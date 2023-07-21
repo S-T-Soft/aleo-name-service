@@ -1,0 +1,13 @@
+version: '2'
+
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      URL_HOST: http://localhost:3030
+      PROGRAM: aleo_name_service_v0.aleo
+    restart: always
+    ports:
+      - '8000:8000'

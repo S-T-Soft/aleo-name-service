@@ -1,4 +1,4 @@
-# AleoNames API Documentation
+# Aleo Names API Documentation
 
 This project exposes several API endpoints for the purposes of name-to-hash conversions, obtaining the primary name of an address, getting the address of a name, and resolving a category and name to content. 
 
@@ -38,7 +38,7 @@ This API endpoint accepts query parameters `name` and `category` and returns a `
 
 ## Running the server
 
-To start the server, run the following command:
+To start the server in local, run the following command:
 
 ```bash
 cargo run

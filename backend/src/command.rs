@@ -19,7 +19,7 @@ struct SetTransferParams {
 }
 
 
-#[get("/api/v1/command/register/{name}")]
+#[get("/command/register/{name}")]
 async fn register(name: web::Path<String>) -> impl Responder {
     let name = name.into_inner();
     let is_sub = name.split(".").count() > 2;
@@ -41,7 +41,7 @@ async fn register(name: web::Path<String>) -> impl Responder {
 }
 
 
-#[get("/api/v1/command/transfer")]
+#[get("/command/transfer")]
 async fn transfer(set_transfer_params: web::Query<SetTransferParams>) -> impl Responder {
     let name = set_transfer_params.name.clone();
     let name_hash = utils::parse_name_hash(&name);
@@ -57,7 +57,7 @@ async fn transfer(set_transfer_params: web::Query<SetTransferParams>) -> impl Re
 }
 
 
-#[get("/api/v1/command/set_primary_name/{name}")]
+#[get("/command/set_primary_name/{name}")]
 async fn set_primary_name(name: web::Path<String>) -> impl Responder {
     let name = name.into_inner();
     let name_hash = utils::parse_name_hash(&name);
@@ -73,7 +73,7 @@ async fn set_primary_name(name: web::Path<String>) -> impl Responder {
 }
 
 
-#[get("/api/v1/command/set_resolver")]
+#[get("/command/set_resolver")]
 async fn set_resolver(resolver_params: web::Query<SetResolverParams>) -> impl Responder {
     let name = resolver_params.name.clone();
     let category = resolver_params.category.clone();

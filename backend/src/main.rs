@@ -31,7 +31,7 @@ struct ResolverContent {
     content: String,
 }
 
-#[get("/api/v1/name_to_hash/{name}")]
+#[get("/name_to_hash/{name}")]
 async fn name_to_hash(name: web::Path<String>) -> impl Responder {
     let name = name.into_inner();
     let name_hash = utils::parse_name_hash(&name);
@@ -52,7 +52,7 @@ async fn name_to_hash(name: web::Path<String>) -> impl Responder {
     HttpResponse::Ok().json(result)
 }
 
-#[get("/api/v1/primary_name/{address}")]
+#[get("/primary_name/{address}")]
 async fn name_api(address: web::Path<String>) -> impl Responder {
     let address = address.into_inner();
     let name = primary_name_of_address(&address);
@@ -63,7 +63,7 @@ async fn name_api(address: web::Path<String>) -> impl Responder {
     }
 }
 
-#[get("/api/v1/address/{name}")]
+#[get("/address/{name}")]
 async fn address_api(name: web::Path<String>) -> impl Responder {
     let name = name.into_inner();
     let address = address_of_name(&name);
@@ -75,7 +75,7 @@ async fn address_api(name: web::Path<String>) -> impl Responder {
 }
 
 
-#[get("/api/v1/resolver")]
+#[get("/resolver")]
 async fn resolver(resolver_params: web::Query<GetResolverParams>) -> impl Responder {
     let name = resolver_params.name.clone();
     let category = resolver_params.category.clone();
@@ -102,7 +102,7 @@ async fn main() -> std::io::Result<()> {
             .service(command::set_resolver)
             .service(command::transfer)
     })
-    .bind("127.0.0.1:8000")?
+    .bind("0.0.0.0:8000")?
     .run()
     .await
 }
