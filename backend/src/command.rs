@@ -12,6 +12,12 @@ struct SetResolverParams {
     resolver: String,
 }
 
+#[derive(Deserialize)]
+struct SetTransferParams {
+    name: String,
+    receiver: String,
+}
+
 
 #[get("/api/v1/command/register/{name}")]
 async fn register(name: web::Path<String>) -> impl Responder {
@@ -32,6 +38,22 @@ async fn register(name: web::Path<String>) -> impl Responder {
         "register"
     };
     HttpResponse::Ok().body(format!("{} {} {} \"$COST_RECORD\"", BASE_COMMAND, function, params))
+}
+
+
+#[get("/api/v1/command/transfer")]
+async fn transfer(set_transfer_params: web::Query<SetTransferParams>) -> impl Responder {
+    let name = set_transfer_params.name.clone();
+    let name_hash = utils::parse_name_hash(&name);
+    let name_hash = match name_hash {
+        Ok(value) => value.to_string(),
+        Err(e) => {
+            // Handle the error here
+            println!("Error parsing name: {}", e);
+            return HttpResponse::InternalServerError().json(serde_json::json!({ "error": format!("Error parsing name: {}", e) }));
+        }
+    };
+    HttpResponse::Ok().body(format!("{} transfer {} {}", BASE_COMMAND, name_hash, set_transfer_params.receiver))
 }
 
 

@@ -54,9 +54,8 @@ async fn name_to_hash(name: web::Path<String>) -> impl Responder {
 
 #[get("/api/v1/primary_name/{address}")]
 async fn name_api(address: web::Path<String>) -> impl Responder {
-    // TODO: Implement your logic here to find the name by address
     let address = address.into_inner();
-    let name = name_of_address(&address);
+    let name = primary_name_of_address(&address);
 
     match name.await {
         Ok(name) => HttpResponse::Ok().json(AddressName { address: address.clone(), name }),
@@ -101,6 +100,7 @@ async fn main() -> std::io::Result<()> {
             .service(command::register)
             .service(command::set_primary_name)
             .service(command::set_resolver)
+            .service(command::transfer)
     })
     .bind("127.0.0.1:8000")?
     .run()
@@ -108,13 +108,22 @@ async fn main() -> std::io::Result<()> {
 }
 
 
-async fn name_of_address(_address: &str) -> Result<String, String> {
+async fn primary_name_of_address(_address: &str) -> Result<String, String> {
     // get name_hash from address
     let name_hash = client::get_primary_name_hash(_address).await?;
 
     println!("name_hash: {}", name_hash);
 
+    if name_hash == "0scalar" {
+        return Err("Deleted".to_string());
+    }
+
     let mut ans = client::get_name(name_hash).await?;
+
+    if ans.addr != _address {
+        return Err("Not owned".to_string());
+    }
+
     let mut names = Vec::new();
 
     println!("ans: {:?}", ans);

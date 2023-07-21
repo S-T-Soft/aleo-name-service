@@ -124,7 +124,7 @@ program aleo_name_service_v0.aleo {
         Mapping::set(names, name_hash, ans);
     }
 
-    transition transfer(name_hash: scalar, receiver: address) {
+    transition transfer(public name_hash: scalar, public receiver: address) {
         return then finalize(name_hash, self.caller, receiver);
     }
 
@@ -135,7 +135,8 @@ program aleo_name_service_v0.aleo {
         let old_own_index: OwnIndex = Mapping::get(own_indies, from);
         Mapping::set(own_indies, from, OwnIndex {index: old_own_index.index, count: old_own_index.count - 1u64});
         let old_address_index: AddressIndex = AddressIndex {addr: from, index: old_ans.index};
-        Mapping::remove(own_names, old_address_index);
+        // Mapping::remove(own_names, old_address_index);
+        Mapping::set(own_names, old_address_index, 0scalar);
 
         let own_index: OwnIndex = Mapping::get_or_use(own_indies, receiver, OwnIndex {index: 0u64, count: 0u64});
         let address_index: AddressIndex = AddressIndex {addr: receiver, index: own_index.index};
@@ -144,15 +145,9 @@ program aleo_name_service_v0.aleo {
 
         let ans: ANS = ANS {addr: receiver, index: own_index.index, name: old_ans.name, parent: old_ans.parent};
         Mapping::set(names, name_hash, ans);
-
-        if (Mapping::contains(primary_names, from)) {
-            if(Mapping::get(primary_names, from) == name_hash) {
-                Mapping::remove(primary_names, from);
-            }
-        }
     }
 
-    transition set_primary_name(name_hash: scalar) {
+    transition set_primary_name(public name_hash: scalar) {
         return then finalize(name_hash, self.caller);
     }
 
@@ -162,15 +157,17 @@ program aleo_name_service_v0.aleo {
         Mapping::set(primary_names, owner, name_hash);
     }
 
-    transition set_resolver(name_hash: scalar, category: u128, resolver: Name) {
+    // set resolver, category is the bits of the category string,
+    // for example, "btc" is 132197865694437869286087983372569673728u128
+    transition set_resolver(public name_hash: scalar, public category: u128, public content: Name) {
         assert(validate_name_bit(category));
-        return then finalize(name_hash, self.caller, category, resolver);
+        return then finalize(name_hash, self.caller, category, content);
     }
 
-    finalize set_resolver(name_hash: scalar, owner: address, category: u128, resolver: Name) {
+    finalize set_resolver(name_hash: scalar, owner: address, category: u128, content: Name) {
         assert_eq(owner, Mapping::get(names, name_hash).addr);
 
         let resolver_index: ResolverIndex = ResolverIndex {name: name_hash, category: category};
-        Mapping::set(resolvers, resolver_index, resolver);
+        Mapping::set(resolvers, resolver_index, content);
     }
 }
