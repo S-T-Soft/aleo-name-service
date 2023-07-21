@@ -1,4 +1,4 @@
-# Aleo Names Contract Source Code Documentation
+# Aleo Name Service Contract Source Code Documentation
 
 AleoNames is a contract written in the Leo language for the Aleo platform. It provides a name service, similar to ENS, on the Aleo blockchain.
 

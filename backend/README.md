@@ -1,4 +1,4 @@
-# Aleo Names API Documentation
+# Aleo Name Service API Documentation
 
 This project exposes several API endpoints for the purposes of name-to-hash conversions, obtaining the primary name of an address, getting the address of a name, and resolving a category and name to content. 
 

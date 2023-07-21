@@ -6,7 +6,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     environment:
-      URL_HOST: http://localhost:3030
+      URL_HOST: https://vm.aleo.org/api
       PROGRAM: aleo_name_service_v0.aleo
     restart: always
     ports:
