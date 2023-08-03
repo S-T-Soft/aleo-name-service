@@ -8,23 +8,24 @@ use crate::utils;
 
 #[derive(Deserialize, Debug)]
 pub struct Name {
-    pub n1: u128,
-    pub n2: u128,
-    pub n3: u128,
-    pub n4: u128,
+    pub data1: u128,
+    pub data2: u128,
+    pub data3: u128,
+    pub data4: u128,
 }
 
 #[derive(Deserialize, Debug)]
-pub struct ANS {
-    pub addr: String,
-    pub index: u64,
-    pub name: Name,
+pub struct TokenId {
+    pub data1: u128,
+    pub data2: u128,
+    pub data3: u128,
+    pub data4: u128,
     pub parent: String,
 }
 
 fn get_base_uri() -> String {
     let url_host = env::var("URL_HOST").unwrap_or_else(|_| "http://localhost:3030".to_string());
-    let program = env::var("PROGRAM").unwrap_or_else(|_| "aleo_name_service_v0.aleo".to_string());
+    let program = env::var("PROGRAM").unwrap_or_else(|_| "aleo_name_service_v2.aleo".to_string());
     let base_uri = format!("{}/testnet3/program/{}", url_host, program);
     base_uri
 }
@@ -93,14 +94,37 @@ fn parse(content: &str) -> String {
 }
 
 
-pub async fn get_name(name_hash: String) -> Result<ANS, String> {
+pub async fn has_sub_names(name_hash: String) -> Result<bool, String> {
+    // get address from name_hash
+    let url = format!("{}/mapping/has_sub_names/{}", get_base_uri(), name_hash);
+    let resp = call_api(url).await?;
+
+    let res = parse(&resp);
+    let res = res.parse::<bool>().unwrap();
+
+    Ok( res )
+}
+
+
+pub async fn get_owner(name_hash: String) -> Result<String, String> {
+    // get address from name_hash
+    let url = format!("{}/mapping/nft_owners/{}", get_base_uri(), name_hash);
+    let resp = call_api(url).await?;
+
+    let address = parse(&resp);
+
+    Ok( address )
+}
+
+
+pub async fn get_name(name_hash: String) -> Result<TokenId, String> {
     // get address from name_hash
     let url = format!("{}/mapping/names/{}", get_base_uri(), name_hash);
     let resp = call_api(url).await?;
 
     let json = parse(&resp);
 
-    let ans: ANS = serde_json::from_str(&json).map_err(|_| "Failed to convert to json")?;
+    let ans: TokenId = serde_json::from_str(&json).map_err(|_| "Failed to convert to json")?;
 
     Ok( ans )
 }
@@ -126,6 +150,6 @@ pub async fn get_resolver(category: &str, name: &str) -> Result<String, String> 
     let resp = call_api(url).await?;
     let json = parse(&resp);
     let name: Name = serde_json::from_str(&json).map_err(|_| "Failed to convert to json")?;
-    let content = utils::reverse_parse_label(name.n1, name.n2, name.n3, name.n4)?;
+    let content = utils::reverse_parse_label(name.data1, name.data2, name.data3, name.data4)?;
     Ok( content )
 }

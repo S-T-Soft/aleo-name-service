@@ -1,6 +1,8 @@
-use snarkvm_console_program::{Scalar, Value};
+use std::str::FromStr;
+use snarkvm_console_program::{Field, Value};
 use snarkvm_console_network::prelude::Zero;
 use snarkvm_console_network::{Network, Testnet3, ToFields};
+use snarkvm_console_program::SizeInBits;
 
 type N = Testnet3;
 
@@ -19,7 +21,7 @@ pub fn string_to_u128(s: &str) -> Result<u128, String> {
 
     // Pad the vector with zeros
     while bytes.len() < 16 {
-        bytes.insert(0, 0);
+        bytes.push(0);
     }
 
     let mut bits = [0u8; 16];
@@ -45,7 +47,7 @@ pub fn parse_label_string(name: &str, valid: bool) -> Result<String, String> {
 
     // Pad the vector with zeros
     while bytes.len() < 64 {
-        bytes.insert(0, 0);
+        bytes.push(0);
     }
 
     // Convert the vector to a 512-bit integer
@@ -58,13 +60,13 @@ pub fn parse_label_string(name: &str, valid: bool) -> Result<String, String> {
     let n3 = u128::from_le_bytes([bits[32], bits[33], bits[34], bits[35], bits[36], bits[37], bits[38], bits[39], bits[40], bits[41], bits[42], bits[43], bits[44], bits[45], bits[46], bits[47]]);
     let n4 = u128::from_le_bytes([bits[48], bits[49], bits[50], bits[51], bits[52], bits[53], bits[54], bits[55], bits[56], bits[57], bits[58], bits[59], bits[60], bits[61], bits[62], bits[63]]);
 
-    Ok( format!("{{n1: {}u128, n2: {}u128, n3: {}u128, n4: {}u128}}", n1, n2, n3, n4) )
+    Ok( format!("{{data1: {}u128, data2: {}u128, data3: {}u128, data4: {}u128}}", n1, n2, n3, n4) )
 }
 
 // Parse a label
-pub fn parse_label(name: &str, parent: Scalar<N>) -> Result<Value<N>, String> {
+pub fn parse_label(name: &str, parent: Field<N>) -> Result<Value<N>, String> {
     let name_str = parse_label_string(name, true)?;
-    let names = format!("{{name:{}, parent: {}}}", name_str, parent);
+    let names = format!("{{{}, parent: {}}}", &name_str[1..name_str.len()-1], parent);
 
     println!("{}", names);
 
@@ -72,7 +74,7 @@ pub fn parse_label(name: &str, parent: Scalar<N>) -> Result<Value<N>, String> {
 }
 
 // Parse a name to hash
-pub fn parse_name_hash(name: &str) -> Result<Scalar<N>, String> {
+pub fn parse_name_hash(name: &str) -> Result<Field<N>, String> {
     // split name with dot，revert the order
     let mut name_parts: Vec<&str> = name.split('.').collect();
     name_parts.reverse();
@@ -83,13 +85,15 @@ pub fn parse_name_hash(name: &str) -> Result<Scalar<N>, String> {
     // remove the first element
     name_parts.remove(0);
     // convert the parts to hash
-    let mut  name_hash = Scalar::<N>::zero();
+    let mut name_hash = Field::<N>::zero();
     for part in name_parts {
         let label = parse_label(part, name_hash)?;
         let avalue = label.to_fields().map_err(|e| e.to_string())?;
-        name_hash = N::hash_to_scalar_psd2(&avalue).map_err(|e| e.to_string())?;
+        name_hash = N::hash_psd2(&avalue).map_err(|e| e.to_string())?;
     }
-    return Ok(name_hash);
+    //let name_hash = Field::<N>::size_in_bits().to_string();
+    //let name_hash = Field::<N>::from_str(&name_hash).map_err(|e| e.to_string())?;
+    Ok(name_hash)
 }
 
 // Parse a name
@@ -106,14 +110,14 @@ pub fn parse_name(name: &str) -> Result<String, String> {
     // remove the first element
     name_parts.remove(0);
     // convert the parts to hash
-    let mut parent = Scalar::<N>::zero();
+    let mut parent = Field::<N>::zero();
     for part in name_parts {
         let label = parse_label(part, parent)?;
         let avalue = label.to_fields().map_err(|e| e.to_string())?;
-        parent = N::hash_to_scalar_psd2(&avalue).map_err(|e| e.to_string())?;
+        parent = N::hash_psd2(&avalue).map_err(|e| e.to_string())?;
     }
     let first_label = parse_label_string(first_name.expect("REASON") , true)?;
-    if parent == Scalar::<N>::zero() {
+    if parent == Field::<N>::zero() {
         return Ok(format!("\"{}\"", first_label));
     }
     return Ok( format!("\"{}\" {}", first_label, parent) );
@@ -130,7 +134,7 @@ pub fn reverse_parse_label(n1: u128, n2: u128, n3: u128, n4: u128) -> Result<Str
 
     let mut name = String::from_utf8(bytes.to_vec()).map_err(|_| "Failed to convert bytes to UTF-8")?;
 
-    name = name.trim_start_matches(char::from(0)).to_string();
+    name = name.trim_end_matches(char::from(0)).to_string();
 
     Ok(name)
 }

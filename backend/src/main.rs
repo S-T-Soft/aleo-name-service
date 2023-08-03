@@ -1,4 +1,5 @@
 use actix_web::{App, get, HttpResponse, HttpServer, Responder, web};
+use actix_cors::Cors;
 use serde::{Deserialize, Serialize};
 use serde_json;
 
@@ -93,14 +94,14 @@ async fn resolver(resolver_params: web::Query<GetResolverParams>) -> impl Respon
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
+            .wrap(
+                Cors::permissive()
+                    .allow_any_origin()
+            )
             .service(name_to_hash)
             .service(name_api)
             .service(address_api)
             .service(resolver)
-            .service(command::register)
-            .service(command::set_primary_name)
-            .service(command::set_resolver)
-            .service(command::transfer)
     })
     .bind("0.0.0.0:8000")?
     .run()
@@ -112,29 +113,25 @@ async fn primary_name_of_address(_address: &str) -> Result<String, String> {
     // get name_hash from address
     let name_hash = client::get_primary_name_hash(_address).await?;
 
-    println!("name_hash: {}", name_hash);
-
-    if name_hash == "0scalar" {
+    if name_hash == "0field" {
         return Err("Deleted".to_string());
     }
 
-    let mut ans = client::get_name(name_hash).await?;
-
-    if ans.addr != _address {
+    let address = client::get_owner(name_hash.clone()).await?;
+    if address != _address {
         return Err("Not owned".to_string());
     }
 
+    let mut ans = client::get_name(name_hash.clone()).await?;
+
     let mut names = Vec::new();
 
-    println!("ans: {:?}", ans);
-
-    while ans.parent != "0scalar" {
-        names.push(utils::reverse_parse_label(ans.name.n1, ans.name.n2, ans.name.n3, ans.name.n4).unwrap());
+    while ans.parent != "0field" {
+        names.push(utils::reverse_parse_label(ans.data1, ans.data2, ans.data3, ans.data4).unwrap());
         ans = client::get_name(ans.parent).await?;
-        println!("ans: {:?}", ans);
     }
 
-    names.push(utils::reverse_parse_label(ans.name.n1, ans.name.n2, ans.name.n3, ans.name.n4).unwrap());
+    names.push(utils::reverse_parse_label(ans.data1, ans.data2, ans.data3, ans.data4).unwrap());
     names.push("ans".to_string());
 
     // Join all the names with "."
@@ -153,6 +150,15 @@ async fn address_of_name(_name: &str) -> Result<String, String> {
         }
     };
 
-    let ans = client::get_name(name_hash).await?;
-    Ok( ans.addr )
+    let available = client::has_sub_names(name_hash.clone()).await?;
+
+    if !available {
+        let address = client::get_owner(name_hash).await;
+        match address {
+            Ok(address) => return Ok(address),
+            Err(_e) => return Ok("Private Register".to_string()),
+        }
+    }
+
+    Err("Not Register".to_string())
 }
