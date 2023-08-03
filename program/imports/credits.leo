@@ -36,28 +36,4 @@ program credits.aleo {
         let current_amount: u64 = Mapping::get_or_use(account, receiver, 0u64);
         Mapping::set(account, receiver, current_amount + amount);
     }
-
-    // The function `transfer_private` sends the specified token amount to the token receiver from the specified token record.
-    transition transfer_private(sender: credits, receiver: address, amount: u64) -> (credits, credits) {
-        // Checks the given token record has sufficient balance.
-        // This `sub` operation is safe, and the proof will fail if an overflow occurs.
-        // `difference` holds the change amount to be returned to sender.
-        let difference: u64 = sender.microcredits - amount;
-
-        // Produce a token record with the change amount for the sender.
-        let remaining: credits = credits {
-            owner: sender.owner,
-            microcredits: difference,
-        };
-
-        // Produce a token record for the specified receiver.
-        let transferred: credits = credits {
-            owner: receiver,
-            microcredits: amount,
-        };
-
-        // Output the sender's change record and the receiver's record.
-        return (remaining, transferred);
-    }
-
 }

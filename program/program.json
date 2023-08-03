@@ -1,10 +1,6 @@
 {
-    "program": "aleo_name_service_v0.aleo",
-    "version": "0.0.1",
+    "program": "aleo_name_service_v2.aleo",
+    "version": "0.0.2",
     "description": "",
-    "development": {
-        "private_key": "APrivateKey1zkp4CjnnVYYyFQDtmPF4ziKsRhj5jxGptZfAoW5XpKXdPwv",
-        "address": "aleo1zvn0ddqpzguv6nhdj30yn30fhwg978nhasvvmc5sd7k6mhj4vqfqvwpuwl"
-    },
     "license": "MIT"
 }
