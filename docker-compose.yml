@@ -7,7 +7,14 @@ services:
       dockerfile: Dockerfile
     environment:
       URL_HOST: https://vm.aleo.org/api
-      PROGRAM: aleo_name_service_v0.aleo
+      PROGRAM: aleo_name_service_v2.aleo
+      VIRTUAL_HOST: api.aleonames.id,api.aleonames.local
+      VIRTUAL_PORT: 8000
     restart: always
+
+  nginx-proxy:
+    image: jwilder/nginx-proxy
     ports:
-      - '8000:8000'
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro

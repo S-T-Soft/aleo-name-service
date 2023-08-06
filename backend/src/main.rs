@@ -5,7 +5,6 @@ use serde_json;
 
 mod utils;
 mod client;
-mod command;
 
 #[derive(Serialize)]
 struct NameHash {
