@@ -1,7 +1,7 @@
 import credits.leo;
 
 // The 'program' program.
-program aleo_name_service_v2.aleo {
+program aleo_name_service_v3.aleo {
     // Structure holding the ASCII bits of a domain name. If the length of the bits is less than 512,
     // zeros are appended in the end. The bits are then split into four parts, with n1 holding the
     // first 128 bits and n4 holding the last 128 bits.
@@ -37,12 +37,11 @@ program aleo_name_service_v2.aleo {
     record NFT {
         owner: address,
         data: TokenId,
-        editon: scalar
+        edition: scalar
     }
 
     // Mappings for different data structures
     mapping nft_owners: field => address;
-    mapping has_sub_names: field => bool; // Mapping from a field to a bool indicating if it has sub names, key not exists means not registeed
     mapping names: field => TokenId; // Mapping from a field(hash name) to an TokenId structure
     mapping primary_names: address => field; // Mapping from an address to a primary name
     mapping resolvers: ResolverIndex => Name; // Mapping from a ResolverIndex structure to an Name structure(string)
@@ -167,13 +166,14 @@ program aleo_name_service_v2.aleo {
 
     transition register(
         name: Name,
+        receiver: address,
         pay_record: credits.leo/credits
     ) -> NFT {
         // Validate the name before registration
         assert(validate_name(name));
-        let receiver: address = aleo1sr8d93usu395zc29qcl35ul2e7hl2538hl8pehe4ms88q4g70gxq3ffw0v;
+        let credit_receiver: address = aleo1sr8d93usu395zc29qcl35ul2e7hl2538hl8pehe4ms88q4g70gxq3ffw0v;
         let price: u64 = 5000000u64;
-        credits.leo/transfer_private_to_public(pay_record, receiver, price);
+        credits.leo/transfer_private_to_public(pay_record, credit_receiver, price);
         let token_id: TokenId = TokenId {
             data1: name.data1,
             data2: name.data2,
@@ -183,16 +183,16 @@ program aleo_name_service_v2.aleo {
         };
         let name_hash: field = Poseidon2::hash_to_field(token_id);
         let nft: NFT = NFT {
-            owner: self.caller,
+            owner: receiver,
             data: token_id,
-            editon: 0scalar
+            edition: 0scalar
         };
-        return nft then finalize(name_hash);
+        return nft then finalize(name_hash, token_id);
     }
 
-    finalize register(name_hash: field) {
+    finalize register(name_hash: field, token_id: TokenId) {
         // Check if the name has already been registered
-        assert_eq(has_sub_names.contains(name_hash), false);
+        assert_eq(names.contains(name_hash), false);
 
         // Ensure mint block height is less than current block height
         let mint_block: u32 = toggle_settings.get(1u8);
@@ -206,11 +206,54 @@ program aleo_name_service_v2.aleo {
         let collection_settings_met: u32 = toggle_settings_status & 11u32;
         assert_eq(collection_settings_met, 3u32);
 
-        has_sub_names.set(name_hash, false);
+        names.set(name_hash, token_id);
     }
 
     transition register_sub(
         name: Name,
+        receiver: address,
+        parent: NFT
+    ) -> (NFT, NFT) {
+        // Validate the name before registration
+        assert(validate_name(name));
+        let parent_hash: field = Poseidon2::hash_to_field(parent.data);
+        let token_id: TokenId = TokenId {
+            data1: name.data1,
+            data2: name.data2,
+            data3: name.data3,
+            data4: name.data4,
+            parent: parent_hash
+        };
+        let name_hash: field = Poseidon2::hash_to_field(token_id);
+        let nft: NFT = NFT { owner: receiver, data: token_id, edition: 0scalar};
+        let new_parent: NFT = NFT { owner: parent.owner, data: parent.data, edition: parent.edition };
+        return (nft, new_parent) then finalize(name_hash, token_id);
+    }
+
+    // Register subdomain of a name
+    // The parent domain must public, and the caller must be the owner of the parent domain
+    finalize register_sub(name_hash: field, token_id: TokenId) {
+        // Check if the name has already been registered
+        assert_eq(names.contains(name_hash), false);
+
+        // Ensure mint block height is less than current block height
+        let mint_block: u32 = toggle_settings.get(1u8);
+        let passed_height_check: bool = mint_block <= block.height;
+        assert_eq(passed_height_check, true);
+
+        // Ensure minting is allowed, and is initialized,
+        let toggle_settings_status: u32 = toggle_settings.get(0u8);
+        // frozen & minting & initialized flags = 0b0000...1011 = 11u32
+        // what the settings should be = 0b0000...0011 = 3u32
+        let collection_settings_met: u32 = toggle_settings_status & 11u32;
+        assert_eq(collection_settings_met, 3u32);
+
+        names.set(name_hash, token_id);
+    }
+
+    transition register_sub_public(
+        name: Name,
+        receiver: address,
         parent: field
     ) -> NFT {
         // Validate the name before registration
@@ -223,17 +266,17 @@ program aleo_name_service_v2.aleo {
             parent: parent
         };
         let name_hash: field = Poseidon2::hash_to_field(token_id);
-        let nft: NFT = NFT { owner: self.caller, data: token_id, editon: 0scalar};
-        return nft then finalize(name_hash, parent, self.caller);
+        let nft: NFT = NFT { owner: receiver, data: token_id, edition: 0scalar};
+        return nft then finalize(name_hash, token_id, self.caller);
     }
 
     // Register subdomain of a name
     // The parent domain must public, and the caller must be the owner of the parent domain
-    finalize register_sub(name_hash: field, parent: field, caller: address) {
+    finalize register_sub_public(name_hash: field, token_id: TokenId, caller: address) {
         // Check if the callar is the owner of the parent name
-        assert_eq(caller, nft_owners.get(parent));
+        assert_eq(caller, nft_owners.get(token_id.parent));
         // Check if the name has already been registered
-        assert_eq(has_sub_names.contains(name_hash), false);
+        assert_eq(names.contains(name_hash), false);
 
         // Ensure mint block height is less than current block height
         let mint_block: u32 = toggle_settings.get(1u8);
@@ -247,8 +290,7 @@ program aleo_name_service_v2.aleo {
         let collection_settings_met: u32 = toggle_settings_status & 11u32;
         assert_eq(collection_settings_met, 3u32);
 
-        has_sub_names.set(name_hash, false);
-        has_sub_names.set(parent, true);
+        names.set(name_hash, token_id);
     }
 
     // Proof that you own an nft without revealing the nft.
@@ -279,7 +321,7 @@ program aleo_name_service_v2.aleo {
 
     finalize burn(name_hash: field)
     {
-        has_sub_names.remove(name_hash);
+        names.remove(name_hash);
     }
 
     transition is_avaiable(
@@ -289,7 +331,7 @@ program aleo_name_service_v2.aleo {
     }
 
     finalize is_avaiable(name_hash: field) {
-        assert_eq(has_sub_names.contains(name_hash), false);
+        assert_eq(names.contains(name_hash), false);
     }
 
     transition transfer_private(
@@ -300,7 +342,7 @@ program aleo_name_service_v2.aleo {
         return NFT {
             owner: receiver,
             data: nft.data,
-            editon: 0scalar
+            edition: 0scalar
         };
     }
 
@@ -327,17 +369,15 @@ program aleo_name_service_v2.aleo {
     )
     {
         let name_hash: field = Poseidon2::hash_to_field(nft.data);
-        return then finalize(self.caller, name_hash, nft.data);
+        return then finalize(self.caller, name_hash);
     }
 
     finalize convert_private_to_public(
         public owner: address,
         public name_hash: field,
-        public token_id: TokenId
     )
     {
         nft_owners.set(name_hash, owner);
-        names.set(name_hash, token_id);
     }
 
     transition convert_public_to_private(
@@ -348,7 +388,7 @@ program aleo_name_service_v2.aleo {
         return NFT {
             owner: self.caller,
             data: token_id,
-            editon: 0scalar
+            edition: 0scalar
         } then finalize(self.caller, name_hash);
     }
 
@@ -371,11 +411,20 @@ program aleo_name_service_v2.aleo {
         primary_names.set(owner, name_hash);
     }
 
+    transition unset_primary_name() {
+        return then finalize(self.caller);
+    }
+
+    finalize unset_primary_name(owner: address) {
+        primary_names.remove(owner);
+    }
+
     // set resolver
     // category is the bits of the category string, u128 can store max of 16 caracters
     // for example, "btc" is 6517858u128, "eth" is 6845541u128, "twitter" is 32199698188695412u128
     transition set_resolver(name_hash: field, category: u128, content: Name) {
-        assert(validate_name_bit(category));
+        let name: Name = Name { data1: category, data2: 0u128, data3: 0u128, data4: 0u128 };
+        assert(validate_name(name));
         return then finalize(name_hash, self.caller, category, content);
     }
 
@@ -384,5 +433,16 @@ program aleo_name_service_v2.aleo {
 
         let resolver_index: ResolverIndex = ResolverIndex { name: name_hash, category: category };
         resolvers.set(resolver_index, content);
+    }
+
+    transition unset_resolver(name_hash: field, category: u128) {
+        return then finalize(name_hash, self.caller, category);
+    }
+
+    finalize unset_resolver(name_hash: field, owner: address, category: u128) {
+        assert_eq(owner, nft_owners.get(name_hash));
+
+        let resolver_index: ResolverIndex = ResolverIndex { name: name_hash, category: category };
+        resolvers.remove(resolver_index);
     }
 }

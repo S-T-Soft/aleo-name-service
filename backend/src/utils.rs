@@ -1,8 +1,6 @@
-use std::str::FromStr;
 use snarkvm_console_program::{Field, Value};
 use snarkvm_console_network::prelude::Zero;
 use snarkvm_console_network::{Network, Testnet3, ToFields};
-use snarkvm_console_program::SizeInBits;
 
 type N = Testnet3;
 
@@ -94,33 +92,6 @@ pub fn parse_name_hash(name: &str) -> Result<Field<N>, String> {
     //let name_hash = Field::<N>::size_in_bits().to_string();
     //let name_hash = Field::<N>::from_str(&name_hash).map_err(|e| e.to_string())?;
     Ok(name_hash)
-}
-
-// Parse a name
-pub fn parse_name(name: &str) -> Result<String, String> {
-    // split name with dot，revert the order
-    let mut name_parts: Vec<&str> = name.split('.').collect();
-    name_parts.reverse();
-    let first_name = name_parts.pop();
-
-    // the parts size must >=2 and the first element must be ans
-    if name_parts.len() < 1 || name_parts[0] != "ans" {
-        return Err("Invalid name".to_string());
-    }
-    // remove the first element
-    name_parts.remove(0);
-    // convert the parts to hash
-    let mut parent = Field::<N>::zero();
-    for part in name_parts {
-        let label = parse_label(part, parent)?;
-        let avalue = label.to_fields().map_err(|e| e.to_string())?;
-        parent = N::hash_psd2(&avalue).map_err(|e| e.to_string())?;
-    }
-    let first_label = parse_label_string(first_name.expect("REASON") , true)?;
-    if parent == Field::<N>::zero() {
-        return Ok(format!("\"{}\"", first_label));
-    }
-    return Ok( format!("\"{}\" {}", first_label, parent) );
 }
 
 

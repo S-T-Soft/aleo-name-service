@@ -18,9 +18,9 @@ This is the backend part of the Aleo Name Service, written in Rust. The backend 
 
 This is the smart contract part of the Aleo Name Service, written in Leo language. The smart contract defines the core logic of ANS on the Aleo blockchain. Refer to [program/README.md](./program/README.md) for more details.
 
-### [website/](./website)
+### [frontend/](./frontend)
 
-This is the frontend part of Aleo Name Service. Users can interact with ANS intuitively through this website. Refer to [website/README.md](./website/README.md) for more details.
+This is the frontend part of Aleo Name Service. Users can interact with ANS intuitively through this website. Refer to [frontend/README.md](./frontend/README.md) for more details.
 
 ## Contribution
 

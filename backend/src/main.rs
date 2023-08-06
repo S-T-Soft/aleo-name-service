@@ -2,6 +2,9 @@ use actix_web::{App, get, HttpResponse, HttpServer, Responder, web};
 use actix_cors::Cors;
 use serde::{Deserialize, Serialize};
 use serde_json;
+use deadpool_redis::{Config, Runtime, Pool};
+use std::env;
+
 
 mod utils;
 mod client;
@@ -52,10 +55,23 @@ async fn name_to_hash(name: web::Path<String>) -> impl Responder {
     HttpResponse::Ok().json(result)
 }
 
+#[get("/hash_to_name/{name_hash}")]
+async fn hash_to_name(pool: web::Data<Pool>, name_hash: web::Path<String>) -> impl Responder {
+    let name_hash = name_hash.into_inner();
+    let name = client::get_full_name(&pool,name_hash.clone());
+
+    match name.await {
+        Ok(name) => HttpResponse::Ok().json(NameHash { name_hash, name }),
+        Err(_e) => {
+            HttpResponse::NotFound().finish()
+        },
+    }
+}
+
 #[get("/primary_name/{address}")]
-async fn name_api(address: web::Path<String>) -> impl Responder {
+async fn name_api(pool: web::Data<Pool>, address: web::Path<String>) -> impl Responder {
     let address = address.into_inner();
-    let name = primary_name_of_address(&address);
+    let name = primary_name_of_address(&pool,&address);
 
     match name.await {
         Ok(name) => HttpResponse::Ok().json(AddressName { address: address.clone(), name }),
@@ -91,13 +107,21 @@ async fn resolver(resolver_params: web::Query<GetResolverParams>) -> impl Respon
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
+    let redis_url = env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379/0".to_string());
+
+    let cfg = Config::from_url(redis_url);
+
+    let pool = cfg.create_pool(Some(Runtime::Tokio1)).unwrap();
+
+    HttpServer::new(move || {
         App::new()
             .wrap(
                 Cors::permissive()
                     .allow_any_origin()
             )
+            .app_data(web::Data::new(pool.clone()))
             .service(name_to_hash)
+            .service(hash_to_name)
             .service(name_api)
             .service(address_api)
             .service(resolver)
@@ -108,35 +132,18 @@ async fn main() -> std::io::Result<()> {
 }
 
 
-async fn primary_name_of_address(_address: &str) -> Result<String, String> {
+async fn primary_name_of_address(pool: &Pool, _address: &str) -> Result<String, String> {
     // get name_hash from address
     let name_hash = client::get_primary_name_hash(_address).await?;
-
-    if name_hash == "0field" {
-        return Err("Deleted".to_string());
-    }
 
     let address = client::get_owner(name_hash.clone()).await?;
     if address != _address {
         return Err("Not owned".to_string());
     }
 
-    let mut ans = client::get_name(name_hash.clone()).await?;
+    let name = client::get_full_name(pool,name_hash.clone()).await?;
 
-    let mut names = Vec::new();
-
-    while ans.parent != "0field" {
-        names.push(utils::reverse_parse_label(ans.data1, ans.data2, ans.data3, ans.data4).unwrap());
-        ans = client::get_name(ans.parent).await?;
-    }
-
-    names.push(utils::reverse_parse_label(ans.data1, ans.data2, ans.data3, ans.data4).unwrap());
-    names.push("ans".to_string());
-
-    // Join all the names with "."
-    let name = names.join(".");
-
-    Ok(name)
+    Ok( name )
 }
 
 
@@ -149,15 +156,11 @@ async fn address_of_name(_name: &str) -> Result<String, String> {
         }
     };
 
-    let available = client::has_sub_names(name_hash.clone()).await?;
+    client::get_name(name_hash.clone()).await?;
 
-    if !available {
-        let address = client::get_owner(name_hash).await;
-        match address {
-            Ok(address) => return Ok(address),
-            Err(_e) => return Ok("Private Register".to_string()),
-        }
+    let address = client::get_owner(name_hash).await;
+    match address {
+        Ok(address) => return Ok(address),
+        Err(_e) => return Ok("Private Register".to_string()),
     }
-
-    Err("Not Register".to_string())
 }

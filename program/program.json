@@ -1,6 +1,6 @@
 {
-    "program": "aleo_name_service_v2.aleo",
-    "version": "0.0.2",
+    "program": "aleo_name_service_v3.aleo",
+    "version": "0.0.3",
     "description": "",
     "license": "MIT"
 }

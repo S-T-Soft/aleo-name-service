@@ -4,6 +4,7 @@ use regex::Regex;
 use serde::Deserialize;
 use urlencoding;
 use crate::utils;
+use deadpool_redis::{Pool, redis::{cmd}};
 
 
 #[derive(Deserialize, Debug)]
@@ -25,7 +26,7 @@ pub struct TokenId {
 
 fn get_base_uri() -> String {
     let url_host = env::var("URL_HOST").unwrap_or_else(|_| "http://localhost:3030".to_string());
-    let program = env::var("PROGRAM").unwrap_or_else(|_| "aleo_name_service_v2.aleo".to_string());
+    let program = env::var("PROGRAM").unwrap_or_else(|_| "aleo_name_service_v3.aleo".to_string());
     let base_uri = format!("{}/testnet3/program/{}", url_host, program);
     base_uri
 }
@@ -94,18 +95,6 @@ fn parse(content: &str) -> String {
 }
 
 
-pub async fn has_sub_names(name_hash: String) -> Result<bool, String> {
-    // get address from name_hash
-    let url = format!("{}/mapping/has_sub_names/{}", get_base_uri(), name_hash);
-    let resp = call_api(url).await?;
-
-    let res = parse(&resp);
-    let res = res.parse::<bool>().unwrap();
-
-    Ok( res )
-}
-
-
 pub async fn get_owner(name_hash: String) -> Result<String, String> {
     // get address from name_hash
     let url = format!("{}/mapping/nft_owners/{}", get_base_uri(), name_hash);
@@ -127,6 +116,43 @@ pub async fn get_name(name_hash: String) -> Result<TokenId, String> {
     let ans: TokenId = serde_json::from_str(&json).map_err(|_| "Failed to convert to json")?;
 
     Ok( ans )
+}
+
+
+pub async fn get_full_name(pool: &Pool, name_hash: String) -> Result<String, String> {
+    // Create a Redis key
+    let redis_key = format!("hash_to_name/{}", name_hash);
+
+    let mut conn = pool.get().await.unwrap();
+    let cached_value: Option<String> = match cmd("GET").arg(&[redis_key.as_str()]).query_async(&mut conn).await {
+        Ok(value) => value,
+        Err(err) => {
+            println!("Error getting content: {}", err);
+            None
+        }
+    };
+    if let Some(value) = cached_value {
+        return Ok(value);
+    }
+
+    let mut ans = get_name(name_hash.clone()).await?;
+
+    let mut names = Vec::new();
+
+    while ans.parent != "0field" {
+        names.push(utils::reverse_parse_label(ans.data1, ans.data2, ans.data3, ans.data4).unwrap());
+        ans = get_name(ans.parent).await?;
+    }
+
+    names.push(utils::reverse_parse_label(ans.data1, ans.data2, ans.data3, ans.data4).unwrap());
+    names.push("ans".to_string());
+
+    // Join all the names with "."
+    let name = names.join(".");
+
+    cmd("SET").arg(&[redis_key.as_str(), name.as_str()]).query_async::<_, ()>(&mut conn).await.unwrap();
+
+    Ok(name)
 }
 
 
