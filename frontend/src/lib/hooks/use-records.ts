@@ -43,7 +43,7 @@ export function useRecords() {
   }
 
   const loadPublicRecords = async (privateRecords: Record[]) => {
-    const ownerUrl = `https://explorer.hamp.app/api/v1/mapping/list_program_mapping_values/${NEXT_PUBLIC_PROGRAM}/nft_owners`;
+    const ownerUrl = `https://explorer.hamp.app/api/v1/mapping/list_program_mapping_values/${NEXT_PUBLIC_PROGRAM}/nft_owners?outdated=1`;
 
     if (publicKey) {
       setLoading(true);
