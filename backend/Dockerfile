@@ -16,6 +16,8 @@ RUN apt-get update && apt-get install -y libssl-dev ca-certificates libcurl4
 # clean the cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
+EXPOSE 8000
+
 # copy the build artifact from the build stage
 COPY --from=builder /usr/local/cargo/bin/ans-api /usr/local/bin/ans-api
 

@@ -20,7 +20,6 @@ services:
       PROGRAM: aleo_name_service_v3.aleo
       REDIS_URL: redis://redis:6379/0
       VIRTUAL_HOST: api.aleonames.id,api.aleonames.local
-      VIRTUAL_PORT: 8000
       LOG_STORE: ans
     restart: always
 
@@ -32,3 +31,4 @@ services:
       LOG_STORE: ans
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
+      - /etc/nginx/certs:/etc/nginx/certs:ro

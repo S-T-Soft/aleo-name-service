@@ -161,6 +161,6 @@ async fn address_of_name(_name: &str) -> Result<String, String> {
     let address = client::get_owner(name_hash).await;
     match address {
         Ok(address) => return Ok(address),
-        Err(_e) => return Ok("Private Register".to_string()),
+        Err(_e) => return Ok("Private Registration".to_string()),
     }
 }
