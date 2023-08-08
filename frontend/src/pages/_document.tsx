@@ -5,7 +5,6 @@ import Document, {
   Main,
   NextScript,
 } from 'next/document';
-import { Analytics } from '@vercel/analytics/react';
 
 class CustomDocument extends Document {
   static async getInitialProps(ctx: DocumentContext) {
@@ -24,7 +23,6 @@ class CustomDocument extends Document {
         <body>
           <Main />
           <NextScript />
-          <Analytics />
         </body>
       </Html>
     );
