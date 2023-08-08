@@ -130,7 +130,7 @@ const NamePage: NextPageWithLayout = () => {
                                             <li>data2: Enter <CopyToClipboardText text={nameInputs[1] + 'u128'}/></li>
                                             <li>data3: Enter <CopyToClipboardText text={nameInputs[2] + 'u128'}/></li>
                                             <li>data4: Enter <CopyToClipboardText text={nameInputs[3] + 'u128'}/></li>
-                                            <li>r1: Enter <CopyToClipboardText text={publicKey}/></li>
+                                            <li>r1: Enter {publicKey?<CopyToClipboardText text={publicKey}/>:"the address which will own the name"}</li>
                                             <li>r2: Enter a record containing at least 5 credits.</li>
                                             <li>Click the "Run" button</li>
                                         </ol>
