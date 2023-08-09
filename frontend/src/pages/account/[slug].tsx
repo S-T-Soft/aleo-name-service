@@ -1,4 +1,4 @@
-import type {NextPageWithLayout} from '@/types';
+import type {NextPageWithLayout, Status} from '@/types';
 import {NextSeo} from 'next-seo';
 import DashboardLayout from '@/layouts/dashboard/_dashboard';
 import {useRouter} from 'next/router'
@@ -28,9 +28,9 @@ function Transfer({name, setTriggerRecheck}: React.PropsWithChildren<{name: stri
       return;
     }
     setError("");
-    await transfer(name, recipient,(running: boolean, status: string) => {
+    await transfer(name, recipient,(running: boolean, status: Status) => {
       setTransferring(running);
-      setTransferStatus(status);
+      setTransferStatus(status.message);
       if (!running) {
         setTriggerRecheck();
       }
@@ -42,7 +42,7 @@ function Transfer({name, setTriggerRecheck}: React.PropsWithChildren<{name: stri
         <input
           className="h-16 w-full appearance-none rounded-full border-2 border-gray-200 py-1 text-lg tracking-tighter text-gray-900 outline-none transition-all placeholder:text-gray-600 hover:border-sky-900 focus:border-sky-500 ltr:pr-24 ltr:pl-8 rtl:pl-24 rtl:pr-8 dark:border-gray-600 dark:bg-light-dark dark:text-white dark:placeholder:text-gray-500 dark:hover:border-sky-900 dark:focus:border-sky-500 sm:ltr:pr-24 sm:rtl:pl-24 xl:ltr:pr-24 xl:rtl:pl-24"
           value={recipient}
-          placeholder={"Recipient Address ..."}
+          placeholder={"Address(aleo***) or Public ANS(***.ans)"}
           onChange={onChange}
           autoComplete="off"
         />
@@ -66,9 +66,9 @@ function PrivateName({name, setTriggerRecheck}: React.PropsWithChildren<{name: s
 
   const handleConvert = async (event: any) => {
     event.preventDefault();
-    await convertToPublic(name, (running: boolean, status: string) => {
+    await convertToPublic(name, (running: boolean, status: Status) => {
       setConverting(running);
-      setConvertStatus(status);
+      setConvertStatus(status.message);
       if (!running) {
         setTriggerRecheck();
       }
@@ -98,9 +98,9 @@ function PublicName({name, isPrimaryName, setIsPrimaryName, setTriggerRecheck}:
 
   const handleConvert = async (event: any) => {
     event.preventDefault();
-    await convertToPrivate(name, (running: boolean, status: string) => {
+    await convertToPrivate(name, (running: boolean, status: Status) => {
       setConverting(running);
-      setConvertStatus(status);
+      setConvertStatus(status.message);
       if (!running) {
         setTriggerRecheck();
       }
@@ -110,17 +110,17 @@ function PublicName({name, isPrimaryName, setIsPrimaryName, setTriggerRecheck}:
   const handleSetting = async (event: any) => {
     event.preventDefault();
     if (isPrimaryName) {
-      await unsetPrimaryName((running: boolean, status: string) => {
+      await unsetPrimaryName((running: boolean, status: Status) => {
         setSetting(running);
-        setSettingStatus(status);
+        setSettingStatus(status.message);
         if (!running) {
           setTriggerRecheck();
         }
       });
     } else {
-      await setPrimaryName(name, (running: boolean, status: string) => {
+      await setPrimaryName(name, (running: boolean, status: Status) => {
         setSetting(running);
-        setSettingStatus(status);
+        setSettingStatus(status.message);
         if (!running) {
           setTriggerRecheck();
         }

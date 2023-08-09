@@ -8,14 +8,17 @@ import Sidebar from '@/layouts/dashboard/_sidebar';
 import React, { FC, useMemo } from 'react';
 import { WalletMultiButton } from '@demox-labs/aleo-wallet-adapter-reactui';
 import SearchButton from "@/components/search/button";
+import {useRecords} from "@/lib/hooks/use-records";
 
 require('@demox-labs/aleo-wallet-adapter-reactui/dist/styles.css');
 
 function HeaderRightArea() {
+  const {primaryName} = useRecords();
+
   return (
     <div className="relative order-last flex shrink-0 items-center gap-3 sm:gap-6 lg:gap-8">
       <SearchButton/>
-      <WalletMultiButton className="bg-[#1253fa]"/>
+      <WalletMultiButton className="bg-[#1253fa]">{primaryName?(primaryName + ".ans"):undefined}</WalletMultiButton>
     </div>
   );
 }

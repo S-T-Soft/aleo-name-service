@@ -121,7 +121,7 @@ export function useRecords() {
   }
 
   useEffect(() => {
-    publicKey && refreshRecords("auto");
+    syncPrimaryName();
   }, [publicKey]);
 
   const addRecord = (record: Record) => {

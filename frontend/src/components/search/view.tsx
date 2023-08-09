@@ -74,7 +74,7 @@ export function SearchFrom({ placeholder = 'Search ANS Name...' }: SearchFromPro
 export default function SearchView({ ...props }) {
   return (
     <div
-      className="relative z-50 mx-auto w-full max-w-full xs:w-[480px] sm:w-[600px] lg:w-[900px]"
+      className="relative mx-auto w-full max-w-full xs:w-[480px] sm:w-[600px] lg:w-[900px]"
       {...props}
     >
       <SearchFrom />

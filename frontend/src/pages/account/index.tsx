@@ -6,10 +6,15 @@ import Button from "@/components/ui/button";
 import {useRecords} from "@/lib/hooks/use-records";
 import {RefreshIcon} from "@/components/icons/refresh";
 import AnchorLink from "@/components/ui/links/anchor-link";
+import {useEffect} from "react";
 
 const AccountPage: NextPageWithLayout = () => {
   const {wallet, publicKey} = useWallet();
   const { loading, records, refreshRecords } = useRecords();
+
+  useEffect(() => {
+    publicKey && refreshRecords("auto");
+  }, [publicKey]);
 
   return (
     <>

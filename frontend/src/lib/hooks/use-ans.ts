@@ -1,11 +1,13 @@
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
 import {padArray, splitStringToBigInts} from "@/lib/util";
-import {useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import * as process from "process";
 import {LeoWalletAdapter} from "@demox-labs/aleo-wallet-adapter-leo";
 import {Transaction, WalletAdapterNetwork, WalletNotConnectedError} from "@demox-labs/aleo-wallet-adapter-base";
 import {useRecords} from "@/lib/hooks/use-records";
-import {Record} from "@/types";
+import {Record, Status, StatusChangeCallback} from "@/types";
+import toast from "@/components/ui/toast";
+import {TypeOptions} from "react-toastify";
 
 interface AnsTransaction {
   method: string;
@@ -14,9 +16,6 @@ interface AnsTransaction {
   onStatusChange?: StatusChangeCallback;
 }
 
-interface StatusChangeCallback {
-  (loading: boolean, status: string): void;
-}
 
 export function useANS() {
   const NEXT_PUBLIC_PROGRAM = process.env.NEXT_PUBLIC_PROGRAM;
@@ -33,15 +32,19 @@ export function useANS() {
   const {wallet, publicKey, requestRecords} = useWallet();
   const [transactions, setTransactions] = useState<AnsTransaction[]>([]);
 
+  const notify = React.useCallback((type: TypeOptions, message: string) => {
+    toast({ type, message });
+  }, []);
+
   const getTransactionStatus = async (tx: AnsTransaction) => {
     const status = await (
       wallet?.adapter as LeoWalletAdapter
     ).transactionStatus(tx.id);
-    tx.onStatusChange && tx.onStatusChange(true, status);
+    tx.onStatusChange && tx.onStatusChange(true, {hasError: false, message: status});
     console.log(tx.id, status);
     if (status === "Failed") {
       setTransactions(transactions.filter((t) => t.id !== tx.id));
-      tx.onStatusChange && tx.onStatusChange(false, status);
+      tx.onStatusChange && tx.onStatusChange(false, {hasError: true, message: status});
     } else if (status === "Finalized") {
       setTransactions(transactions.filter((t) => t.id !== tx.id));
 
@@ -71,7 +74,7 @@ export function useANS() {
           break;
       }
 
-      tx.onStatusChange && tx.onStatusChange(false, status);
+      tx.onStatusChange && tx.onStatusChange(false, {hasError: false, message: status});
     }
   };
 
@@ -123,14 +126,15 @@ export function useANS() {
   const register = async (name: string, onStatusChange?: StatusChangeCallback) => {
     if (!publicKey) throw new WalletNotConnectedError();
 
-    onStatusChange && onStatusChange(true, "Registering");
+    onStatusChange && onStatusChange(true, {hasError: false, message: "Registering"});
 
     requestRecords!("credits.aleo")
       .then((records) => {
         records = records.filter((rec) => !rec.spent);
         if (records.length < 2) {
-          alert("You need 2 records at least to register a name");
-          onStatusChange && onStatusChange(false, "Exception");
+          const message = "You need 2 records at least to register a name";
+          notify("error", message);
+          onStatusChange && onStatusChange(false, {hasError: true, message});
           return;
         }
         let register_record: any = null;
@@ -143,8 +147,9 @@ export function useANS() {
         });
 
         if (register_record == null) {
-          alert("You don't have enough credits to register a name");
-          onStatusChange && onStatusChange(false, "Exception");
+          const message = "You don't have enough credits to register a name";
+          notify("error", message);
+          onStatusChange && onStatusChange(false, {hasError: true, message});
           return;
         }
         const aleoTransaction = Transaction.createTransaction(
@@ -169,17 +174,38 @@ export function useANS() {
         }]);
       })
       .catch((error) => {
-        console.log(error);
-        onStatusChange && onStatusChange(false, "Exception");
+        notify("error", error.message);
+        onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
       });
   }
 
   const transfer = async (name: string, recipient: string, onStatusChange?: StatusChangeCallback) => {
     if (!publicKey) throw new WalletNotConnectedError();
-    onStatusChange && onStatusChange(true, "Transferring");
+    onStatusChange && onStatusChange(true, {hasError: false, message: "Transferring"});
+
+    if (recipient.endsWith(".ans")) {
+      try {
+        const data = await fetch(`${NEXT_PUBLIC_API_URL}/address/${recipient}`);
+        const { address } = await data.json();
+        if (address.startsWith("Private")) {
+          const message = `${recipient} is ${address}`;
+          notify("error", message);
+          onStatusChange && onStatusChange(false, {hasError: true, message});
+          return;
+        }
+        recipient = address;
+      } catch (e) {
+        const message = `${recipient} has not been registered`;
+        notify("error", message);
+        onStatusChange && onStatusChange(false, {hasError: true, message});
+        return;
+      }
+    }
 
     if (recipient === publicKey) {
-      onStatusChange && onStatusChange(false, "Exception");
+      const message = "You cannot transfer a name to yourself";
+      notify("error", message);
+      onStatusChange && onStatusChange(false, {hasError: true, message});
       return;
     }
 
@@ -212,19 +238,20 @@ export function useANS() {
           onStatusChange: onStatusChange
         }]);
       }).catch((error) => {
-        console.log(error);
-        onStatusChange && onStatusChange(false, "Exception");
+        notify("error", error.message);
+        onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
       });
     } else {
-      alert("You don't own this name");
-      onStatusChange && onStatusChange(false, "Exception");
+      const message = "You don't own this name";
+      notify("error", message);
+      onStatusChange && onStatusChange(false, {hasError: true, message});
       return;
     }
   }
 
   const convertToPublic = async (name: string, onStatusChange?: StatusChangeCallback) => {
     if (!publicKey) throw new WalletNotConnectedError();
-    onStatusChange && onStatusChange(true, "Converting");
+    onStatusChange && onStatusChange(true,  {hasError: false, message: "Converting"});
 
     await refreshRecords("manual");
 
@@ -232,8 +259,9 @@ export function useANS() {
 
     if (record) {
       if (!record.private) {
-        alert("This name is already public");
-        onStatusChange && onStatusChange(false, "Exception");
+        const message = "This name is already public";
+        notify("error", message);
+        onStatusChange && onStatusChange(false, {hasError: true, message});
         return;
       }
       const aleoTransaction = Transaction.createTransaction(
@@ -254,26 +282,28 @@ export function useANS() {
           onStatusChange: onStatusChange
         }]);
       }).catch((error) => {
-        console.log(error);
-        onStatusChange && onStatusChange(false, "Exception");
+        notify("error", error.message);
+        onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
       });
     } else {
-      alert("You don't own this name");
-      onStatusChange && onStatusChange(false, "Exception");
+      const message = "You don't own this name";
+      notify("error", message);
+      onStatusChange && onStatusChange(false, {hasError: true, message});
       return;
     }
   }
 
   const convertToPrivate = async (name: string, onStatusChange?: StatusChangeCallback) => {
     if (!publicKey) throw new WalletNotConnectedError();
-    onStatusChange && onStatusChange(true, "Converting");
+    onStatusChange && onStatusChange(true, {hasError: false, message: "Converting"});
 
     const record = records?.find((rec) => rec.name === name);
 
     if (record) {
       if (record.private) {
-        alert("This name is already private");
-        onStatusChange && onStatusChange(false, "Exception");
+        const message = "This name is already private";
+        notify("error", message);
+        onStatusChange && onStatusChange(false, {hasError: true, message});
         return;
       }
 
@@ -299,26 +329,28 @@ export function useANS() {
             onStatusChange: onStatusChange
           }]);
         }).catch((error) => {
-        console.log(error);
-        onStatusChange && onStatusChange(false, "Exception");
+        notify("error", error.message);
+        onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
       });
     } else {
-      alert("You don't own this name");
-      onStatusChange && onStatusChange(false, "Exception");
+      const message = "You don't own this name";
+      notify("error", message);
+      onStatusChange && onStatusChange(false, {hasError: true, message});
       return;
     }
   }
 
   const setPrimaryName = async (name: string, onStatusChange?: StatusChangeCallback) => {
     if (!publicKey) throw new WalletNotConnectedError();
-    onStatusChange && onStatusChange(true, "Setting");
+    onStatusChange && onStatusChange(true, {hasError: false, message: "Setting"});
 
     const record = records?.find((rec) => rec.name === name);
 
     if (record) {
       if (record.private) {
-        alert("Only public names can be set as primary name");
-        onStatusChange && onStatusChange(false, "Exception");
+        const message = "Only public names can be set as primary name";
+        notify("error", message);
+        onStatusChange && onStatusChange(false, {hasError: true, message});
         return;
       }
 
@@ -342,19 +374,20 @@ export function useANS() {
             onStatusChange: onStatusChange
           }]);
         }).catch((error) => {
-        console.log(error);
-        onStatusChange && onStatusChange(false, "Exception");
+        notify("error", error.message);
+        onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
       });
     } else {
-      alert("You don't own this name");
-      onStatusChange && onStatusChange(false, "Exception");
+      const message = "You don't own this name";
+      notify("error", message);
+      onStatusChange && onStatusChange(false, {hasError: true, message});
       return;
     }
   }
 
   const unsetPrimaryName = async (onStatusChange?: StatusChangeCallback) => {
     if (!publicKey) throw new WalletNotConnectedError();
-    onStatusChange && onStatusChange(true, "Unsetting");
+    onStatusChange && onStatusChange(true, {hasError: false, message: "Unsetting"});
 
     const aleoTransaction = Transaction.createTransaction(
       publicKey,
@@ -376,8 +409,8 @@ export function useANS() {
           onStatusChange: onStatusChange
         }]);
       }).catch((error) => {
-      console.log(error);
-      onStatusChange && onStatusChange(false, "Exception");
+      notify("error", error.message);
+      onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
     });
   }
 

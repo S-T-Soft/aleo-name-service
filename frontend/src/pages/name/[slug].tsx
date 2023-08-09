@@ -13,6 +13,7 @@ import ActiveLink from "@/components/ui/links/active-link";
 import CopyToClipboardText from "@/components/copy_to_clipboard";
 import {RefreshIcon} from "@/components/icons/refresh";
 import {useANS} from "@/lib/hooks/use-ans";
+import {Status} from "@/types";
 
 
 const NamePage: NextPageWithLayout = () => {
@@ -67,9 +68,9 @@ const NamePage: NextPageWithLayout = () => {
 
   const handleRegister = async (event: any) => {
     event.preventDefault();
-    await register(slug as string, (running: boolean, status: string) => {
+    await register(slug as string, (running: boolean, status: Status) => {
       setRegistering(running);
-      setStatus(status);
+      setStatus(status.message);
       if (!running) {
         setTriggerRecheck(triggerRecheck + 1);
       }

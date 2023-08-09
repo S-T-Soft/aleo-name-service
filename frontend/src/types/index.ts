@@ -1,5 +1,5 @@
-import type { NextPage } from 'next';
-import type { ReactElement, ReactNode } from 'react';
+import type {NextPage} from 'next';
+import type {ReactElement, ReactNode} from 'react';
 
 export type NextPageWithLayout<P = {}> = NextPage<P> & {
   authorization?: boolean;
@@ -18,4 +18,13 @@ export interface Record {
   isPrimaryName: boolean;
   record?: any;
   name_hash?: string;
+}
+
+export interface Status {
+  hasError: boolean;
+  message: string;
+}
+
+export interface StatusChangeCallback {
+  (loading: boolean, status: Status): void;
 }
