@@ -141,7 +141,7 @@ export function useANS() {
 
         records.forEach((rec) => {
           let microcredits = +rec.data.microcredits.substring(0, rec.data.microcredits.length - 11)
-          if (register_record == null && microcredits >= 11000000) {
+          if (register_record == null && microcredits >= NEXT_PUBLIC_FEES_REGISTER) {
             register_record = rec;
           }
         });
