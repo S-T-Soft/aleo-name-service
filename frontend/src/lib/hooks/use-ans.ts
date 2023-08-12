@@ -137,27 +137,23 @@ export function useANS() {
           onStatusChange && onStatusChange(false, {hasError: true, message});
           return;
         }
-        let register_record: any = null;
 
-        records.forEach((rec) => {
-          let microcredits = +rec.data.microcredits.substring(0, rec.data.microcredits.length - 11)
-          if (register_record == null && microcredits >= NEXT_PUBLIC_FEES_REGISTER) {
-            register_record = rec;
-          }
-        });
+        const matchRecords = records.filter((rec) =>
+          +rec.data.microcredits.substring(0, rec.data.microcredits.length - 11) >= NEXT_PUBLIC_FEES_REGISTER);
 
-        if (register_record == null) {
+        if (matchRecords.length == 0) {
           const message = "You don't have enough credits to register a name";
           notify("error", message);
           onStatusChange && onStatusChange(false, {hasError: true, message});
           return;
         }
+
         const aleoTransaction = Transaction.createTransaction(
           publicKey,
           WalletAdapterNetwork.Testnet,
           NEXT_PUBLIC_PROGRAM!,
           "register",
-          [getFormattedNameInput(name), publicKey, register_record],
+          [getFormattedNameInput(name), publicKey, matchRecords[Math.floor(Math.random() * matchRecords.length)]],
           NEXT_PUBLIC_FEES_REGISTER
         );
 
