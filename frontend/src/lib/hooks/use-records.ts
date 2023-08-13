@@ -1,7 +1,7 @@
 import {useLocalStorage} from "react-use";
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
 import {joinBigIntsToString} from "@/lib/util";
-import {useEffect, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import {Record} from "@/types";
 
 export function useRecords() {
@@ -13,7 +13,14 @@ export function useRecords() {
   const [storedAddress, setStoredAddress] = useLocalStorage('address', '');
   const [lastUpdateTime, setLastUpdateTime] = useLocalStorage('lastUpdateTime', 0);
   const [loading, setLoading] = useState(false);
+  const primaryNameMemo = useMemo(() => primaryName, [primaryName]);
 
+  useEffect(() => {
+    setRecords((records || []).map((rec) => {
+          rec.isPrimaryName = !rec.private && rec.name === primaryName;
+          return rec;
+        }));
+  }, [primaryNameMemo]);
 
   const sortRecords = (records: Record[]) => {
     return records.sort((a, b) => {
@@ -28,54 +35,61 @@ export function useRecords() {
   }
 
   const getPrimaryName = async () => {
-    if (publicKey) {
-      fetch(`${NEXT_PUBLIC_API_URL}/primary_name/${publicKey}`)
-        .then((response) => response.json())
-        .then((data) => {
-          setPrimaryName(data.name.substring(0, data.name.length - 4));
-        })
-        .catch((error) => {
-          setPrimaryName("");
-        });
-    } else {
-      setPrimaryName("");
-    }
+    return new Promise<string>((resolve, reject) => {
+      if (publicKey) {
+        fetch(`${NEXT_PUBLIC_API_URL}/primary_name/${publicKey}`)
+          .then((response) => response.json())
+          .then((data) => {
+            const nameParts = data.name.split(".");
+            nameParts.pop();
+            resolve(nameParts.join(","));
+          })
+          .catch((error) => {
+            resolve("");
+          });
+      } else {
+        resolve("");
+      }
+    });
   }
 
-  const loadPublicRecords = async (privateRecords: Record[]) => {
-    const ownerUrl = `https://explorer.hamp.app/api/v1/mapping/list_program_mapping_values/${NEXT_PUBLIC_PROGRAM}/nft_owners?outdated=1`;
 
-    if (publicKey) {
-      setLoading(true);
-      fetch(ownerUrl)
-        .then((response) => response.json())
-        .then((data) => {
-          return Promise.all(
-            data
-              .filter((rec: any) => rec.value === publicKey)
-              .map(async (rec: any) => {
-                let response = await fetch(`${NEXT_PUBLIC_API_URL}/hash_to_name/${rec.key}`);
-                let data1 = await response.json();
-                let name = data1.name.substring(0, data1.name.length - 4);
-                return {
-                  name: name,
-                  private: false,
-                  name_hash: rec.key,
-                  isPrimaryName: name === primaryName
-                } as Record;
-              })
-          );
-        })
-        .then((publicRecords) => {
-          setRecords(sortRecords([...privateRecords, ...publicRecords]));
-        }).catch((error) => {
+  const loadPublicRecords = async () => {
+    return new Promise<Record[]>((resolve, reject) => {
+      const ownerUrl = `https://explorer.hamp.app/api/v1/mapping/list_program_mapping_values/${NEXT_PUBLIC_PROGRAM}/nft_owners?outdated=1`;
+
+      if (publicKey) {
+        fetch(ownerUrl)
+          .then((response) => response.json())
+          .then((data) => {
+            return Promise.all(
+              data
+                .filter((rec: any) => rec.value === publicKey)
+                .map(async (rec: any) => {
+                  const response = await fetch(`${NEXT_PUBLIC_API_URL}/hash_to_name/${rec.key}`);
+                  const data1 = await response.json();
+                  const nameParts = data1.name.split(".");
+                  nameParts.pop();
+                  const name = nameParts.join(".");
+                  return {
+                    name: name,
+                    private: false,
+                    name_hash: rec.key,
+                    isPrimaryName: name === primaryName
+                  } as Record;
+                })
+            );
+          })
+          .then((publicRecords) => {
+            resolve(publicRecords);
+          }).catch((error) => {
           console.log(error);
-        }).finally(() => {
-          setLoading(false);
-        });
-    } else {
-      setLoading(false);
-    }
+          resolve([]);
+        })
+      } else {
+        resolve([]);
+      }
+    });
   }
 
 
@@ -87,16 +101,13 @@ export function useRecords() {
     }
     if (publicKey) {
       setLoading(true);
+      setRecords([]);
       if (storedAddress !== publicKey) {
-        setRecords([]);
         setPrimaryName("");
         setLastUpdateTime(0);
       }
-      getPrimaryName()
-        .then(() => {
-          return requestRecords!(NEXT_PUBLIC_PROGRAM!)
-        })
-        .then((records) => {
+      Promise.all([getPrimaryName(), requestRecords!(NEXT_PUBLIC_PROGRAM!), loadPublicRecords()])
+        .then(([primaryName, records, publicRecords]) => {
           records = records.filter((rec) => !rec.spent).map((rec) => {
             const ans = rec.data.data;
             return {
@@ -111,12 +122,20 @@ export function useRecords() {
           });
           setStoredAddress(publicKey);
           setLastUpdateTime(Date.now());
-          loadPublicRecords(records);
+          publicRecords.forEach((rec) => {
+            rec.isPrimaryName = rec.name === primaryName;
+          });
+          setRecords(sortRecords([...records, ...publicRecords]));
+          setPrimaryName(primaryName);
         })
         .catch((error) => {
           console.log(error);
           setLoading(false);
-        });
+        }).finally(
+        () => {
+          setLoading(false);
+        }
+      );
     }
   }
 
@@ -136,13 +155,10 @@ export function useRecords() {
     setRecords((records || []).map((rec) => rec.name === record.name ? record : rec));
   }
 
-  const syncPrimaryName = async () => {
+  const syncPrimaryName = () => {
     getPrimaryName()
-      .then(() => {
-        setRecords((records || []).map((rec) => {
-          rec.isPrimaryName = !rec.private && rec.name === primaryName;
-          return rec;
-        }));
+      .then((primaryName) => {
+        setPrimaryName(primaryName);
       });
   }
 

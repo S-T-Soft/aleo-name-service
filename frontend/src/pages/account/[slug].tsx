@@ -3,7 +3,7 @@ import {NextSeo} from 'next-seo';
 import DashboardLayout from '@/layouts/dashboard/_dashboard';
 import {useRouter} from 'next/router'
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
-import {useEffect, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import Button from "@/components/ui/button";
 import * as process from "process";
 import {useRecords} from "@/lib/hooks/use-records";
@@ -11,8 +11,7 @@ import {RefreshIcon} from "@/components/icons/refresh";
 import {useANS} from "@/lib/hooks/use-ans";
 
 
-function Transfer({name, setTriggerRecheck}: React.PropsWithChildren<{name: string, setTriggerRecheck: CallableFunction}>) {
-  const {transfer} = useANS();
+function Transfer({name, transfer, setTriggerRecheck}: React.PropsWithChildren<{name: string, transfer: CallableFunction, setTriggerRecheck: CallableFunction}>) {
   const [transferring, setTransferring] = useState(false);
   const [transferStatus, setTransferStatus] = useState("Transferring");
   const [recipient, setRecipient] = useState("");
@@ -59,8 +58,11 @@ function Transfer({name, setTriggerRecheck}: React.PropsWithChildren<{name: stri
       )}</>
 }
 
-function PrivateName({name, setTriggerRecheck}: React.PropsWithChildren<{name: string, setTriggerRecheck: CallableFunction}>) {
-  const {convertToPublic} = useANS();
+function PrivateName({name, setTriggerRecheck, convertToPublic, transfer}:
+                       React.PropsWithChildren<{name: string,
+                         setTriggerRecheck: CallableFunction,
+                         convertToPublic: CallableFunction,
+                         transfer: CallableFunction}>) {
   const [converting, setConverting] = useState(false);
   const [convertStatus, setConvertStatus] = useState("Converting");
 
@@ -84,13 +86,18 @@ function PrivateName({name, setTriggerRecheck}: React.PropsWithChildren<{name: s
       {converting && <Button className="bg-sky-500 mr-10" disabled={true}><RefreshIcon className="inline motion-safe:animate-spin"/> {convertStatus}</Button>}
       <Button className="bg-gray-700" disabled={true}>Register Subdomain</Button>
     </div>
-    <Transfer name={name} setTriggerRecheck={setTriggerRecheck}/>
+    <Transfer name={name} transfer={transfer} setTriggerRecheck={setTriggerRecheck}/>
   </>;
 }
 
-function PublicName({name, isPrimaryName, setIsPrimaryName, setTriggerRecheck}:
-                      React.PropsWithChildren<{name: string, isPrimaryName: boolean, setIsPrimaryName: CallableFunction, setTriggerRecheck: CallableFunction}>) {
-  const {convertToPrivate, setPrimaryName, unsetPrimaryName} = useANS();
+function PublicName({name, isPrimaryName, setTriggerRecheck, convertToPrivate, setPrimaryName, unsetPrimaryName, transfer}:
+                      React.PropsWithChildren<{name: string,
+                        isPrimaryName: boolean,
+                        setTriggerRecheck: CallableFunction,
+                        convertToPrivate: CallableFunction,
+                        setPrimaryName: CallableFunction,
+                        unsetPrimaryName: CallableFunction,
+                        transfer: CallableFunction}>) {
   const [converting, setConverting] = useState(false);
   const [convertStatus, setConvertStatus] = useState("Converting");
   const [setting, setSetting] = useState(false);
@@ -145,7 +152,7 @@ function PublicName({name, isPrimaryName, setIsPrimaryName, setTriggerRecheck}:
       <Button className="bg-gray-700 mr-10" disabled={true}>Register Subdomain</Button>
       <Button className="bg-gray-700" disabled={true}>Add Resolver</Button>
     </div>
-    <Transfer name={name} setTriggerRecheck={setTriggerRecheck}/>
+    <Transfer name={name} transfer={transfer} setTriggerRecheck={setTriggerRecheck}/>
   </>;
 }
 
@@ -153,6 +160,7 @@ const ManageNamePage: NextPageWithLayout = () => {
   const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
   const router = useRouter();
   const {wallet, publicKey} = useWallet();
+  const {convertToPrivate, convertToPublic, setPrimaryName, unsetPrimaryName, transfer} = useANS();
   const {records} = useRecords();
   const [available, setAvailable] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -161,47 +169,51 @@ const ManageNamePage: NextPageWithLayout = () => {
   const [triggerRecheck, setTriggerRecheck] = useState(0);
   const [isMine, setIsMine] = useState(true);
   const [isPrimaryName, setIsPrimaryName] = useState(false);
+  const [name, setName] = useState("");
+
+  const load = useMemo(() => {
+    return (isValid && publicKey && !loading && name && name.length > 0) || false;
+  }, [name, publicKey, isValid, records, triggerRecheck]);
 
   let {slug} = router.query;
 
-  // check if slug is valid
-  if (typeof slug === 'string' && slug.endsWith('.ans')) {
-    slug = slug.split('.')[0];
-  } else if (typeof slug !== 'string') {
-    slug = "";
-  }
+  useEffect(() => {
+    if (typeof slug === 'string' && slug.endsWith('.ans')) {
+      setName(slug.split('.')[0])
+    }
+  }, [slug]);
 
   useEffect(() => {
-    if (!loading && slug && slug.length > 0) {
+    if (!loading && name && name.length > 0) {
       if (!isValid) {
         router.push("/");
       } else if (available || !isMine) {
-        router.push(`/name/${slug}.ans`);
+        router.push(`/name/${name}.ans`);
       }
     }
-  }, [isValid, loading, isMine]);
+  }, [isValid, loading, isMine, name]);
 
   useEffect(() => {
-    // Only do the check if the slug is valid and the public key is available
-    if (isValid && publicKey && !loading && slug && slug.length > 0) {
+    // Only do the check if the name is valid and the public key is available
+    if (load) {
       setLoading(true);
-      fetch(`${NEXT_PUBLIC_API_URL}/address/${slug}.ans`)
+      fetch(`${NEXT_PUBLIC_API_URL}/address/${name}.ans`)
         .then((response) => response.json())
         .then((data) => {
           setAvailable(false);
           const isPrivate = data.address.startsWith("Private");
-          setIsPrivate(isPrivate);
-          setIsMine(data.address === publicKey || (isPrivate && (records || []).some((rec) => rec.name === slug)));
           if (!isPrivate) {
-            setIsPrimaryName(records?.find((rec) => rec.name === slug)?.isPrimaryName || false);
+            setIsPrimaryName(records?.find((rec) => rec.name === name)?.isPrimaryName || false);
           }
+          setIsPrivate(isPrivate);
+          setIsMine(data.address === publicKey || (isPrivate && (records || []).some((rec) => rec.name === name)));
         }).catch((error) => {
-          setAvailable(true);
+        setAvailable(true);
       }).finally(() => {
         setLoading(false);
       });
     }
-  }, [slug, publicKey, isValid, records, triggerRecheck]);
+  }, [load]);
 
   return (
     <>
@@ -211,7 +223,7 @@ const ManageNamePage: NextPageWithLayout = () => {
       />
       <div className="mx-auto w-full px-4 pt-8 pb-14 sm:px-6 sm:pb-20 lg:px-8 xl:px-10 2xl:px-0">
         <h2 className="mb-6 text-lg font-medium tracking-wider text-gray-900 dark:text-white sm:mb-10 sm:text-2xl text-left">
-          Manage <span className="text-sky-500">{slug}.ans</span>
+          Manage <span className="text-sky-500">{name}.ans</span>
           {isPrimaryName && <span className="bg-green-700 mx-3 px-2 py-1 rounded-lg text-lg sm:text-xl">PrimaryName</span>}
         </h2>
         <div className="mb-3">
@@ -223,9 +235,22 @@ const ManageNamePage: NextPageWithLayout = () => {
               ) : available || !isMine ? (
                 <span>Redirecting...</span>
               ) : isPrivate ? (
-                <PrivateName name={slug as string} setTriggerRecheck={() => {setTriggerRecheck(triggerRecheck + 1)}} />
+                <PrivateName
+                  name={name}
+                  setTriggerRecheck={() => {setTriggerRecheck(triggerRecheck + 1)}}
+                  convertToPublic={convertToPublic}
+                  transfer={transfer}
+                />
               ) : (
-                <PublicName name={slug as string} isPrimaryName={isPrimaryName} setIsPrimaryName={setIsPrimaryName} setTriggerRecheck={() => {setTriggerRecheck(triggerRecheck + 1)}} />
+                <PublicName
+                  name={name}
+                  isPrimaryName={isPrimaryName}
+                  setTriggerRecheck={() => {setTriggerRecheck(triggerRecheck + 1)}}
+                  convertToPrivate={convertToPrivate}
+                  setPrimaryName={setPrimaryName}
+                  unsetPrimaryName={unsetPrimaryName}
+                  transfer={transfer}
+                />
               )}
             </div>
           </div>

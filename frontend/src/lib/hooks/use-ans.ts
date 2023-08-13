@@ -70,7 +70,7 @@ export function useANS() {
           break;
         case "setPrimaryName":
         case "unsetPrimaryName":
-          await syncPrimaryName();
+          syncPrimaryName();
           break;
       }
 
