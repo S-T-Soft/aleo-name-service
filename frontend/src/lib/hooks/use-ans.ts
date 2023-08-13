@@ -139,7 +139,7 @@ export function useANS() {
         }
 
         const matchRecords = records.filter((rec) =>
-          +rec.data.microcredits.substring(0, rec.data.microcredits.length - 11) >= NEXT_PUBLIC_FEES_REGISTER);
+          +rec.data.microcredits.substring(0, rec.data.microcredits.length - 11) >= 5000000);
 
         if (matchRecords.length == 0) {
           const message = "You don't have enough credits to register a name";
