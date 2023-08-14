@@ -1,13 +1,14 @@
 import {useLocalStorage} from "react-use";
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
 import {joinBigIntsToString} from "@/lib/util";
-import {useEffect, useMemo, useState} from "react";
+import {createContext, useContext, useEffect, useMemo, useState} from "react";
 import {Record} from "@/types";
+import {useClient} from "@/lib/hooks/use-client";
 
-export function useRecords() {
+export function createRecordContext() {
   const NEXT_PUBLIC_PROGRAM = process.env.NEXT_PUBLIC_PROGRAM;
-  const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
-  const {wallet, publicKey, requestRecords} = useWallet();
+  const {getPrimaryName,getName} = useClient();
+  const {publicKey, requestRecords} = useWallet();
   const [records, setRecords] = useLocalStorage<Record[]>('records', []);
   const [primaryName, setPrimaryName] = useLocalStorage('primaryName', '');
   const [storedAddress, setStoredAddress] = useLocalStorage('address', '');
@@ -34,26 +35,6 @@ export function useRecords() {
     });
   }
 
-  const getPrimaryName = async () => {
-    return new Promise<string>((resolve, reject) => {
-      if (publicKey) {
-        fetch(`${NEXT_PUBLIC_API_URL}/primary_name/${publicKey}`)
-          .then((response) => response.json())
-          .then((data) => {
-            const nameParts = data.name.split(".");
-            nameParts.pop();
-            resolve(nameParts.join(","));
-          })
-          .catch((error) => {
-            resolve("");
-          });
-      } else {
-        resolve("");
-      }
-    });
-  }
-
-
   const loadPublicRecords = async () => {
     return new Promise<Record[]>((resolve, reject) => {
       const ownerUrl = `https://explorer.hamp.app/api/v1/mapping/list_program_mapping_values/${NEXT_PUBLIC_PROGRAM}/nft_owners?outdated=1`;
@@ -66,9 +47,7 @@ export function useRecords() {
               data
                 .filter((rec: any) => rec.value === publicKey)
                 .map(async (rec: any) => {
-                  const response = await fetch(`${NEXT_PUBLIC_API_URL}/hash_to_name/${rec.key}`);
-                  const data1 = await response.json();
-                  const nameParts = data1.name.split(".");
+                  const nameParts = (await getName(rec.key)).split(".");
                   nameParts.pop();
                   const name = nameParts.join(".");
                   return {
@@ -106,7 +85,7 @@ export function useRecords() {
         setPrimaryName("");
         setLastUpdateTime(0);
       }
-      Promise.all([getPrimaryName(), requestRecords!(NEXT_PUBLIC_PROGRAM!), loadPublicRecords()])
+      Promise.all([getPrimaryName(publicKey), requestRecords!(NEXT_PUBLIC_PROGRAM!), loadPublicRecords()])
         .then(([primaryName, records, publicRecords]) => {
           records = records.filter((rec) => !rec.spent).map((rec) => {
             const ans = rec.data.data;
@@ -156,21 +135,52 @@ export function useRecords() {
   }
 
   const syncPrimaryName = () => {
-    getPrimaryName()
-      .then((primaryName) => {
-        setPrimaryName(primaryName);
-      });
+    if (publicKey) {
+      getPrimaryName(publicKey)
+        .then((primaryName) => {
+          setPrimaryName(primaryName);
+        });
+    } else {
+      setPrimaryName("");
+    }
   }
 
   return {
     records: records,
     primaryName: primaryName,
     loading: loading,
-    error: null,
     refreshRecords: refreshRecords,
     addRecord: addRecord,
     removeRecord: removeRecord,
     replaceRecord: replaceRecord,
     syncPrimaryName: syncPrimaryName
   };
+}
+
+interface RecordContextState {
+  records?: Record[];
+  primaryName?: string;
+  loading: boolean;
+  refreshRecords: (mode: string) => void;
+  addRecord: (record: Record) => void;
+  removeRecord: (name: string) => void;
+  replaceRecord: (record: Record) => void;
+  syncPrimaryName: () => void;
+}
+
+const DEFAULT = {
+  records: [],
+  primaryName: "",
+  loading: false,
+  refreshRecords: () => {},
+  addRecord: () => {},
+  removeRecord: () => {},
+  replaceRecord: () => {},
+  syncPrimaryName: () => {}
+}
+
+export const RecordContext = createContext<RecordContextState>(DEFAULT as RecordContextState);
+
+export function useRecords(): RecordContextState {
+  return useContext(RecordContext);
 }

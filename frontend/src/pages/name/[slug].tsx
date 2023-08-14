@@ -14,14 +14,16 @@ import CopyToClipboardText from "@/components/copy_to_clipboard";
 import {RefreshIcon} from "@/components/icons/refresh";
 import {useANS} from "@/lib/hooks/use-ans";
 import {Status} from "@/types";
+import {useClient} from "@/lib/hooks/use-client";
+import {set} from "husky";
 
 
 const NamePage: NextPageWithLayout = () => {
-  const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
   const NEXT_PUBLIC_PROGRAM = process.env.NEXT_PUBLIC_PROGRAM;
   const router = useRouter();
   const {wallet, publicKey} = useWallet();
   const {register} = useANS();
+  const {getAddress} = useClient();
   const [available, setAvailable] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isValid, setIsValid] = useState(false);
@@ -31,15 +33,17 @@ const NamePage: NextPageWithLayout = () => {
   const [triggerRecheck, setTriggerRecheck] = useState(0);
   const [nameInputs, setNameInputs] = useState([0, 0, 0, 0]);
   const [showAleoTools, setShowAleoTools] = useState(false);
+  const [name, setName] = useState("");
 
   let {slug} = router.query;
 
-  // check if slug is valid
-  if (typeof slug === 'string' && slug.endsWith('.ans')) {
-    slug = slug.split('.')[0];
-  } else if (typeof slug !== 'string') {
-    slug = "";
-  }
+  useEffect(() => {
+    if (typeof slug === 'string' && slug.endsWith('.ans')) {
+      setName(slug.split('.')[0])
+    } else if (typeof slug === 'string') {
+      setName(slug);
+    }
+  }, [slug]);
 
   const toggleAleoTools = () => {
     setShowAleoTools(!showAleoTools);
@@ -47,28 +51,27 @@ const NamePage: NextPageWithLayout = () => {
 
   useEffect(() => {
     setLoading(true);
-    const is_valid = /^[a-z0-9-_]{1,64}$/.test(slug as string);
+    const is_valid = /^[a-z0-9-_]{1,64}$/.test(name);
     setIsValid(is_valid);
     if (is_valid) {
-      fetch(`${NEXT_PUBLIC_API_URL}/address/${slug}.ans`)
-        .then((response) => response.json())
-        .then((data) => {
+      getAddress(name)
+        .then((address) => {
           setAvailable(false);
-          setOwner(data.address);
+          setOwner(address);
         }).catch((error) => {
           setAvailable(true);
-          const nameInputs = padArray(splitStringToBigInts(slug as string), 4);
+          const nameInputs = padArray(splitStringToBigInts(name), 4);
           // @ts-ignore
           setNameInputs(nameInputs);
       }).finally(() => {
         setLoading(false);
       });
     }
-  }, [slug, publicKey, triggerRecheck]);
+  }, [name, publicKey, triggerRecheck]);
 
   const handleRegister = async (event: any) => {
     event.preventDefault();
-    await register(slug as string, (running: boolean, status: Status) => {
+    await register(name, (running: boolean, status: Status) => {
       setRegistering(running);
       setStatus(status.message);
       if (!running) {
@@ -85,7 +88,7 @@ const NamePage: NextPageWithLayout = () => {
       />
       <div className="mx-auto w-full px-4 pt-8 pb-14 sm:px-6 sm:pb-20 sm:pt-12 lg:px-8 xl:px-10 2xl:px-0">
         <div className="mb-10">
-          <SearchView value={slug}/>
+          <SearchView value={name}/>
         </div>
         <div className="mb-3">
           <div
@@ -94,7 +97,7 @@ const NamePage: NextPageWithLayout = () => {
               <div className="items-center ltr:mr-6 rtl:ml-6">
                 {isValid && <div>
                     <div className="block text-2xl font-medium tracking-wider text-gray-900 dark:text-white">
-                      {slug}.ans
+                      {name}.ans
                       {loading && <span className="animate-pulse">...</span>}
                       {!loading && available && <span className="text-green-500 text-sm ml-2">Available</span>}
                       {!loading && !available && <span className="text-red-500 text-sm ml-2">Unavailable</span>}
@@ -149,7 +152,7 @@ const NamePage: NextPageWithLayout = () => {
                 </div>}
                 {!isValid && <div>
                     <span className="block text-lg font-medium tracking-wider text-gray-900 dark:text-white">
-                        <span className="text-red-500">{slug}</span> is not a valid domain name
+                        <span className="text-red-500">{name}</span> is not a valid domain name
                     </span>
                 </div>}
               </div>

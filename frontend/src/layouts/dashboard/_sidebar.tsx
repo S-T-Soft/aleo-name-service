@@ -9,6 +9,7 @@ import { HomeIcon } from '@/components/icons/home';
 import { ExchangeIcon } from '@/components/icons/exchange';
 import { Close } from '@/components/icons/close';
 import { Sun } from '@/components/icons/sun';
+import {OptionIcon} from "@/components/icons/option";
 
 const menuItems = [
   {
@@ -25,6 +26,11 @@ const menuItems = [
     name: 'Docs',
     icon: <Sun />,
     href: routes.docs,
+  },
+  {
+    name: 'Toolbox',
+    icon: <OptionIcon />,
+    href: routes.toolbox,
   }
 ];
 

@@ -43,7 +43,8 @@ const response = await fetch(\`https://api.aleonames.id/primary_name/\${address}
 const { name } = await response.json();
   `;
   const nameToAddress = `
-// Replace "test.ans" with your ANS name.
+// Replace "test.ans" with your ANS name. 
+// For private name, the address will be "Private Registration".
 const name = "test.ans";
 const response = await fetch(\`https://api.aleonames.id/address/\${name}\`);
 const { address } = await response.json();

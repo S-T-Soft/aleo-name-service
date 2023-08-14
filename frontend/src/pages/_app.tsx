@@ -19,6 +19,7 @@ import { DecryptPermission } from '@demox-labs/aleo-wallet-adapter-base';
 import { WalletProvider } from '@demox-labs/aleo-wallet-adapter-react';
 import { WalletModalProvider } from '@demox-labs/aleo-wallet-adapter-reactui';
 import {Analytics} from "@vercel/analytics/react";
+import {RecordProvider} from "@/components/record-provider";
 
 type AppPropsWithLayout = AppProps & {
   Component: NextPageWithLayout;
@@ -53,15 +54,17 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
             autoConnect
           >
             <WalletModalProvider>
-              <ThemeProvider
-                attribute="class"
-                enableSystem={false}
-                defaultTheme="dark"
-              >
-                {getLayout(<Component {...pageProps} />)}
-                <ModalsContainer />
-                <DrawersContainer />
-              </ThemeProvider>
+              <RecordProvider>
+                <ThemeProvider
+                  attribute="class"
+                  enableSystem={false}
+                  defaultTheme="dark"
+                >
+                  {getLayout(<Component {...pageProps} />)}
+                  <ModalsContainer />
+                  <DrawersContainer />
+                </ThemeProvider>
+              </RecordProvider>
             </WalletModalProvider>
           </WalletProvider>
         </Hydrate>

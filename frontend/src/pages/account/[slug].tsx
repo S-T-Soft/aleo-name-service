@@ -9,6 +9,7 @@ import * as process from "process";
 import {useRecords} from "@/lib/hooks/use-records";
 import {RefreshIcon} from "@/components/icons/refresh";
 import {useANS} from "@/lib/hooks/use-ans";
+import {useClient} from "@/lib/hooks/use-client";
 
 
 function Transfer({name, transfer, setTriggerRecheck}: React.PropsWithChildren<{name: string, transfer: CallableFunction, setTriggerRecheck: CallableFunction}>) {
@@ -157,23 +158,18 @@ function PublicName({name, isPrimaryName, setTriggerRecheck, convertToPrivate, s
 }
 
 const ManageNamePage: NextPageWithLayout = () => {
-  const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
   const router = useRouter();
-  const {wallet, publicKey} = useWallet();
+  const {publicKey} = useWallet();
+  const {getAddress} = useClient();
   const {convertToPrivate, convertToPublic, setPrimaryName, unsetPrimaryName, transfer} = useANS();
   const {records} = useRecords();
   const [available, setAvailable] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isValid, setIsValid] = useState(true);
   const [isPrivate, setIsPrivate] = useState(true);
   const [triggerRecheck, setTriggerRecheck] = useState(0);
   const [isMine, setIsMine] = useState(true);
   const [isPrimaryName, setIsPrimaryName] = useState(false);
   const [name, setName] = useState("");
-
-  const load = useMemo(() => {
-    return (isValid && publicKey && !loading && name && name.length > 0) || false;
-  }, [name, publicKey, isValid, records, triggerRecheck]);
 
   let {slug} = router.query;
 
@@ -185,35 +181,32 @@ const ManageNamePage: NextPageWithLayout = () => {
 
   useEffect(() => {
     if (!loading && name && name.length > 0) {
-      if (!isValid) {
-        router.push("/");
-      } else if (available || !isMine) {
+      if (available || !isMine) {
         router.push(`/name/${name}.ans`);
       }
     }
-  }, [isValid, loading, isMine, name]);
+  }, [loading, isMine, name]);
 
   useEffect(() => {
     // Only do the check if the name is valid and the public key is available
-    if (load) {
+    if (publicKey && !loading && name && name.length > 0) {
       setLoading(true);
-      fetch(`${NEXT_PUBLIC_API_URL}/address/${name}.ans`)
-        .then((response) => response.json())
-        .then((data) => {
+      getAddress(name)
+        .then((address) => {
           setAvailable(false);
-          const isPrivate = data.address.startsWith("Private");
+          const isPrivate = address.startsWith("Private");
           if (!isPrivate) {
             setIsPrimaryName(records?.find((rec) => rec.name === name)?.isPrimaryName || false);
           }
           setIsPrivate(isPrivate);
-          setIsMine(data.address === publicKey || (isPrivate && (records || []).some((rec) => rec.name === name)));
+          setIsMine(address === publicKey || (isPrivate && (records || []).some((rec) => rec.name === name)));
         }).catch((error) => {
         setAvailable(true);
       }).finally(() => {
         setLoading(false);
       });
     }
-  }, [load]);
+  }, [records, name, publicKey, triggerRecheck]);
 
   return (
     <>

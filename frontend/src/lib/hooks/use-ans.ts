@@ -5,21 +5,16 @@ import * as process from "process";
 import {LeoWalletAdapter} from "@demox-labs/aleo-wallet-adapter-leo";
 import {Transaction, WalletAdapterNetwork, WalletNotConnectedError} from "@demox-labs/aleo-wallet-adapter-base";
 import {useRecords} from "@/lib/hooks/use-records";
-import {Record, Status, StatusChangeCallback} from "@/types";
+import {StatusChangeCallback} from "@/types";
 import toast from "@/components/ui/toast";
 import {TypeOptions} from "react-toastify";
-
-interface AnsTransaction {
-  method: string;
-  id: string;
-  params: any[];
-  onStatusChange?: StatusChangeCallback;
-}
+import {useTransaction} from "@/lib/hooks/use-transaction";
+import {useCredit} from "@/lib/hooks/use-credit";
+import {useClient} from "@/lib/hooks/use-client";
 
 
 export function useANS() {
   const NEXT_PUBLIC_PROGRAM = process.env.NEXT_PUBLIC_PROGRAM;
-  const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
   const NEXT_PUBLIC_FEES_REGISTER = parseInt(process.env.NEXT_PUBLIC_FEES_REGISTER!);
   const NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC!);
   const NEXT_PUBLIC_FEES_CONVERT_TO_PRIVATE = parseInt(process.env.NEXT_PUBLIC_FEES_CONVERT_TO_PRIVATE!);
@@ -28,81 +23,15 @@ export function useANS() {
   const NEXT_PUBLIC_FEES_TRANSFER_PRIVATE = parseInt(process.env.NEXT_PUBLIC_FEES_TRANSFER_PRIVATE!);
   const NEXT_PUBLIC_FEES_TRANSFER_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_TRANSFER_PUBLIC!);
 
-  const {records, refreshRecords, replaceRecord, removeRecord, syncPrimaryName} = useRecords();
-  const {wallet, publicKey, requestRecords} = useWallet();
-  const [transactions, setTransactions] = useState<AnsTransaction[]>([]);
+  const {records, refreshRecords} = useRecords();
+  const {addTransaction} = useTransaction();
+  const {getCreditRecord} = useCredit();
+  const {getAddress, getNameHash} = useClient();
+  const {wallet, publicKey} = useWallet();
 
   const notify = React.useCallback((type: TypeOptions, message: string) => {
     toast({ type, message });
   }, []);
-
-  const getTransactionStatus = async (tx: AnsTransaction) => {
-    const status = await (
-      wallet?.adapter as LeoWalletAdapter
-    ).transactionStatus(tx.id);
-    tx.onStatusChange && tx.onStatusChange(true, {hasError: false, message: status});
-    console.log(tx.id, status);
-    if (status === "Failed") {
-      setTransactions(transactions.filter((t) => t.id !== tx.id));
-      tx.onStatusChange && tx.onStatusChange(false, {hasError: true, message: status});
-    } else if (status === "Finalized") {
-      setTransactions(transactions.filter((t) => t.id !== tx.id));
-
-      switch (tx.method) {
-        case "transfer":
-          removeRecord(tx.params[0]);
-          break;
-        case "convertToPublic":
-          fetch(`${NEXT_PUBLIC_API_URL}/name_to_hash/${tx.params[0]}.ans`)
-            .then((response) => response.json())
-            .then((data) => {
-              const record = {
-                name: tx.params[0],
-                private: false,
-                name_hash: data.name_hash,
-              } as Record;
-              replaceRecord(record);
-            });
-          break;
-        case "register":
-        case "convertToPrivate":
-          await refreshRecords("manual");
-          break;
-        case "setPrimaryName":
-        case "unsetPrimaryName":
-          syncPrimaryName();
-          break;
-      }
-
-      tx.onStatusChange && tx.onStatusChange(false, {hasError: false, message: status});
-    }
-  };
-
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout | undefined;
-
-    // Clear the previous timer at the start of the effect
-    if (intervalId) {
-      clearInterval(intervalId);
-      intervalId = undefined;
-    }
-
-    // Only set a new timer if there are transactions
-    if (transactions.length > 0) {
-      intervalId = setInterval(() => {
-        transactions.forEach((tx) => {
-          getTransactionStatus(tx);
-        });
-      }, 1000);
-    }
-
-    // Clear the timer when the component unmounts
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    };
-  }, [transactions]);
 
   const getFormattedNameInput = (name: string) => {
     const nameInputs = padArray(splitStringToBigInts(name), 4);
@@ -115,45 +44,24 @@ export function useANS() {
     let parent = '0field';
     if (names.length > 1) {
       const parentName = names.slice(0, names.length - 1).join(".");
-      const response = await fetch(`${NEXT_PUBLIC_API_URL}/name_to_hash/${parentName}.ans`);
-      const data = await response.json();
-      parent = data.name_hash;
+      parent = await getNameHash(parentName);
     }
     return `{data1: ${nameInputs[0]}u128, data2: ${nameInputs[1]}u128, data3: ${nameInputs[2]}u128, data4: ${nameInputs[3]}u128, parent: ${parent}}`;
   }
-
 
   const register = async (name: string, onStatusChange?: StatusChangeCallback) => {
     if (!publicKey) throw new WalletNotConnectedError();
 
     onStatusChange && onStatusChange(true, {hasError: false, message: "Registering"});
 
-    requestRecords!("credits.aleo")
-      .then((records) => {
-        records = records.filter((rec) => !rec.spent);
-        if (records.length < 2) {
-          const message = "You need 2 records at least to register a name";
-          notify("error", message);
-          onStatusChange && onStatusChange(false, {hasError: true, message});
-          return;
-        }
-
-        const matchRecords = records.filter((rec) =>
-          +rec.data.microcredits.substring(0, rec.data.microcredits.length - 11) >= 5000000);
-
-        if (matchRecords.length == 0) {
-          const message = "You don't have enough credits to register a name";
-          notify("error", message);
-          onStatusChange && onStatusChange(false, {hasError: true, message});
-          return;
-        }
-
+    getCreditRecord(5000000, 2)
+      .then((record) => {
         const aleoTransaction = Transaction.createTransaction(
           publicKey,
           WalletAdapterNetwork.Testnet,
           NEXT_PUBLIC_PROGRAM!,
           "register",
-          [getFormattedNameInput(name), publicKey, matchRecords[Math.floor(Math.random() * matchRecords.length)]],
+          [getFormattedNameInput(name), publicKey, record],
           NEXT_PUBLIC_FEES_REGISTER
         );
 
@@ -162,12 +70,7 @@ export function useANS() {
         );
       })
       .then((txId) => {
-        setTransactions([...transactions, {
-          method: "register",
-          id: txId as string,
-          params: [name],
-          onStatusChange: onStatusChange
-        }]);
+        addTransaction("register", txId, [name], onStatusChange);
       })
       .catch((error) => {
         notify("error", error.message);
@@ -181,8 +84,7 @@ export function useANS() {
 
     if (recipient.endsWith(".ans")) {
       try {
-        const data = await fetch(`${NEXT_PUBLIC_API_URL}/address/${recipient}`);
-        const { address } = await data.json();
+        const address = await getAddress(recipient);
         if (address.startsWith("Private")) {
           const message = `${recipient} is ${address}`;
           notify("error", message);
@@ -191,7 +93,8 @@ export function useANS() {
         }
         recipient = address;
       } catch (e) {
-        const message = `${recipient} has not been registered`;
+        // @ts-ignore
+        const message = e.message;
         notify("error", message);
         onStatusChange && onStatusChange(false, {hasError: true, message});
         return;
@@ -227,12 +130,7 @@ export function useANS() {
       (wallet?.adapter as LeoWalletAdapter).requestTransaction(
         aleoTransaction
       ).then((txId) => {
-        setTransactions([...transactions, {
-          method: "transfer",
-          id: txId as string,
-          params: [name],
-          onStatusChange: onStatusChange
-        }]);
+        addTransaction("transfer", txId, [name], onStatusChange);
       }).catch((error) => {
         notify("error", error.message);
         onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
@@ -271,12 +169,7 @@ export function useANS() {
       (wallet?.adapter as LeoWalletAdapter).requestTransaction(
         aleoTransaction
       ).then((txId) => {
-        setTransactions([...transactions, {
-          method: "convertToPublic",
-          id: txId as string,
-          params: [name],
-          onStatusChange: onStatusChange
-        }]);
+        addTransaction("convertToPublic", txId, [name], onStatusChange);
       }).catch((error) => {
         notify("error", error.message);
         onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
@@ -318,12 +211,7 @@ export function useANS() {
           );
         })
         .then((txId) => {
-          setTransactions([...transactions, {
-            method: "convertToPrivate",
-            id: txId as string,
-            params: [name],
-            onStatusChange: onStatusChange
-          }]);
+          addTransaction("convertToPrivate", txId, [name], onStatusChange);
         }).catch((error) => {
         notify("error", error.message);
         onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
@@ -363,12 +251,7 @@ export function useANS() {
         aleoTransaction
       )
         .then((txId) => {
-          setTransactions([...transactions, {
-            method: "setPrimaryName",
-            id: txId as string,
-            params: [name],
-            onStatusChange: onStatusChange
-          }]);
+          addTransaction("setPrimaryName", txId, [name], onStatusChange);
         }).catch((error) => {
         notify("error", error.message);
         onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
@@ -398,12 +281,7 @@ export function useANS() {
       aleoTransaction
     )
       .then((txId) => {
-        setTransactions([...transactions, {
-          method: "unsetPrimaryName",
-          id: txId as string,
-          params: [],
-          onStatusChange: onStatusChange
-        }]);
+        addTransaction("unsetPrimaryName", txId, [], onStatusChange);
       }).catch((error) => {
       notify("error", error.message);
       onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
