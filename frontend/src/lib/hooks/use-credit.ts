@@ -37,7 +37,7 @@ export function useCredit() {
           return;
         }
 
-        resolve(matchRecords[matchRecords.length - 1]);
+        resolve(matchRecords[Math.floor(Math.random() * matchRecords.length)]);
       }).catch((err) => {
         reject(err);
       });
