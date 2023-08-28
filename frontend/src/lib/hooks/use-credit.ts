@@ -24,7 +24,7 @@ export function useCredit() {
       requestRecords!("credits.aleo")
       .then((records) => {
         records = records.filter((rec) => !rec.spent);
-        if (records.length < count+1000) {
+        if (records.length < count) {
           const message = `You need ${count} records at least to finish this transaction`;
           reject({message});
           openModal("FAUCET_VIEW");
