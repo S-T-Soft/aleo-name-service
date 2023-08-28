@@ -17,7 +17,15 @@ export interface Record {
   private: boolean;
   isPrimaryName: boolean;
   record?: any;
-  name_hash?: string;
+  nameHash?: string;
+}
+
+export interface Resolver {
+  nameHash: string,
+  key: string;
+  value: string;
+  canRemove: boolean;
+  isCustomResolver: boolean;
 }
 
 export interface Status {

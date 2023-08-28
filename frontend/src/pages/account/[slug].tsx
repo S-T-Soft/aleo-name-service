@@ -3,13 +3,14 @@ import {NextSeo} from 'next-seo';
 import DashboardLayout from '@/layouts/dashboard/_dashboard';
 import {useRouter} from 'next/router'
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
-import {useEffect, useMemo, useState} from "react";
+import {useEffect, useState} from "react";
 import Button from "@/components/ui/button";
-import * as process from "process";
 import {useRecords} from "@/lib/hooks/use-records";
 import {RefreshIcon} from "@/components/icons/refresh";
 import {useANS} from "@/lib/hooks/use-ans";
 import {useClient} from "@/lib/hooks/use-client";
+import {Record} from "@/types";
+import ResolverView from "@/components/resolver/view";
 
 
 function Transfer({name, transfer, setTriggerRecheck}: React.PropsWithChildren<{name: string, transfer: CallableFunction, setTriggerRecheck: CallableFunction}>) {
@@ -151,7 +152,6 @@ function PublicName({name, isPrimaryName, setTriggerRecheck, convertToPrivate, s
       {!converting && <Button className="bg-sky-500 mr-10" onClick={handleConvert}>Convert to Private</Button>}
       {converting && <Button className="bg-sky-500 mr-10" disabled={true}><RefreshIcon className="inline motion-safe:animate-spin"/> {convertStatus}</Button>}
       <Button className="bg-gray-700 mr-10" disabled={true}>Register Subdomain</Button>
-      <Button className="bg-gray-700" disabled={true}>Add Resolver</Button>
     </div>
     <Transfer name={name} transfer={transfer} setTriggerRecheck={setTriggerRecheck}/>
   </>;
@@ -170,6 +170,7 @@ const ManageNamePage: NextPageWithLayout = () => {
   const [isMine, setIsMine] = useState(true);
   const [isPrimaryName, setIsPrimaryName] = useState(false);
   const [name, setName] = useState("");
+  const [record, setRecord] = useState<Record | undefined>(undefined);
 
   let {slug} = router.query;
 
@@ -194,9 +195,11 @@ const ManageNamePage: NextPageWithLayout = () => {
       getAddress(name)
         .then((address) => {
           setAvailable(false);
+          const record = records?.find((rec) => rec.name === name);
+          setRecord(record);
           const isPrivate = address.startsWith("Private");
           if (!isPrivate) {
-            setIsPrimaryName(records?.find((rec) => rec.name === name)?.isPrimaryName || false);
+            setIsPrimaryName(record?.isPrimaryName || false);
           }
           setIsPrivate(isPrivate);
           setIsMine(address === publicKey || (isPrivate && (records || []).some((rec) => rec.name === name)));
@@ -219,35 +222,37 @@ const ManageNamePage: NextPageWithLayout = () => {
           Manage <span className="text-sky-500">{name}.ans</span>
           {isPrimaryName && <span className="bg-green-700 mx-3 px-2 py-1 rounded-lg text-lg sm:text-xl">PrimaryName</span>}
         </h2>
-        <div className="mb-3">
-          <div
-            className="rounded-lg bg-white shadow-card dark:bg-light-dark z-50 mx-auto w-full max-w-full">
-            <div className="relative items-center justify-between gap-4 p-4">
-              {loading ? (
-                <span>Loading...</span>
-              ) : available || !isMine ? (
-                <span>Redirecting...</span>
-              ) : isPrivate ? (
-                <PrivateName
-                  name={name}
-                  setTriggerRecheck={() => {setTriggerRecheck(triggerRecheck + 1)}}
-                  convertToPublic={convertToPublic}
-                  transfer={transfer}
-                />
-              ) : (
-                <PublicName
-                  name={name}
-                  isPrimaryName={isPrimaryName}
-                  setTriggerRecheck={() => {setTriggerRecheck(triggerRecheck + 1)}}
-                  convertToPrivate={convertToPrivate}
-                  setPrimaryName={setPrimaryName}
-                  unsetPrimaryName={unsetPrimaryName}
-                  transfer={transfer}
-                />
-              )}
-            </div>
+        <div
+          className="mb-6 rounded-lg bg-white shadow-card dark:bg-light-dark z-50 mx-auto w-full max-w-full">
+          <div className="relative items-center justify-between gap-4 p-4">
+            {loading ? (
+              <span>Loading...</span>
+            ) : available || !isMine ? (
+              <span>Redirecting...</span>
+            ) : isPrivate ? (
+              <PrivateName
+                name={name}
+                setTriggerRecheck={() => {setTriggerRecheck(triggerRecheck + 1)}}
+                convertToPublic={convertToPublic}
+                transfer={transfer}
+              />
+            ) : (
+              <PublicName
+                name={name}
+                isPrimaryName={isPrimaryName}
+                setTriggerRecheck={() => {setTriggerRecheck(triggerRecheck + 1)}}
+                convertToPrivate={convertToPrivate}
+                setPrimaryName={setPrimaryName}
+                unsetPrimaryName={unsetPrimaryName}
+                transfer={transfer}
+              />
+            )}
           </div>
         </div>
+        {!loading && !isPrivate && <div
+            className="rounded-lg bg-white shadow-card dark:bg-light-dark z-50 mx-auto w-full max-w-full gap-4 p-4">
+            <ResolverView record={record!}/>
+        </div>}
       </div>
     </>
   );

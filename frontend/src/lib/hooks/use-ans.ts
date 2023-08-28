@@ -1,5 +1,5 @@
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
-import {padArray, splitStringToBigInts} from "@/lib/util";
+import {padArray, splitStringToBigInts, stringToBigInt} from "@/lib/util";
 import React, {useEffect, useState} from "react";
 import * as process from "process";
 import {LeoWalletAdapter} from "@demox-labs/aleo-wallet-adapter-leo";
@@ -32,6 +32,11 @@ export function useANS() {
   const notify = React.useCallback((type: TypeOptions, message: string) => {
     toast({ type, message });
   }, []);
+
+  const getFormattedU128Input = (str: string) => {
+    const bint = stringToBigInt(str);
+    return `${bint}u128`;
+  }
 
   const getFormattedNameInput = (name: string) => {
     const nameInputs = padArray(splitStringToBigInts(name), 4);
@@ -117,7 +122,7 @@ export function useANS() {
         fee = NEXT_PUBLIC_FEES_TRANSFER_PRIVATE;
         inputs.splice(0, 0, record.record);
       } else {
-        inputs.push(record.name_hash as string);
+        inputs.push(record.nameHash as string);
       }
       const aleoTransaction = Transaction.createTransaction(
         publicKey,
@@ -243,7 +248,7 @@ export function useANS() {
         WalletAdapterNetwork.Testnet,
         NEXT_PUBLIC_PROGRAM!,
         "set_primary_name",
-        [record.name_hash],
+        [record.nameHash],
         NEXT_PUBLIC_FEES_SET_PRIMARY
       );
 
@@ -288,5 +293,86 @@ export function useANS() {
     });
   }
 
-  return {register, transfer, convertToPrivate, convertToPublic, setPrimaryName, unsetPrimaryName};
+  const setResolver = async (name: string, category: string, content: string, onStatusChange?: StatusChangeCallback) => {
+    if (!publicKey) throw new WalletNotConnectedError();
+    onStatusChange && onStatusChange(true, {hasError: false, message: "Setting"});
+
+    const record = records?.find((rec) => rec.name === name);
+
+    if (record) {
+      if (record.private) {
+        const message = "Only public names can set resolvers";
+        notify("error", message);
+        onStatusChange && onStatusChange(false, {hasError: true, message});
+        return;
+      }
+
+      const aleoTransaction = Transaction.createTransaction(
+        publicKey,
+        WalletAdapterNetwork.Testnet,
+        NEXT_PUBLIC_PROGRAM!,
+        "set_resolver",
+        [record.nameHash, getFormattedU128Input(category), getFormattedNameInput(content)],
+        NEXT_PUBLIC_FEES_SET_PRIMARY
+      );
+
+      (wallet?.adapter as LeoWalletAdapter).requestTransaction(
+        aleoTransaction
+      )
+        .then((txId) => {
+          addTransaction("setResolver", txId, [name], onStatusChange);
+        }).catch((error) => {
+        notify("error", error.message);
+        onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
+      });
+    } else {
+      const message = "You don't own this name";
+      notify("error", message);
+      onStatusChange && onStatusChange(false, {hasError: true, message});
+      return;
+    }
+  }
+
+  const unsetResolver = async (name: string, category: string, onStatusChange?: StatusChangeCallback) => {
+    if (!publicKey) throw new WalletNotConnectedError();
+    onStatusChange && onStatusChange(true, {hasError: false, message: "Unsetting"});
+
+    const record = records?.find((rec) => rec.nameHash === name);
+
+    if (record) {
+      if (record.private) {
+        const message = "Only public names can unset resolvers";
+        notify("error", message);
+        onStatusChange && onStatusChange(false, {hasError: true, message});
+        return;
+      }
+
+      const aleoTransaction = Transaction.createTransaction(
+        publicKey,
+        WalletAdapterNetwork.Testnet,
+        NEXT_PUBLIC_PROGRAM!,
+        "unset_resolver",
+        [record.nameHash, getFormattedU128Input(category)],
+        NEXT_PUBLIC_FEES_SET_PRIMARY
+      );
+
+      (wallet?.adapter as LeoWalletAdapter).requestTransaction(
+        aleoTransaction
+      )
+        .then((txId) => {
+          addTransaction("unsetResolver", txId, [name], onStatusChange);
+        }).catch((error) => {
+        notify("error", error.message);
+        onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
+      });
+    } else {
+      const message = "You don't own this name";
+      notify("error", message);
+      onStatusChange && onStatusChange(false, {hasError: true, message});
+      return;
+    }
+  }
+
+  return {register, transfer, convertToPrivate, convertToPublic, setPrimaryName, unsetPrimaryName,
+    setResolver, unsetResolver};
 }

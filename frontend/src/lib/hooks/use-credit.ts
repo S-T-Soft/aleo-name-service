@@ -7,8 +7,10 @@ import React from "react";
 import {TypeOptions} from "react-toastify";
 import toast from "@/components/ui/toast";
 import {useClient} from "@/lib/hooks/use-client";
+import {useModal} from "@/components/modal-views/context";
 
 export function useCredit() {
+  const { openModal } = useModal();
   const {addTransaction} = useTransaction();
   const {getAddress} = useClient();
   const {wallet, publicKey, requestRecords} = useWallet();
@@ -22,9 +24,10 @@ export function useCredit() {
       requestRecords!("credits.aleo")
       .then((records) => {
         records = records.filter((rec) => !rec.spent);
-        if (records.length < count) {
-          const message = `You need ${count} records at least`;
+        if (records.length < count+1000) {
+          const message = `You need ${count} records at least to finish this transaction`;
           reject({message});
+          openModal("FAUCET_VIEW");
           return;
         }
 

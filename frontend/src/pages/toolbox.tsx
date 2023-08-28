@@ -5,9 +5,12 @@ import {useState} from "react";
 import Button from "@/components/ui/button";
 import {RefreshIcon} from "@/components/icons/refresh";
 import {useCredit} from "@/lib/hooks/use-credit";
+import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
+import {WalletMultiButton} from "@demox-labs/aleo-wallet-adapter-reactui";
 
 const ToolBoxPage: NextPageWithLayout = () => {
   const {transferCredits} = useCredit();
+  const {publicKey} = useWallet();
   const [transferStatus, setTransferStatus] = useState("Transferring");
   const [loading, setLoading] = useState(false);
   const [recipient, setRecipient] = useState("");
@@ -95,8 +98,10 @@ const ToolBoxPage: NextPageWithLayout = () => {
           )}
         <div className="flex flex-col mt-6 sm:flex-row">
           <label className="h-4 leading-4 w-full text-right align-middle mb-4 mx-2 sm:h-12 sm:leading-[3rem] sm:inline sm:w-32 sm:mb-0"></label>
-          {!loading && <Button className="bg-sky-500" onClick={handleTransfer}>Transfer</Button>}
-          {loading && <Button className="bg-sky-500" disabled={true}><RefreshIcon className="inline motion-safe:animate-spin"/> {transferStatus}</Button>}
+          {!publicKey && <WalletMultiButton className="bg-sky-500">Connect Wallet to
+                                Transfer</WalletMultiButton>}
+          {publicKey && !loading && <Button className="bg-sky-500" onClick={handleTransfer}>Transfer</Button>}
+          {publicKey && loading && <Button className="bg-sky-500" disabled={true}><RefreshIcon className="inline motion-safe:animate-spin"/> {transferStatus}</Button>}
         </div>
       </div>
     </>

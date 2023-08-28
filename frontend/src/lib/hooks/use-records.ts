@@ -1,9 +1,10 @@
 import {useLocalStorage} from "react-use";
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
-import {joinBigIntsToString} from "@/lib/util";
+import {bigIntToString, joinBigIntsToString, parseStringToBigIntArray} from "@/lib/util";
 import {createContext, useContext, useEffect, useMemo, useState} from "react";
-import {Record} from "@/types";
+import {Record, Resolver} from "@/types";
 import {useClient} from "@/lib/hooks/use-client";
+import useSWR from 'swr';
 
 export function createRecordContext() {
   const NEXT_PUBLIC_PROGRAM = process.env.NEXT_PUBLIC_PROGRAM;
@@ -15,6 +16,7 @@ export function createRecordContext() {
   const [lastUpdateTime, setLastUpdateTime] = useLocalStorage('lastUpdateTime', 0);
   const [loading, setLoading] = useState(false);
   const primaryNameMemo = useMemo(() => primaryName, [primaryName]);
+  const {data: resolvers, error, isLoading} = useSWR('getAllResolver', () => getAllResolver(), {refreshInterval: 1000 * 10});
 
   useEffect(() => {
     setRecords((records || []).map((rec) => {
@@ -35,6 +37,44 @@ export function createRecordContext() {
     });
   }
 
+  const parseKey = (keyString: string) => {
+    const nameRegex = /name:\s*([\w\d]+field)/;
+    const categoryRegex = /category:\s*([\w\d]+u128)/;
+
+    const nameMatch = keyString.match(nameRegex);
+    const categoryMatch = keyString.match(categoryRegex);
+
+    const name = nameMatch![1];
+    const category = bigIntToString(BigInt(categoryMatch![1].slice(0, -4)));
+
+    return { name, category };
+  };
+
+  const getAllResolver = async () => {
+    const url = `https://explorer.hamp.app/api/v1/mapping/list_program_mapping_values/${NEXT_PUBLIC_PROGRAM}/resolvers?outdated=1`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+    const myNameHashes = records?.map((rec) => rec.nameHash) || [];
+
+    return data.reduce((acc, item) => {
+      const { key, value } = item;
+
+      const content = joinBigIntsToString(parseStringToBigIntArray(value));
+      const { name, category } = parseKey(key);
+
+      if (!acc[name]) {
+        acc[name] = [];
+      }
+      if (category === 'resolver') {
+        acc[name] = [{key: category, value: content, nameHash: name, canRemove: myNameHashes.includes(name), isCustomResolver: true} as Resolver];
+      }
+      else if (acc[name].length < 1 || acc[name][0].key !== 'resolver') {
+        acc[name].push({key: category, value: content, nameHash: name, canRemove: myNameHashes.includes(name), isCustomResolver: false} as Resolver);
+      }
+      return acc;
+    }, {});
+  }
+
   const loadPublicRecords = async () => {
     return new Promise<Record[]>((resolve, reject) => {
       const ownerUrl = `https://explorer.hamp.app/api/v1/mapping/list_program_mapping_values/${NEXT_PUBLIC_PROGRAM}/nft_owners?outdated=1`;
@@ -53,7 +93,7 @@ export function createRecordContext() {
                   return {
                     name: name,
                     private: false,
-                    name_hash: rec.key,
+                    nameHash: rec.key,
                     isPrimaryName: name === primaryName
                   } as Record;
                 })
@@ -147,6 +187,7 @@ export function createRecordContext() {
 
   return {
     records: records,
+    resolvers: resolvers,
     primaryName: primaryName,
     loading: loading,
     refreshRecords: refreshRecords,
@@ -159,6 +200,7 @@ export function createRecordContext() {
 
 interface RecordContextState {
   records?: Record[];
+  resolvers: {};
   primaryName?: string;
   loading: boolean;
   refreshRecords: (mode: string) => void;
@@ -170,6 +212,7 @@ interface RecordContextState {
 
 const DEFAULT = {
   records: [],
+  resolvers: {},
   primaryName: "",
   loading: false,
   refreshRecords: () => {},

@@ -17,6 +17,7 @@
     "@demox-labs/aleo-wallet-adapter-react": "^0.0.15",
     "@demox-labs/aleo-wallet-adapter-reactui": "^0.0.27",
     "@headlessui/react": "^1.7.15",
+    "@svgr/webpack": "^8.1.0",
     "@tailwindcss/forms": "^0.5.3",
     "@tailwindcss/typography": "^0.5.9",
     "@uiw/codemirror-theme-tokyo-night": "^4.21.8",
@@ -39,6 +40,7 @@
     "overlayscrollbars-react": "^0.5.1",
     "path-browserify": "^1.0.1",
     "process": "^0.11.10",
+    "qrcode.react": "^3.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-icons": "^4.10.1",
@@ -48,6 +50,7 @@
     "stream-browserify": "^3.0.0",
     "stream-http": "^3.2.0",
     "swiper": "^10.0.4",
+    "swr": "^2.2.1",
     "uuid": "^9.0.0"
   },
   "devDependencies": {

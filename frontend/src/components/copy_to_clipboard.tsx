@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Copy } from "@/components/icons/copy";
 import { Check } from "@/components/icons/check";
 
-const CopyToClipboardText = ({ text }) => {
+const CopyToClipboardText = ({ text, ...props }) => {
     const [copied, setCopied] = useState(false);
 
     useEffect(() => {
@@ -23,7 +23,7 @@ const CopyToClipboardText = ({ text }) => {
     };
 
     return (
-        <span className="text-sky-600 cursor-pointer" onClick={copyText}>
+        <span className="text-sky-600 cursor-pointer" {...props} onClick={copyText}>
             {text} {copied ? <Check className="inline text-green-700"/> : <Copy className="inline"/>}
         </span>
     );

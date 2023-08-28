@@ -8,11 +8,14 @@ import { Close } from '@/components/icons/close';
 import { useModal, MODAL_VIEW } from '@/components/modal-views/context';
 // dynamic imports
 const SearchView = dynamic(() => import('@/components/search/view'));
+const FaucetView = dynamic(() => import('@/components/faucet/view'));
 
 function renderModalContent(view: MODAL_VIEW | string) {
   switch (view) {
     case 'SEARCH_VIEW':
       return <SearchView />;
+    case 'FAUCET_VIEW':
+      return <FaucetView />;
     default:
       return null;
   }

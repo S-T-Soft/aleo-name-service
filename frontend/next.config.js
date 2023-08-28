@@ -46,6 +46,10 @@ module.exports = withPWA({
       react$: require.resolve('react'),
     });
     config.resolve.alias = alias;
+    config.module.rules.push({
+      test: /\.svg$/,
+      use: ['@svgr/webpack'],
+    });
     return config;
   },
 });

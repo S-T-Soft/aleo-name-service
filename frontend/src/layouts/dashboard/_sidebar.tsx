@@ -6,10 +6,10 @@ import Button from '@/components/ui/button';
 import routes from '@/config/routes';
 import { useDrawer } from '@/components/drawer-views/context';
 import { HomeIcon } from '@/components/icons/home';
-import { ExchangeIcon } from '@/components/icons/exchange';
 import { Close } from '@/components/icons/close';
 import { Sun } from '@/components/icons/sun';
 import {OptionIcon} from "@/components/icons/option";
+import {GridSVG} from "@/assets/icons";
 
 const menuItems = [
   {
@@ -19,7 +19,7 @@ const menuItems = [
   },
   {
     name: 'My Names',
-    icon: <ExchangeIcon />,
+    icon: <GridSVG />,
     href: routes.account,
   },
   {

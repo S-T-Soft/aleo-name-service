@@ -2,7 +2,6 @@ import {useState, useRef, SyntheticEvent} from 'react';
 import { SearchIcon } from '@/components/icons/search';
 import Button from "@/components/ui/button";
 import {useRouter} from "next/router";
-import {on} from "react-use/lib/misc/util";
 
 
 type SearchFromProps = {
