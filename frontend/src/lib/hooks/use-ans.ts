@@ -152,8 +152,6 @@ export function useANS() {
     if (!publicKey) throw new WalletNotConnectedError();
     onStatusChange && onStatusChange(true,  {hasError: false, message: "Converting"});
 
-    await refreshRecords("manual");
-
     const record = records?.find((rec) => rec.name === name);
 
     if (record) {
