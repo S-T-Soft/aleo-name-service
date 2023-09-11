@@ -50,7 +50,8 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
         <Hydrate state={pageProps.dehydratedState}>
           <WalletProvider
             wallets={wallets}
-            decryptPermission={DecryptPermission.UponRequest}
+            decryptPermission={DecryptPermission.OnChainHistory}
+            programs={["credits.aleo", process.env.NEXT_PUBLIC_PROGRAM]}
             autoConnect
           >
             <WalletModalProvider>
