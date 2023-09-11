@@ -1,9 +1,8 @@
 import React, {useEffect, useState} from "react";
-import {Record, StatusChangeCallback} from "@/types";
+import {StatusChangeCallback} from "@/types";
 import {LeoWalletAdapter} from "@demox-labs/aleo-wallet-adapter-leo";
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
 import {useRecords} from "@/lib/hooks/use-records";
-import {useClient} from "@/lib/hooks/use-client";
 import {useSWRConfig} from "swr";
 import {TypeOptions} from "react-toastify";
 import toast from "@/components/ui/toast";
@@ -18,9 +17,8 @@ interface AnsTransaction {
 
 export function useTransaction() {
   const {mutate} = useSWRConfig();
-  const {refreshRecords, replaceRecord, removeRecord, syncPrimaryName} = useRecords();
-  const {getNameHash} = useClient();
-  const {wallet, publicKey, requestRecords} = useWallet();
+  const {refreshRecords, syncPrimaryName} = useRecords();
+  const {wallet, publicKey} = useWallet();
   const [transactions, setTransactions] = useState<AnsTransaction[]>([]);
 
   const notify = React.useCallback((type: TypeOptions, message: string) => {
@@ -41,20 +39,7 @@ export function useTransaction() {
 
       switch (tx.method) {
         case "transfer":
-          removeRecord(tx.params[0]);
-          break;
         case "convertToPublic":
-          getNameHash(tx.params[0])
-            .then((nameHash) => {
-              const record = {
-                name: tx.params[0],
-                private: false,
-                nameHash: nameHash,
-                isPrimaryName: false,
-              } as Record;
-              replaceRecord(record);
-            });
-          break;
         case "register":
         case "convertToPrivate":
           refreshRecords("manual");
