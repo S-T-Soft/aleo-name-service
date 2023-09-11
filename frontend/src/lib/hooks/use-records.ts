@@ -123,6 +123,7 @@ export function createRecordContext() {
       if (storedAddress !== publicKey) {
         setPrimaryName("");
         setLastUpdateTime(0);
+        setRecords([]);
       }
       Promise.all([getPrimaryName(publicKey), requestRecords!(NEXT_PUBLIC_PROGRAM!), loadPublicRecords()])
         .then(([primaryName, records, publicRecords]) => {
