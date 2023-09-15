@@ -40,7 +40,7 @@ export function useCredit() {
           return;
         }
 
-        resolve(matchRecords[matchRecords.length - 1]);
+        resolve(matchRecords[Math.max(0, Math.floor(matchRecords.length / 2) - 1)]);
       }).catch((err) => {
         reject(err);
       });
