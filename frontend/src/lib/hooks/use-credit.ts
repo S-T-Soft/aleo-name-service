@@ -40,7 +40,12 @@ export function useCredit() {
           return;
         }
 
-        resolve(matchRecords[Math.max(0, Math.floor(matchRecords.length / 2) - 1)]);
+        const maxMicroCreditRecord = matchRecords.reduce((maxRec, currentRec) => {
+            return +currentRec.data.microcredits.substring(0, currentRec.data.microcredits.length - 11) >
+            +maxRec.data.microcredits.substring(0, maxRec.data.microcredits.length - 11) ? currentRec : maxRec;
+        }, matchRecords[0]);
+
+        resolve(maxMicroCreditRecord);
       }).catch((err) => {
         reject(err);
       });
