@@ -40,8 +40,10 @@ export function useCredit() {
           return;
         }
 
+        console.log(matchRecords)
+
         const maxMicroCreditRecord = matchRecords.reduce((maxRec, currentRec) => {
-            return +currentRec.data.microcredits.substring(0, currentRec.data.microcredits.length - 11) >
+            return +currentRec.data.microcredits.substring(0, currentRec.data.microcredits.length - 11) >=
             +maxRec.data.microcredits.substring(0, maxRec.data.microcredits.length - 11) ? currentRec : maxRec;
         }, matchRecords[0]);
 
