@@ -1,8 +1,7 @@
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
 import {padArray, splitStringToBigInts, stringToBigInt} from "@/lib/util";
-import React, {useEffect, useState} from "react";
+import React from "react";
 import * as process from "process";
-import {LeoWalletAdapter} from "@demox-labs/aleo-wallet-adapter-leo";
 import {Transaction, WalletAdapterNetwork, WalletNotConnectedError} from "@demox-labs/aleo-wallet-adapter-base";
 import {useRecords} from "@/lib/hooks/use-records";
 import {StatusChangeCallback} from "@/types";
@@ -27,7 +26,7 @@ export function useANS() {
   const {addTransaction} = useTransaction();
   const {getCreditRecord} = useCredit();
   const {getAddress, getNameHash} = useClient();
-  const {wallet, publicKey} = useWallet();
+  const {publicKey, requestTransaction} = useWallet();
 
   const notify = React.useCallback((type: TypeOptions, message: string) => {
     toast({ type, message });
@@ -70,9 +69,10 @@ export function useANS() {
           NEXT_PUBLIC_FEES_REGISTER
         );
 
-        return (wallet?.adapter as LeoWalletAdapter).requestTransaction(
-          aleoTransaction
-        );
+        if (requestTransaction)
+          return requestTransaction(aleoTransaction);
+        else
+          throw new Error("requestTransaction is not defined");
       })
       .then((txId) => {
         addTransaction("register", txId, [name], onStatusChange);
@@ -132,9 +132,7 @@ export function useANS() {
         inputs,
         fee
       );
-      (wallet?.adapter as LeoWalletAdapter).requestTransaction(
-        aleoTransaction
-      ).then((txId) => {
+      requestTransaction && requestTransaction(aleoTransaction).then((txId) => {
         addTransaction("transfer", txId, [name], onStatusChange);
       }).catch((error) => {
         notify("error", error.message);
@@ -169,7 +167,7 @@ export function useANS() {
         [record.record],
         NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC
       );
-      (wallet?.adapter as LeoWalletAdapter).requestTransaction(
+      requestTransaction && requestTransaction(
         aleoTransaction
       ).then((txId) => {
         addTransaction("convertToPublic", txId, [name], onStatusChange);
@@ -209,9 +207,10 @@ export function useANS() {
             [formattedTokenId],
             NEXT_PUBLIC_FEES_CONVERT_TO_PRIVATE
           );
-          return (wallet?.adapter as LeoWalletAdapter).requestTransaction(
-            aleoTransaction
-          );
+          if (requestTransaction)
+            return requestTransaction(aleoTransaction);
+          else
+            throw new Error("requestTransaction is not defined");
         })
         .then((txId) => {
           addTransaction("convertToPrivate", txId, [name], onStatusChange);
@@ -250,9 +249,7 @@ export function useANS() {
         NEXT_PUBLIC_FEES_SET_PRIMARY
       );
 
-      (wallet?.adapter as LeoWalletAdapter).requestTransaction(
-        aleoTransaction
-      )
+      requestTransaction && requestTransaction(aleoTransaction)
         .then((txId) => {
           addTransaction("setPrimaryName", txId, [name], onStatusChange);
         }).catch((error) => {
@@ -280,9 +277,7 @@ export function useANS() {
       NEXT_PUBLIC_FEES_UNSET_PRIMARY
     );
 
-    (wallet?.adapter as LeoWalletAdapter).requestTransaction(
-      aleoTransaction
-    )
+    requestTransaction && requestTransaction(aleoTransaction)
       .then((txId) => {
         addTransaction("unsetPrimaryName", txId, [], onStatusChange);
       }).catch((error) => {
@@ -314,9 +309,7 @@ export function useANS() {
         NEXT_PUBLIC_FEES_SET_PRIMARY
       );
 
-      (wallet?.adapter as LeoWalletAdapter).requestTransaction(
-        aleoTransaction
-      )
+      requestTransaction && requestTransaction(aleoTransaction)
         .then((txId) => {
           addTransaction("setResolver", txId, [name], onStatusChange);
         }).catch((error) => {
@@ -354,9 +347,7 @@ export function useANS() {
         NEXT_PUBLIC_FEES_SET_PRIMARY
       );
 
-      (wallet?.adapter as LeoWalletAdapter).requestTransaction(
-        aleoTransaction
-      )
+      requestTransaction && requestTransaction(aleoTransaction)
         .then((txId) => {
           addTransaction("unsetResolver", txId, [name], onStatusChange);
         }).catch((error) => {

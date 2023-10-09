@@ -9,7 +9,7 @@ import AnchorLink from "@/components/ui/links/anchor-link";
 import {useEffect} from "react";
 
 const AccountPage: NextPageWithLayout = () => {
-  const {wallet, publicKey} = useWallet();
+  const {publicKey} = useWallet();
   const { loading, records, refreshRecords } = useRecords();
 
   useEffect(() => {

@@ -1,6 +1,5 @@
 import React, {useEffect, useState} from "react";
 import {StatusChangeCallback} from "@/types";
-import {LeoWalletAdapter} from "@demox-labs/aleo-wallet-adapter-leo";
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
 import {useRecords} from "@/lib/hooks/use-records";
 import {useSWRConfig} from "swr";
@@ -18,7 +17,7 @@ interface AnsTransaction {
 export function useTransaction() {
   const {mutate} = useSWRConfig();
   const {refreshRecords, syncPrimaryName} = useRecords();
-  const {wallet, publicKey} = useWallet();
+  const {transactionStatus} = useWallet();
   const [transactions, setTransactions] = useState<AnsTransaction[]>([]);
 
   const notify = React.useCallback((type: TypeOptions, message: string) => {
@@ -26,9 +25,10 @@ export function useTransaction() {
   }, []);
 
   const getTransactionStatus = async (tx: AnsTransaction) => {
-    const status = await (
-      wallet?.adapter as LeoWalletAdapter
-    ).transactionStatus(tx.id);
+    let status = "Pending";
+    if (transactionStatus) {
+      status = await transactionStatus(tx.id);
+    }
     tx.onStatusChange && tx.onStatusChange(true, {hasError: false, message: status});
     console.log(tx.id, status);
     if (status === "Failed") {

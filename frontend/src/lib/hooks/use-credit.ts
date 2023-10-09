@@ -1,7 +1,6 @@
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
 import {StatusChangeCallback} from "@/types";
 import {Transaction, WalletAdapterNetwork, WalletNotConnectedError} from "@demox-labs/aleo-wallet-adapter-base";
-import {LeoWalletAdapter} from "@demox-labs/aleo-wallet-adapter-leo";
 import {useTransaction} from "@/lib/hooks/use-transaction";
 import React from "react";
 import {TypeOptions} from "react-toastify";
@@ -13,7 +12,7 @@ export function useCredit() {
   const { openModal } = useModal();
   const {addTransaction} = useTransaction();
   const {getAddress} = useClient();
-  const {wallet, publicKey, requestRecords} = useWallet();
+  const {publicKey, requestRecords, requestTransaction} = useWallet();
 
   const notify = React.useCallback((type: TypeOptions, message: string) => {
     toast({ type, message });
@@ -101,9 +100,10 @@ export function useCredit() {
             [record, recipient, amount + "u64"],
             method === "transfer_private" ? 3000 : 1507000
           );
-          return (wallet?.adapter as LeoWalletAdapter).requestTransaction(
-            aleoTransaction
-          );
+          if (requestTransaction)
+            return requestTransaction(aleoTransaction);
+          else
+            throw new Error("requestTransaction is not defined");
         })
       : Promise.resolve().then(() => {
           const aleoTransaction = Transaction.createTransaction(
@@ -114,9 +114,10 @@ export function useCredit() {
             [recipient, amount + "u64"],
             method === "transfer_public" ? 3016000 : 1514000
           );
-          return (wallet?.adapter as LeoWalletAdapter).requestTransaction(
-            aleoTransaction
-          );
+          if (requestTransaction)
+            return requestTransaction(aleoTransaction);
+          else
+            throw new Error("requestTransaction is not defined");
         });
 
     createTransactionPromise.then((txId) => {

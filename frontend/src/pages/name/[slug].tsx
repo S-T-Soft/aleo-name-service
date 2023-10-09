@@ -21,7 +21,7 @@ import {set} from "husky";
 const NamePage: NextPageWithLayout = () => {
   const NEXT_PUBLIC_PROGRAM = process.env.NEXT_PUBLIC_PROGRAM;
   const router = useRouter();
-  const {wallet, publicKey} = useWallet();
+  const {publicKey} = useWallet();
   const {register} = useANS();
   const {getAddress} = useClient();
   const [available, setAvailable] = useState(false);
