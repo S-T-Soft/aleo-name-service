@@ -6,27 +6,16 @@ use urlencoding;
 use crate::utils;
 use deadpool_redis::{Pool, redis::{cmd}};
 
-
 #[derive(Deserialize, Debug)]
-pub struct Name {
-    pub data1: u128,
-    pub data2: u128,
-    pub data3: u128,
-    pub data4: u128,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct TokenId {
-    pub data1: u128,
-    pub data2: u128,
-    pub data3: u128,
-    pub data4: u128,
+pub struct NameStruct {
+    pub name: [u128; 4],
     pub parent: String,
+    pub resolver: u128
 }
 
 fn get_base_uri() -> String {
-    let url_host = env::var("URL_HOST").unwrap_or_else(|_| "http://localhost:3030".to_string());
-    let program = env::var("PROGRAM").unwrap_or_else(|_| "aleo_name_service_v3.aleo".to_string());
+    let url_host = env::var("URL_HOST").unwrap_or_else(|_| "https://api.explorer.aleo.org/v1".to_string());
+    let program = env::var("PROGRAM").unwrap_or_else(|_| "aleo_name_service_registry_v1.aleo".to_string());
     let base_uri = format!("{}/testnet3/program/{}", url_host, program);
     base_uri
 }
@@ -56,36 +45,61 @@ async fn call_api(url: String) -> Result<String, String> {
 
 
 fn parse(content: &str) -> String {
-    // Split into lines
-    let content = &content[1..content.len()-1];
-    let lines: Vec<&str> = content.split("\\n").collect();
-
-    // Process each line
+    let lines: Vec<&str> = content.trim_matches('"').split("\\n").collect();
     let mut json_lines = Vec::new();
+    let mut in_array = false;
+
     for line in lines {
-        if line.contains("{") || line.contains("}") {
-            let line = line.trim();
-            if line.contains("{") && line.len() > 1 {
-                let re = Regex::new(r#"(\w+): \{$"#).unwrap();
-                let line = re.replace_all(&line, r#""$1": {"#);
-                json_lines.push(line.to_string());
-            } else {
-                json_lines.push(line.to_string());
-            }
+        let line = line.trim();
+
+        // Detect array start
+        if line.ends_with("[") {
+            in_array = true;
+            let re = Regex::new(r#"(\w+): \[$"#).unwrap();
+            let json_line = re.replace_all(line, r#""$1": ["#);
+            json_lines.push(json_line.to_string());
             continue;
         }
 
-        // Add quotes around keys and string values that are not numbers
-        let re = Regex::new(r#"(\w+): (\w+)u\d+(,)?$"#).unwrap();
-        let json_line = re.replace_all(&line, r#""$1": $2$3"#);
+        // Detect array end
+        if line.starts_with("]") {
+            in_array = false;
+            json_lines.push("],".to_string());  // Add a comma after the array
+            continue;
+        }
 
-        let re = Regex::new(r#"(\w+): (\w+)(,)?$"#).unwrap();
-        let json_line = re.replace_all(&json_line, r#""$1": "$2"$3"#);
+        // Inside an array
+        if in_array {
+            let re = Regex::new(r#"(\d+)u\d+(,)?$"#).unwrap();
+            let json_line = re.replace_all(line, r#"$1$2"#);
+            json_lines.push(json_line.to_string());
+            continue;
+        }
 
-        let re = Regex::new(r#"(\w+): (\d+)$"#).unwrap();
-        let json_line = re.replace_all(&json_line, r#""$1": $2"#);
+        // Object keys and values
+        if line.contains(":") {
+            let re = Regex::new(r#"(\w+): (\w+)u\d+(,)?$"#).unwrap();
+            let json_line = re.replace_all(line, r#""$1": $2$3"#);
 
-        json_lines.push(json_line.into_owned());
+            let re = Regex::new(r#"(\w+): (\w+)(,)?$"#).unwrap();
+            let json_line = re.replace_all(&json_line, r#""$1": "$2"$3"#);
+
+            let re = Regex::new(r#"(\w+): (\d+)$"#).unwrap();
+            let json_line = re.replace_all(&json_line, r#""$1": $2"#);
+
+            json_lines.push(json_line.to_string());
+            continue;
+        }
+
+        // Just append braces and other lines as-is
+        json_lines.push(line.to_string());
+    }
+
+    // Remove the trailing comma in the last key-value pair
+    if let Some(last) = json_lines.last_mut() {
+        if last.ends_with(",") {
+            last.pop();
+        }
     }
 
     // Join lines into a single JSON string
@@ -106,14 +120,15 @@ pub async fn get_owner(name_hash: String) -> Result<String, String> {
 }
 
 
-pub async fn get_name(name_hash: String) -> Result<TokenId, String> {
+pub async fn get_name(name_hash: String) -> Result<NameStruct, String> {
     // get address from name_hash
     let url = format!("{}/mapping/names/{}", get_base_uri(), name_hash);
+    println!("{}", url);
     let resp = call_api(url).await?;
-
+    println!("{}", resp);
     let json = parse(&resp);
-
-    let ans: TokenId = serde_json::from_str(&json).map_err(|_| "Failed to convert to json")?;
+    println!("{}", json);
+    let ans: NameStruct = serde_json::from_str(&json).map_err(|_| "Failed to convert to json")?;
 
     Ok( ans )
 }
@@ -140,12 +155,11 @@ pub async fn get_full_name(pool: &Pool, name_hash: String) -> Result<String, Str
     let mut names = Vec::new();
 
     while ans.parent != "0field" {
-        names.push(utils::reverse_parse_label(ans.data1, ans.data2, ans.data3, ans.data4).unwrap());
+        names.push(utils::reverse_parse_label(ans.name[0], ans.name[1], ans.name[2], ans.name[3]).unwrap());
         ans = get_name(ans.parent).await?;
     }
 
-    names.push(utils::reverse_parse_label(ans.data1, ans.data2, ans.data3, ans.data4).unwrap());
-    names.push("ans".to_string());
+    names.push(utils::reverse_parse_label(ans.name[0], ans.name[1], ans.name[2], ans.name[3]).unwrap());
 
     // Join all the names with "."
     let name = names.join(".");
@@ -169,13 +183,13 @@ pub async fn get_resolver(category: &str, name: &str) -> Result<String, String> 
     let name_hash = utils::parse_name_hash(name)?;
     let category = utils::string_to_u128(&category)?;
     // get resolver from name_hash and category
-    let resolver = format!("{{name:{}, category:{}u128}}", name_hash, category);
+    let resolver = format!("{{name:{}, category:{}u128, version: 1u64}}", name_hash, category);
     // encode resolver with urlencoding
     let resolver_encoded = urlencoding::encode(&resolver);
     let url = format!("{}/mapping/resolvers/{}", get_base_uri(), resolver_encoded);
     let resp = call_api(url).await?;
     let json = parse(&resp);
-    let name: Name = serde_json::from_str(&json).map_err(|_| "Failed to convert to json")?;
-    let content = utils::reverse_parse_label(name.data1, name.data2, name.data3, name.data4)?;
+    let name: [u128; 4] = serde_json::from_str(&json).map_err(|_| "Failed to convert to json")?;
+    let content = utils::reverse_parse_label(name[0], name[1], name[2], name[3])?;
     Ok( content )
 }

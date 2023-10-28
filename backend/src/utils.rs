@@ -58,13 +58,13 @@ pub fn parse_label_string(name: &str, valid: bool) -> Result<String, String> {
     let n3 = u128::from_le_bytes([bits[32], bits[33], bits[34], bits[35], bits[36], bits[37], bits[38], bits[39], bits[40], bits[41], bits[42], bits[43], bits[44], bits[45], bits[46], bits[47]]);
     let n4 = u128::from_le_bytes([bits[48], bits[49], bits[50], bits[51], bits[52], bits[53], bits[54], bits[55], bits[56], bits[57], bits[58], bits[59], bits[60], bits[61], bits[62], bits[63]]);
 
-    Ok( format!("{{data1: {}u128, data2: {}u128, data3: {}u128, data4: {}u128}}", n1, n2, n3, n4) )
+    Ok( format!("[{}u128, {}u128, {}u128, {}u128]", n1, n2, n3, n4) )
 }
 
 // Parse a label
 pub fn parse_label(name: &str, parent: Field<N>) -> Result<Value<N>, String> {
     let name_str = parse_label_string(name, true)?;
-    let names = format!("{{{}, parent: {}}}", &name_str[1..name_str.len()-1], parent);
+    let names = format!("{{name: {}, parent: {}}}", &name_str, parent);
 
     println!("{}", names);
 
@@ -76,12 +76,6 @@ pub fn parse_name_hash(name: &str) -> Result<Field<N>, String> {
     // split name with dot，revert the order
     let mut name_parts: Vec<&str> = name.split('.').collect();
     name_parts.reverse();
-    // the parts size must >=2 and the first element must be ans
-    if name_parts.len() < 2 || name_parts[0] != "ans" {
-        return Err("Invalid name".to_string());
-    }
-    // remove the first element
-    name_parts.remove(0);
     // convert the parts to hash
     let mut name_hash = Field::<N>::zero();
     for part in name_parts {
