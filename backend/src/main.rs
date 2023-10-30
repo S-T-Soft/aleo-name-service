@@ -8,6 +8,7 @@ use std::env;
 
 mod utils;
 mod client;
+mod db;
 
 #[derive(Serialize)]
 struct NameHash {
@@ -105,6 +106,59 @@ async fn resolver(resolver_params: web::Query<GetResolverParams>) -> impl Respon
 }
 
 
+#[get("/public_ans/{address}")]
+async fn public_ans(address: web::Path<String>) -> impl Responder {
+    let address = address.into_inner();
+    let names = db::get_names_by_addr(&address).await;
+
+    match names {
+        Ok(data) => HttpResponse::Ok().json(data),
+        Err(_e) => HttpResponse::NotFound().finish(),
+    }
+}
+
+#[get("/resolver/{name}")]
+async fn resolvers(name: web::Path<String>) -> impl Responder {
+    let name = name.into_inner();
+
+    let name_hash = utils::parse_name_hash(&name);
+    let name_hash = match name_hash {
+        Ok(name_hash_field) => name_hash_field.to_string(),
+        Err(e) => {
+            return HttpResponse::InternalServerError().json(serde_json::json!({ "error": format!("Error parsing name: {}", e) }));
+        }
+    };
+
+    let name_resolvers = db::get_resolvers_by_namehash(&name_hash).await;
+
+    match name_resolvers {
+        Ok(data) => HttpResponse::Ok().json(data),
+        Err(_e) => HttpResponse::NotFound().finish(),
+    }
+}
+
+
+#[get("/subdomain/{name}")]
+async fn subdomains(name: web::Path<String>) -> impl Responder {
+    let name = name.into_inner();
+
+    let name_hash = utils::parse_name_hash(&name);
+    let name_hash = match name_hash {
+        Ok(name_hash_field) => name_hash_field.to_string(),
+        Err(e) => {
+            return HttpResponse::InternalServerError().json(serde_json::json!({ "error": format!("Error parsing name: {}", e) }));
+        }
+    };
+
+    let name_subdomains = db::get_subdomains_by_namehash(&name_hash).await;
+
+    match name_subdomains {
+        Ok(data) => HttpResponse::Ok().json(data),
+        Err(_e) => HttpResponse::NotFound().finish(),
+    }
+}
+
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let redis_url = env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379/0".to_string());
@@ -125,8 +179,11 @@ async fn main() -> std::io::Result<()> {
             .service(name_api)
             .service(address_api)
             .service(resolver)
+            .service(public_ans)
+            .service(resolvers)
+            
     })
-    .bind("0.0.0.0:8000")?
+    .bind("0.0.0.0:8080")?
     .run()
     .await
 }

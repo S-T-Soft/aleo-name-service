@@ -19,6 +19,7 @@ services:
       URL_HOST: https://api.explorer.aleo.org/v1
       PROGRAM: aleo_name_service_registry_v1.aleo
       REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql://user:pwd@47.252.87.139:5432/ans
       VIRTUAL_HOST: api.aleonames.id,api.aleonames.local
       LOG_STORE: ans
     restart: always
