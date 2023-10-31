@@ -2,9 +2,9 @@ import {useState} from "react";
 import {Status} from "@/types";
 import Button from "@/components/ui/button";
 import {RefreshIcon} from "@/components/icons/refresh";
-import {Transfer} from "@/pages/account/transfer";
+import Transfer from "@/pages/account/transfer";
 
-export function PrivateName({name, setTriggerRecheck, convertToPublic, transfer}:
+export default function PrivateName({name, setTriggerRecheck, convertToPublic, transfer}:
                               React.PropsWithChildren<{
                                 name: string,
                                 setTriggerRecheck: CallableFunction,

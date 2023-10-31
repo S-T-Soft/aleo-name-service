@@ -3,7 +3,7 @@ import {Status} from "@/types";
 import Button from "@/components/ui/button";
 import {RefreshIcon} from "@/components/icons/refresh";
 
-export function Transfer({name, transfer, setTriggerRecheck}: React.PropsWithChildren<{
+export default function Transfer({name, transfer, setTriggerRecheck}: React.PropsWithChildren<{
   name: string,
   transfer: CallableFunction,
   setTriggerRecheck: CallableFunction

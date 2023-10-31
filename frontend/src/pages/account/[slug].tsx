@@ -9,8 +9,8 @@ import {useRecords} from "@/lib/hooks/use-records";
 import {useANS} from "@/lib/hooks/use-ans";
 import {useClient} from "@/lib/hooks/use-client";
 import ResolverView from "@/components/resolver/view";
-import {PrivateName} from "@/pages/account/private-name";
-import {PublicName} from "@/pages/account/public-name";
+import PrivateName from "@/pages/account/private-name";
+import PublicName from "@/pages/account/public-name";
 
 
 const ManageNamePage: NextPageWithLayout = () => {
