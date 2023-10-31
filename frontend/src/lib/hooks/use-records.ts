@@ -5,6 +5,7 @@ import {createContext, useContext, useEffect, useMemo, useState} from "react";
 import {Record, Resolver} from "@/types";
 import {useClient} from "@/lib/hooks/use-client";
 import useSWR from 'swr';
+import {getPublicBalance} from "@/lib/rpc";
 
 export function createRecordContext() {
   const NEXT_PUBLIC_PROGRAM = process.env.NEXT_PUBLIC_PROGRAM;
@@ -17,6 +18,7 @@ export function createRecordContext() {
   const [loading, setLoading] = useState(false);
   const primaryNameMemo = useMemo(() => primaryName, [primaryName]);
   const {data: resolvers, error, isLoading} = useSWR('getAllResolver', () => getAllResolver(), {refreshInterval: 1000 * 10});
+  const {data: publicBalance} = useSWR('getBalance', () => getBalance(), {refreshInterval: 1000 * 60});
 
   useEffect(() => {
     setRecords((records || []).map((rec) => {
@@ -24,6 +26,14 @@ export function createRecordContext() {
           return rec;
         }));
   }, [primaryNameMemo]);
+
+  const getBalance = async () => {
+    if (publicKey) {
+      return getPublicBalance(publicKey)
+    } else {
+      return 0;
+    }
+  }
 
   const sortRecords = (records: Record[]) => {
     return records.sort((a, b) => {
@@ -51,28 +61,7 @@ export function createRecordContext() {
   };
 
   const getAllResolver = async () => {
-    const url = `https://explorer.hamp.app/api/v1/mapping/list_program_mapping_values/${NEXT_PUBLIC_PROGRAM}/resolvers?outdated=1`;
-    const resp = await fetch(url);
-    const data = await resp.json();
-    const myNameHashes = records?.map((rec) => rec.nameHash) || [];
-
-    return data.reduce((acc, item) => {
-      const { key, value } = item;
-
-      const content = joinBigIntsToString(parseStringToBigIntArray(value));
-      const { name, category } = parseKey(key);
-
-      if (!acc[name]) {
-        acc[name] = [];
-      }
-      if (category === 'resolver') {
-        acc[name] = [{key: category, value: content, nameHash: name, canRemove: myNameHashes.includes(name), isCustomResolver: true} as Resolver];
-      }
-      else if (acc[name].length < 1 || acc[name][0].key !== 'resolver') {
-        acc[name].push({key: category, value: content, nameHash: name, canRemove: myNameHashes.includes(name), isCustomResolver: false} as Resolver);
-      }
-      return acc;
-    }, {});
+    return {};
   }
 
   const loadPublicRecords = async () => {
@@ -84,17 +73,19 @@ export function createRecordContext() {
           .then((response) => response.json())
           .then((data) => {
             return Promise.all(
-              data
-                .filter((rec: any) => rec.value === publicKey)
-                .map(async (rec: any) => {
-                  const nameParts = (await getName(rec.key)).split(".");
-                  nameParts.pop();
-                  const name = nameParts.join(".");
+              // data is a object with key as nameHash and value as owner
+              // we filter out the records that are not owned by the current user
+              // and then map them to get the name from the nameHash
+              // and then return a promise of array of records
+              Object.keys(data)
+                .filter((key) => data[key].value === publicKey)
+                .map(async (key) => {
                   return {
-                    name: name,
+                    name: await getName(data[key].key),
                     private: false,
-                    nameHash: rec.key,
-                    isPrimaryName: name === primaryName
+                    isPrimaryName: false,
+                    nameHash: data[key].key,
+                    record: null
                   } as Record;
                 })
             );
@@ -108,6 +99,27 @@ export function createRecordContext() {
       } else {
         resolve([]);
       }
+    });
+  }
+
+  const loadPrivateRecords = async () => {
+    return new Promise<Record[]>((resolve, reject) => {
+      requestRecords!(NEXT_PUBLIC_PROGRAM!).then((records) => {
+        return Promise.all(records.filter((rec) => !rec.spent && rec.recordName === "NFT").map(async (rec) => {
+          return {
+            name: await getName(rec.data.data.replace(".private", "")),
+            private: true,
+            isPrimaryName: false,
+            nameHash: rec.data.data,
+            record: rec
+          } as Record;
+        }));
+      }).then((privateRecords) => {
+        resolve(privateRecords);
+      }).catch((error) => {
+        console.log(error);
+        resolve([]);
+      })
     });
   }
 
@@ -125,20 +137,8 @@ export function createRecordContext() {
         setLastUpdateTime(0);
         setRecords([]);
       }
-      Promise.all([getPrimaryName(publicKey), requestRecords!(NEXT_PUBLIC_PROGRAM!), loadPublicRecords()])
+      Promise.all([getPrimaryName(publicKey), loadPrivateRecords(), loadPublicRecords()])
         .then(([primaryName, records, publicRecords]) => {
-          records = records.filter((rec) => !rec.spent).map((rec) => {
-            const ans = rec.data.data;
-            return {
-              name: joinBigIntsToString([BigInt(ans.data1.replace('u128.private', '')),
-                BigInt(ans.data2.replace('u128.private', '')),
-                BigInt(ans.data3.replace('u128.private', '')),
-                BigInt(ans.data4.replace('u128.private', ''))]),
-              private: true,
-              isPrimaryName: false,
-              record: rec
-            } as Record;
-          });
           setStoredAddress(publicKey);
           setLastUpdateTime(Date.now());
           publicRecords.forEach((rec) => {
@@ -188,6 +188,7 @@ export function createRecordContext() {
   return {
     records: records,
     resolvers: resolvers,
+    publicBalance: publicBalance,
     primaryName: primaryName,
     loading: loading,
     refreshRecords: refreshRecords,
@@ -200,6 +201,7 @@ export function createRecordContext() {
 
 interface RecordContextState {
   records?: Record[];
+  publicBalance: number;
   resolvers: {};
   primaryName?: string;
   loading: boolean;
@@ -212,6 +214,7 @@ interface RecordContextState {
 
 const DEFAULT = {
   records: [],
+  publicBalance: 0,
   resolvers: {},
   primaryName: "",
   loading: false,

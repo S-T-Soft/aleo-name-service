@@ -42,13 +42,12 @@ const AccountPage: NextPageWithLayout = () => {
                   <tr key={index} className="h-16 hover:bg-gray-700">
                     <td className="pl-5">
                       <span className="font-bold">{record.name}</span>
-                      <span className="text-gray-400 font-bold">.ans</span>
                       {record.private && <span className="bg-gray-600 mx-3 px-2 py-1 rounded-lg">Private</span>}
                       {record.isPrimaryName && <span className="bg-green-700 mx-3 px-2 py-1 rounded-lg">PrimaryName</span>}
                       {!record.private && !record.isPrimaryName && <span className="bg-gray-600 mx-3 px-2 py-1 rounded-lg">Public</span>}
                     </td>
                     <td className="text-center">
-                      <AnchorLink href={`/account/${record.name}.ans`}>
+                      <AnchorLink href={`/account/${record.name}`}>
                         <Button className="bg-sky-500 px-4 py-1 h-8 sm:h-8 sm:px-4">
                           Manage
                         </Button>

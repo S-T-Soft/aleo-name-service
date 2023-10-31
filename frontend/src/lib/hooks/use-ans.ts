@@ -14,6 +14,7 @@ import {useClient} from "@/lib/hooks/use-client";
 
 export function useANS() {
   const NEXT_PUBLIC_PROGRAM = process.env.NEXT_PUBLIC_PROGRAM;
+  const NEXT_PUBLIC_REGISTRAR_PROGRAM = process.env.NEXT_PUBLIC_REGISTRAR_PROGRAM;
   const NEXT_PUBLIC_FEES_REGISTER = parseInt(process.env.NEXT_PUBLIC_FEES_REGISTER!);
   const NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC!);
   const NEXT_PUBLIC_FEES_CONVERT_TO_PRIVATE = parseInt(process.env.NEXT_PUBLIC_FEES_CONVERT_TO_PRIVATE!);
@@ -39,35 +40,37 @@ export function useANS() {
 
   const getFormattedNameInput = (name: string) => {
     const nameInputs = padArray(splitStringToBigInts(name), 4);
-    return `{data1: ${nameInputs[0]}u128, data2: ${nameInputs[1]}u128, data3: ${nameInputs[2]}u128, data4: ${nameInputs[3]}u128}`;
+    return [`${nameInputs[0]}u128`, `${nameInputs[1]}u128`, `${nameInputs[2]}u128`, `${nameInputs[3]}u128`];
   }
 
-  const getFormattedTokenIdInput = async (name: string) => {
-    const names = name.split(".");
-    const nameInputs = padArray(splitStringToBigInts(names[0]), 4);
-    let parent = '0field';
-    if (names.length > 1) {
-      const parentName = names.slice(0, names.length - 1).join(".");
-      parent = await getNameHash(parentName);
+  const calcPrice = (name: string) => {
+    let price = 1250000000;
+    for (let i = 1; i < name.length; i++) {
+      price = Math.max(2000000, price / 5);
     }
-    return `{data1: ${nameInputs[0]}u128, data2: ${nameInputs[1]}u128, data3: ${nameInputs[2]}u128, data4: ${nameInputs[3]}u128, parent: ${parent}}`;
+    return price;
   }
 
-  const register = async (name: string, onStatusChange?: StatusChangeCallback) => {
+  const register = async (name: string, isPrivate: boolean, onStatusChange?: StatusChangeCallback) => {
     if (!publicKey) throw new WalletNotConnectedError();
 
     onStatusChange && onStatusChange(true, {hasError: false, message: "Registering"});
 
-    getCreditRecord(5000000, 2)
+    let price = calcPrice(name);
+
+    getCreditRecord(price, isPrivate ? 2 : 1)
       .then((record) => {
         const aleoTransaction = Transaction.createTransaction(
           publicKey,
           WalletAdapterNetwork.Testnet,
-          NEXT_PUBLIC_PROGRAM!,
-          "register",
+          NEXT_PUBLIC_REGISTRAR_PROGRAM!,
+          "register_fld",
           [getFormattedNameInput(name), publicKey, record],
-          NEXT_PUBLIC_FEES_REGISTER
+          NEXT_PUBLIC_FEES_REGISTER,
+          isPrivate // use private fee, or will leak the user address information
         );
+
+        console.log(aleoTransaction);
 
         if (requestTransaction)
           return requestTransaction(aleoTransaction);
@@ -130,7 +133,8 @@ export function useANS() {
         NEXT_PUBLIC_PROGRAM!,
         `transfer_${record.private ? "private" : "public"}`,
         inputs,
-        fee
+        fee,
+        record.private  // private record use private fee, public record use public fee
       );
       requestTransaction && requestTransaction(aleoTransaction).then((txId) => {
         addTransaction("transfer", txId, [name], onStatusChange);
@@ -164,8 +168,9 @@ export function useANS() {
         WalletAdapterNetwork.Testnet,
         NEXT_PUBLIC_PROGRAM!,
         "convert_private_to_public",
-        [record.record],
-        NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC
+        [record.record, publicKey],
+        NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC,
+        false
       );
       requestTransaction && requestTransaction(
         aleoTransaction
@@ -197,27 +202,22 @@ export function useANS() {
         return;
       }
 
-      getFormattedTokenIdInput(record.name)
-        .then((formattedTokenId) => {
-          const aleoTransaction = Transaction.createTransaction(
-            publicKey,
-            WalletAdapterNetwork.Testnet,
-            NEXT_PUBLIC_PROGRAM!,
-            "convert_public_to_private",
-            [formattedTokenId],
-            NEXT_PUBLIC_FEES_CONVERT_TO_PRIVATE
-          );
-          if (requestTransaction)
-            return requestTransaction(aleoTransaction);
-          else
-            throw new Error("requestTransaction is not defined");
-        })
-        .then((txId) => {
-          addTransaction("convertToPrivate", txId, [name], onStatusChange);
-        }).catch((error) => {
-        notify("error", error.message);
-        onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
-      });
+      const aleoTransaction = Transaction.createTransaction(
+        publicKey,
+        WalletAdapterNetwork.Testnet,
+        NEXT_PUBLIC_PROGRAM!,
+        "convert_public_to_private",
+        [record.nameHash, publicKey],
+        NEXT_PUBLIC_FEES_CONVERT_TO_PRIVATE,
+        false
+      );
+      if (requestTransaction)
+        requestTransaction(aleoTransaction).then((txId) => {
+            addTransaction("convertToPrivate", txId, [name], onStatusChange);
+          }).catch((error) => {
+          notify("error", error.message);
+          onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
+        });
     } else {
       const message = "You don't own this name";
       notify("error", message);
@@ -246,7 +246,8 @@ export function useANS() {
         NEXT_PUBLIC_PROGRAM!,
         "set_primary_name",
         [record.nameHash],
-        NEXT_PUBLIC_FEES_SET_PRIMARY
+        NEXT_PUBLIC_FEES_SET_PRIMARY,
+        false
       );
 
       requestTransaction && requestTransaction(aleoTransaction)
@@ -274,7 +275,8 @@ export function useANS() {
       NEXT_PUBLIC_PROGRAM!,
       "unset_primary_name",
       [],
-      NEXT_PUBLIC_FEES_UNSET_PRIMARY
+      NEXT_PUBLIC_FEES_UNSET_PRIMARY,
+      false
     );
 
     requestTransaction && requestTransaction(aleoTransaction)
@@ -306,7 +308,8 @@ export function useANS() {
         NEXT_PUBLIC_PROGRAM!,
         "set_resolver",
         [record.nameHash, getFormattedU128Input(category), getFormattedNameInput(content)],
-        NEXT_PUBLIC_FEES_SET_PRIMARY
+        NEXT_PUBLIC_FEES_SET_PRIMARY,
+        false
       );
 
       requestTransaction && requestTransaction(aleoTransaction)
@@ -344,7 +347,8 @@ export function useANS() {
         NEXT_PUBLIC_PROGRAM!,
         "unset_resolver",
         [record.nameHash, getFormattedU128Input(category)],
-        NEXT_PUBLIC_FEES_SET_PRIMARY
+        NEXT_PUBLIC_FEES_UNSET_PRIMARY,
+        false
       );
 
       requestTransaction && requestTransaction(aleoTransaction)
@@ -363,5 +367,5 @@ export function useANS() {
   }
 
   return {register, transfer, convertToPrivate, convertToPublic, setPrimaryName, unsetPrimaryName,
-    setResolver, unsetResolver};
+    setResolver, unsetResolver, calcPrice, getFormattedNameInput};
 }
