@@ -15,15 +15,21 @@ import {RefreshIcon} from "@/components/icons/refresh";
 import {useANS} from "@/lib/hooks/use-ans";
 import {Status} from "@/types";
 import {useClient} from "@/lib/hooks/use-client";
-import {set} from "husky";
+import ToggleSwitch from "@/components/ui/toggle-switch";
+import {useRecords} from "@/lib/hooks/use-records";
+import {useSWRConfig} from "swr";
+import {useCredit} from "@/lib/hooks/use-credit";
 
 
 const NamePage: NextPageWithLayout = () => {
-  const NEXT_PUBLIC_PROGRAM = process.env.NEXT_PUBLIC_PROGRAM;
+  const NEXT_PUBLIC_REGISTRAR_PROGRAM = process.env.NEXT_PUBLIC_REGISTRAR_PROGRAM;
   const router = useRouter();
   const {publicKey} = useWallet();
-  const {register} = useANS();
+  const {mutate} = useSWRConfig();
+  const {register, calcPrice, getFormattedNameInput} = useANS();
   const {getAddress} = useClient();
+  const {getCreditRecord} = useCredit();
+  const {publicBalance} = useRecords();
   const [available, setAvailable] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isValid, setIsValid] = useState(false);
@@ -31,9 +37,12 @@ const NamePage: NextPageWithLayout = () => {
   const [owner, setOwner] = useState("");
   const [status, setStatus] = useState("Registering");
   const [triggerRecheck, setTriggerRecheck] = useState(0);
-  const [nameInputs, setNameInputs] = useState([0, 0, 0, 0]);
+  const [nameInputs, setNameInputs] = useState(['', '', '', '']);
   const [showAleoTools, setShowAleoTools] = useState(false);
   const [name, setName] = useState("");
+  const [price, setPrice] = useState(2);
+  const [record, setRecord] = useState("");
+  const [isPrivate, setIsPrivate] = useState<boolean>(true);
 
   let {slug} = router.query;
 
@@ -54,15 +63,27 @@ const NamePage: NextPageWithLayout = () => {
     const is_valid = /^[a-z0-9-_]{1,64}$/.test(name);
     setIsValid(is_valid);
     if (is_valid) {
+      const ans_price = calcPrice(name);
+      setPrice(ans_price / 1000000);
       getAddress(name)
         .then((address) => {
           setAvailable(false);
           setOwner(address);
         }).catch((error) => {
+          // refresh balance
+          mutate('getBalance');
           setAvailable(true);
-          const nameInputs = padArray(splitStringToBigInts(name), 4);
           // @ts-ignore
-          setNameInputs(nameInputs);
+          setNameInputs(getFormattedNameInput(name));
+          if (publicKey) {
+            getCreditRecord(ans_price, 1).then((record) => {
+              setRecord(record.plaintext?.toString() || "");
+            }).catch((error) => {
+              setRecord("");
+            });
+          } else {
+            setRecord("");
+          }
       }).finally(() => {
         setLoading(false);
       });
@@ -71,7 +92,7 @@ const NamePage: NextPageWithLayout = () => {
 
   const handleRegister = async (event: any) => {
     event.preventDefault();
-    await register(name, (running: boolean, status: Status) => {
+    await register(name, isPrivate, (running: boolean, status: Status) => {
       setRegistering(running);
       setStatus(status.message);
       if (!running) {
@@ -105,12 +126,15 @@ const NamePage: NextPageWithLayout = () => {
                   {!loading && available &&
                       <>
                           <div className="mt-3 text-sm tracking-tighter text-gray-600 dark:text-gray-400 sm:block">
-                              Register price: <span className="bg-gray-700 p-1 pl-2 pr-2 rounded-lg text-gray-300 font-bold">5 ALEO</span>
+                              Register price: <span className="bg-gray-700 p-1 pl-2 pr-2 rounded-lg text-gray-300 font-bold">{price} ALEO</span>
                           </div>
                           <div
                               className="mt-3 text-sm tracking-tighter text-gray-600 dark:text-gray-400 sm:block place-content-center">
                             {publicKey && !registering &&
-                                <Button className="bg-sky-500" onClick={handleRegister}>Register</Button>
+                                <div className="flex items-center">
+                                    <Button className="bg-sky-500 mr-5" onClick={handleRegister}>Register</Button>
+                                    <ToggleSwitch label="Private fee" isToggled={isPrivate} setIsToggled={setIsPrivate} />
+                                </div>
                             }
                             {publicKey && registering &&
                                 <Button className="bg-sky-500" disabled={true}><RefreshIcon className="inline motion-safe:animate-spin"/> {status}</Button>
@@ -118,25 +142,27 @@ const NamePage: NextPageWithLayout = () => {
                             {!publicKey && <WalletMultiButton className="bg-sky-500">Connect Wallet to
                                 Register</WalletMultiButton>}
                               <div className="mt-5">
-                                  <div onClick={toggleAleoTools} className="cursor-pointer block text-xs font-medium uppercase tracking-wider text-gray-900 dark:text-white sm:text-sm">REGISTRATION VIA <span className="text-sky-500">aleo.tools</span>{showAleoTools ? " < " : " > "}</div>
-                                  <div className={`overflow-hidden transition-max-height duration-500 ${showAleoTools ? 'max-h-96' : 'max-h-0'}`}>
-                                    <span>If registration through the Leo Wallet is not possible, <ActiveLink href="https://aleo.tools/develop" target="_blank" className="text-sky-500 underline">aleo.tools</ActiveLink> is another convenient option for registration. Here are the steps to follow. After clicking the 'Register' button above, the transaction records will be displayed in the confirmation pop-up window, you can copy them to use in aleo.tools</span>
-                                    <ol className="list-decimal ml-6">
+                                  <div onClick={toggleAleoTools} className="cursor-pointer block text-xs font-medium uppercase tracking-wider text-gray-900 dark:text-white sm:text-sm">OR REGISTRATION VIA <span className="text-sky-500">aleo.tools</span>{showAleoTools ? " < " : " > "}</div>
+                                  <div className={`overflow-hidden transition-max-height duration-500 ${showAleoTools ? 'max-h-120' : 'max-h-0'}`}>
+                                    <span className="leading-loose">If registration through the Leo Wallet is not possible, <ActiveLink href="https://aleo.tools/develop" target="_blank" className="text-sky-500 underline">aleo.tools</ActiveLink> is another convenient option for registration. Here are the steps to follow. After clicking the 'Register' button above, the transaction records will be displayed in the confirmation pop-up window, you can copy them to use in aleo.tools</span>
+                                    <ol className="list-decimal ml-6 leading-loose">
                                         <li>Open <ActiveLink href="https://aleo.tools/develop" target="_blank" className="text-sky-500 underline">aleo.tools</ActiveLink> in your web browser.</li>
-                                        <li>In the 'Program ID' field, enter <CopyToClipboardText text={NEXT_PUBLIC_PROGRAM} /> and click the search icon</li>
-                                        <li>Provide your PRIVATE_KEY in the corresponding 'Private Key' field</li>
-                                        <li>Switch to the 'Execute On-Chain' mode</li>
-                                        <li>Enter <CopyToClipboardText text="3.8"/> in the "Fee" field</li>
-                                        <li>In the 'Fee Record' field, enter a record that contains at least 3.8 credits.</li>
-                                        <li>Expand the 'register' function and fill in the following fields</li>
+                                        <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">Program ID</span> Enter <CopyToClipboardText text={NEXT_PUBLIC_REGISTRAR_PROGRAM} /> and click the search icon</li>
+                                        <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">Private Key</span> Enter your PRIVATE_KEY</li>
+                                        <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">Execute On-Chain</span> Turn on</li>
+                                        <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">Fee</span> Enter <CopyToClipboardText text="0.37"/></li>
+                                        {isPrivate && publicKey &&
+                                            <>
+                                                <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">Private Fee</span> Turn on</li>
+                                                <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">Fee Record</span> Enter a record that contains at least 0.37 credits.</li>
+                                           </>
+                                        }
+                                        <li>Expand the <span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300"> > register_fld</span> function and fill in the following fields</li>
                                         <ol className="list-disc">
-                                            <li>data1: Enter <CopyToClipboardText text={nameInputs[0] + 'u128'}/></li>
-                                            <li>data2: Enter <CopyToClipboardText text={nameInputs[1] + 'u128'}/></li>
-                                            <li>data3: Enter <CopyToClipboardText text={nameInputs[2] + 'u128'}/></li>
-                                            <li>data4: Enter <CopyToClipboardText text={nameInputs[3] + 'u128'}/></li>
-                                            <li>r1: Enter {publicKey?<CopyToClipboardText text={publicKey}/>:"the address which will own the name"}</li>
-                                            <li>r2: Enter a record containing at least 5 credits.</li>
-                                            <li>Click the "Run" button</li>
+                                            <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">r0</span> Enter <CopyToClipboardText text={'[' + nameInputs.join(",") + ']'}/></li>
+                                            <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">r1</span> Enter {publicKey?<CopyToClipboardText text={publicKey}/> : "the address which will own the name"}</li>
+                                            <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">r2</span> Enter {record != ""?<CopyToClipboardText text={record}/> : ("a record containing at least " + price + " credits")}.</li>
+                                            <li>Click the <span className="bg-green-700 p-1 pl-2 pr-2 rounded-lg text-white">Run</span> button</li>
                                         </ol>
                                     </ol>
                                   </div>

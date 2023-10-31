@@ -12,7 +12,7 @@ export function useCredit() {
   const { openModal } = useModal();
   const {addTransaction} = useTransaction();
   const {getAddress} = useClient();
-  const {publicKey, requestRecords, requestTransaction} = useWallet();
+  const {publicKey, requestRecordPlaintexts, requestTransaction} = useWallet();
 
   const notify = React.useCallback((type: TypeOptions, message: string) => {
     toast({ type, message });
@@ -20,7 +20,7 @@ export function useCredit() {
 
   const getCreditRecord = async (amount: number, count: number) => {
     return new Promise((resolve, reject) => {
-      requestRecords!("credits.aleo")
+      requestRecordPlaintexts!("credits.aleo")
       .then((records) => {
         records = records.filter((rec) => !rec.spent);
         if (records.length < count) {
@@ -39,7 +39,7 @@ export function useCredit() {
           return;
         }
 
-        console.log(matchRecords)
+        console.log(matchRecords);
 
         const maxMicroCreditRecord = matchRecords.reduce((maxRec, currentRec) => {
             return +currentRec.data.microcredits.substring(0, currentRec.data.microcredits.length - 11) >=

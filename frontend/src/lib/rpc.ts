@@ -1,5 +1,4 @@
 import { JSONRPCClient } from 'json-rpc-2.0';
-import { bigIntToString, joinBigIntsToString, parseStringToBigIntArray } from '@/lib/util';
 import * as process from "process";
 
 const ALEO_URL = process.env.NEXT_PUBLIC_ALEO_URL!;
@@ -10,6 +9,13 @@ export async function getHeight(): Promise<number> {
   const client = getClient();
   const height = await client.request('getHeight', {});
   return height;
+}
+
+export async function getPublicBalance(address: string): Promise<number> {
+  const response = await fetch(`${ALEO_URL}program/credits.aleo/mapping/account/${address}`);
+  return response.text().then((balance) => {
+    return parseInt(balance.replaceAll('"', '')) || 0;
+  });
 }
 
 export async function getTransactionsForProgram(programId: string, functionName: string): Promise<any> {
@@ -43,21 +49,6 @@ export async function getTransaction(transactionId: string): Promise<any> {
   }
   const transaction = await response.json();
   return transaction;
-}
-
-export async function getResolver(): Promise<any> {
-  const setResolverTransactionsMetadata = await getAleoTransactionsForProgram(PROGRAM, 'set_resolver');
-  const unsetResolverTransactionsMetadata = await getAleoTransactionsForProgram(PROGRAM, 'unset_resolver');
-  const mintedNFTs = setResolverTransactionsMetadata.map((txM: any) => {
-    const urlBigInts = parseStringToBigIntArray(txM.transaction.execution.transitions[0].inputs[0].value);
-    const relativeUrl = joinBigIntsToString(urlBigInts);
-    return {
-      url: relativeUrl,
-      edition: parseInt(txM.transaction.execution.transitions[0].inputs[1].value.slice(0, -6)),
-      inputs: txM.transaction.execution.transitions[0].inputs
-    }
-  });
-  return mintedNFTs;
 }
 
 export async function getSettingsStatus(): Promise<number> {
