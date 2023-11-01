@@ -181,6 +181,7 @@ async fn main() -> std::io::Result<()> {
             .service(resolver)
             .service(public_ans)
             .service(resolvers)
+            .service(subdomains)
             
     })
     .bind("0.0.0.0:8080")?
