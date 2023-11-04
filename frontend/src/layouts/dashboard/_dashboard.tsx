@@ -18,7 +18,7 @@ function HeaderRightArea() {
   return (
     <div className="relative order-last flex shrink-0 items-center gap-3 sm:gap-6 lg:gap-8">
       <SearchButton/>
-      <WalletMultiButton className="bg-[#1253fa]">{primaryName?(primaryName + ".ans"):undefined}</WalletMultiButton>
+      <WalletMultiButton className="bg-[#1253fa]">{primaryName}</WalletMultiButton>
     </div>
   );
 }

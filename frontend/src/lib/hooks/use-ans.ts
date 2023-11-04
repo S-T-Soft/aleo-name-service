@@ -4,7 +4,7 @@ import React from "react";
 import * as process from "process";
 import {Transaction, WalletAdapterNetwork, WalletNotConnectedError} from "@demox-labs/aleo-wallet-adapter-base";
 import {useRecords} from "@/lib/hooks/use-records";
-import {StatusChangeCallback} from "@/types";
+import {Record, StatusChangeCallback} from "@/types";
 import toast from "@/components/ui/toast";
 import {TypeOptions} from "react-toastify";
 import {useTransaction} from "@/lib/hooks/use-transaction";
@@ -16,10 +16,12 @@ export function useANS() {
   const NEXT_PUBLIC_PROGRAM = process.env.NEXT_PUBLIC_PROGRAM;
   const NEXT_PUBLIC_REGISTRAR_PROGRAM = process.env.NEXT_PUBLIC_REGISTRAR_PROGRAM;
   const NEXT_PUBLIC_FEES_REGISTER = parseInt(process.env.NEXT_PUBLIC_FEES_REGISTER!);
+  const NEXT_PUBLIC_FEES_REGISTER_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_REGISTER_PUBLIC!);
   const NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC!);
   const NEXT_PUBLIC_FEES_CONVERT_TO_PRIVATE = parseInt(process.env.NEXT_PUBLIC_FEES_CONVERT_TO_PRIVATE!);
   const NEXT_PUBLIC_FEES_SET_PRIMARY = parseInt(process.env.NEXT_PUBLIC_FEES_SET_PRIMARY!);
   const NEXT_PUBLIC_FEES_UNSET_PRIMARY = parseInt(process.env.NEXT_PUBLIC_FEES_UNSET_PRIMARY!);
+  const NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD = parseInt(process.env.NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD!);
   const NEXT_PUBLIC_FEES_TRANSFER_PRIVATE = parseInt(process.env.NEXT_PUBLIC_FEES_TRANSFER_PRIVATE!);
   const NEXT_PUBLIC_FEES_TRANSFER_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_TRANSFER_PUBLIC!);
 
@@ -81,6 +83,33 @@ export function useANS() {
         addTransaction("register", txId, [name], onStatusChange);
       })
       .catch((error) => {
+        notify("error", error.message);
+        onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
+      });
+  }
+
+  const registerSubName = async (name: string, parentRecord: Record, isPrivate: boolean, onStatusChange?: StatusChangeCallback) => {
+    if (!publicKey) throw new WalletNotConnectedError();
+
+    onStatusChange && onStatusChange(true, {hasError: false, message: "Registering"});
+
+    const aleoTransaction = Transaction.createTransaction(
+      publicKey,
+      WalletAdapterNetwork.Testnet,
+      NEXT_PUBLIC_PROGRAM!,
+      "register_" + (parentRecord.private ? "private" : "public"),
+      [getFormattedNameInput(name),
+        parentRecord.private ? parentRecord.record : parentRecord.nameHash,
+        publicKey, '0u128'],
+      NEXT_PUBLIC_FEES_REGISTER_PUBLIC,
+      isPrivate // use private fee, or will leak the user address information
+    );
+
+    requestTransaction && requestTransaction(
+        aleoTransaction
+      ).then((txId) => {
+        addTransaction("registerSubdomain", txId, [name], onStatusChange);
+      }).catch((error) => {
         notify("error", error.message);
         onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
       });
@@ -288,7 +317,7 @@ export function useANS() {
     });
   }
 
-  const setResolver = async (name: string, category: string, content: string, onStatusChange?: StatusChangeCallback) => {
+  const setResolverRecord = async (name: string, category: string, content: string, onStatusChange?: StatusChangeCallback) => {
     if (!publicKey) throw new WalletNotConnectedError();
     onStatusChange && onStatusChange(true, {hasError: false, message: "Setting"});
 
@@ -306,9 +335,9 @@ export function useANS() {
         publicKey,
         WalletAdapterNetwork.Testnet,
         NEXT_PUBLIC_PROGRAM!,
-        "set_resolver",
+        "set_resolver_record",
         [record.nameHash, getFormattedU128Input(category), getFormattedNameInput(content)],
-        NEXT_PUBLIC_FEES_SET_PRIMARY,
+        NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD,
         false
       );
 
@@ -327,7 +356,7 @@ export function useANS() {
     }
   }
 
-  const unsetResolver = async (name: string, category: string, onStatusChange?: StatusChangeCallback) => {
+  const unsetResolverRecord = async (name: string, category: string, onStatusChange?: StatusChangeCallback) => {
     if (!publicKey) throw new WalletNotConnectedError();
     onStatusChange && onStatusChange(true, {hasError: false, message: "Unsetting"});
 
@@ -345,7 +374,7 @@ export function useANS() {
         publicKey,
         WalletAdapterNetwork.Testnet,
         NEXT_PUBLIC_PROGRAM!,
-        "unset_resolver",
+        "unset_resolver_record",
         [record.nameHash, getFormattedU128Input(category)],
         NEXT_PUBLIC_FEES_UNSET_PRIMARY,
         false
@@ -367,5 +396,6 @@ export function useANS() {
   }
 
   return {register, transfer, convertToPrivate, convertToPublic, setPrimaryName, unsetPrimaryName,
-    setResolver, unsetResolver, calcPrice, getFormattedNameInput};
+    setResolver: setResolverRecord, unsetResolver: unsetResolverRecord, calcPrice, getFormattedNameInput,
+    registerSubName};
 }

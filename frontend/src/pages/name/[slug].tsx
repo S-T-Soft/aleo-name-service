@@ -44,15 +44,14 @@ const NamePage: NextPageWithLayout = () => {
   const [record, setRecord] = useState("");
   const [isPrivate, setIsPrivate] = useState<boolean>(true);
 
-  let {slug} = router.query;
-
   useEffect(() => {
+    const {slug} = router.query;
     if (typeof slug === 'string' && slug.endsWith('.ans')) {
-      setName(slug.split('.')[0])
+      setName(slug.split('.').slice(0, -1).join('.'))
     } else if (typeof slug === 'string') {
       setName(slug);
     }
-  }, [slug]);
+  }, [router.query]);
 
   const toggleAleoTools = () => {
     setShowAleoTools(!showAleoTools);
@@ -77,7 +76,11 @@ const NamePage: NextPageWithLayout = () => {
           setNameInputs(getFormattedNameInput(name));
           if (publicKey) {
             getCreditRecord(ans_price, 1).then((record) => {
-              setRecord(record.plaintext?.toString() || "");
+              if (record) {
+                setRecord(record.plaintext);
+              } else {
+                setRecord("");
+              }
             }).catch((error) => {
               setRecord("");
             });
@@ -157,7 +160,7 @@ const NamePage: NextPageWithLayout = () => {
                                                 <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">Fee Record</span> Enter a record that contains at least 0.37 credits.</li>
                                            </>
                                         }
-                                        <li>Expand the <span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300"> > register_fld</span> function and fill in the following fields</li>
+                                        <li>Expand the <span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300"> {">"} register_fld</span> function and fill in the following fields</li>
                                         <ol className="list-disc">
                                             <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">r0</span> Enter <CopyToClipboardText text={'[' + nameInputs.join(",") + ']'}/></li>
                                             <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">r1</span> Enter {publicKey?<CopyToClipboardText text={publicKey}/> : "the address which will own the name"}</li>

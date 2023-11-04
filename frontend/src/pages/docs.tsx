@@ -2,6 +2,7 @@ import type { NextPageWithLayout } from '@/types';
 import { NextSeo } from 'next-seo';
 import DashboardLayout from '@/layouts/dashboard/_dashboard';
 import { CodeBlock } from '@/components/CodeBlock';
+import * as process from "process";
 
 type SectionProps = {
   title: string;
@@ -36,24 +37,26 @@ export function Section({
 }
 
 const GettingStartedPage: NextPageWithLayout = () => {
+  const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
+
   const addressToPrimaryName = `
 // Replace "aleo1s......abcdef" with the address you want to lookup.
 const address = "aleo1s......abcdef";
-const response = await fetch(\`https://api.aleonames.id/primary_name/\${address}\`);
+const response = await fetch(\`${NEXT_PUBLIC_API_URL}/primary_name/\${address}\`);
 const { name } = await response.json();
   `;
   const nameToAddress = `
 // Replace "test.ans" with your ANS name. 
 // For private name, the address will be "Private Registration".
 const name = "test.ans";
-const response = await fetch(\`https://api.aleonames.id/address/\${name}\`);
+const response = await fetch(\`${NEXT_PUBLIC_API_URL}/address/\${name}\`);
 const { address } = await response.json();
   `;
   const resolverContent = `
 // Replace "test.ans" with your ANS name. replace category with category you want to lookup.
 const name = "test.ans";
 const category = "btc";
-const response = await fetch(\`https://api.aleonames.id/resolver?name=\${name}&category=\${category}\`);
+const response = await fetch(\`${NEXT_PUBLIC_API_URL}/resolver?name=\${name}&category=\${category}\`);
 const { content } = await response.json();
   `;
 

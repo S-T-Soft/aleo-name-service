@@ -19,10 +19,10 @@ export function useCredit() {
   }, []);
 
   const getCreditRecord = async (amount: number, count: number) => {
-    return new Promise((resolve, reject) => {
+    return new Promise<{plaintext: string}>((resolve, reject) => {
       requestRecordPlaintexts!("credits.aleo")
       .then((records) => {
-        records = records.filter((rec) => !rec.spent);
+        records = records.filter((rec) => !rec.spent && rec.data.microcredits !== "0u64.private");
         if (records.length < count) {
           const message = `You need ${count} records at least to finish this transaction`;
           reject({message});
@@ -34,7 +34,7 @@ export function useCredit() {
           +rec.data.microcredits.substring(0, rec.data.microcredits.length - 11) >= amount);
 
         if (matchRecords.length == 0) {
-          const message = "You don't have enough credits";
+          const message = "You don't have enough private credits";
           reject({message});
           return;
         }
