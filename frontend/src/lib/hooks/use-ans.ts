@@ -21,6 +21,7 @@ export function useANS() {
   const NEXT_PUBLIC_FEES_CONVERT_TO_PRIVATE = parseInt(process.env.NEXT_PUBLIC_FEES_CONVERT_TO_PRIVATE!);
   const NEXT_PUBLIC_FEES_SET_PRIMARY = parseInt(process.env.NEXT_PUBLIC_FEES_SET_PRIMARY!);
   const NEXT_PUBLIC_FEES_UNSET_PRIMARY = parseInt(process.env.NEXT_PUBLIC_FEES_UNSET_PRIMARY!);
+  const NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD = parseInt(process.env.NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD!);
   const NEXT_PUBLIC_FEES_TRANSFER_PRIVATE = parseInt(process.env.NEXT_PUBLIC_FEES_TRANSFER_PRIVATE!);
   const NEXT_PUBLIC_FEES_TRANSFER_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_TRANSFER_PUBLIC!);
 
@@ -336,7 +337,7 @@ export function useANS() {
         NEXT_PUBLIC_PROGRAM!,
         "set_resolver_record",
         [record.nameHash, getFormattedU128Input(category), getFormattedNameInput(content)],
-        NEXT_PUBLIC_FEES_SET_PRIMARY,
+        NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD,
         false
       );
 
