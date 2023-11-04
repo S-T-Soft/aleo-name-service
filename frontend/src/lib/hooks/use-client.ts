@@ -1,4 +1,5 @@
 import * as process from "process";
+import {Record} from "@/types";
 
 export function useClient() {
   const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -51,9 +52,7 @@ export function useClient() {
         fetch(`${NEXT_PUBLIC_API_URL}/primary_name/${publicKey}`)
           .then((response) => response.json())
           .then((data) => {
-            const nameParts = data.name.split(".");
-            nameParts.pop();
-            resolve(nameParts.join(","));
+            resolve(data.name);
           })
           .catch((error) => {
             resolve("");
@@ -64,5 +63,25 @@ export function useClient() {
     });
   }
 
-  return {getAddress, getNameHash, getPrimaryName, getName};
+  const getSubNames = async (name: string) => {
+    return new Promise<Array<Record>>((resolve, reject) => {
+      fetch(`${NEXT_PUBLIC_API_URL}/subdomain/${name}`)
+        .then((response) => response.json())
+        .then((data: Array<{name: string, address: string, name_hash: string}>) => {
+          resolve(data.map(item => {
+            return {
+              name: item.name,
+              private: item.address == "",
+              isPrimaryName: false,
+              nameHash: item.name_hash
+            } as Record;
+          }));
+        })
+        .catch((error) => {
+          resolve([]);
+        });
+    });
+  }
+
+  return {getAddress, getNameHash, getPrimaryName, getName, getSubNames};
 }

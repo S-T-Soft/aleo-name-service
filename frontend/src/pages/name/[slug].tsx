@@ -44,15 +44,14 @@ const NamePage: NextPageWithLayout = () => {
   const [record, setRecord] = useState("");
   const [isPrivate, setIsPrivate] = useState<boolean>(true);
 
-  let {slug} = router.query;
-
   useEffect(() => {
+    const {slug} = router.query;
     if (typeof slug === 'string' && slug.endsWith('.ans')) {
-      setName(slug.split('.')[0])
+      setName(slug.split('.').slice(0, -1).join('.'))
     } else if (typeof slug === 'string') {
       setName(slug);
     }
-  }, [slug]);
+  }, [router.query]);
 
   const toggleAleoTools = () => {
     setShowAleoTools(!showAleoTools);

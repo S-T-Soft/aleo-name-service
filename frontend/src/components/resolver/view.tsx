@@ -86,7 +86,7 @@ export default function ResolverView({ record, ...props }: {record: Record}) {
         <AddressRecordItem key={'address-'+address.key} resolver={address}/>
       ))}
       {canAddResolver && <div className="mt-5 border-t-[1px] border-t-gray-500 flex justify-end">
-        {!showForm && <Button className="bg-sky-500 mt-5" onClick={() => setShowForm(true)}>Add Address Resolver</Button>}
+        {!showForm && <Button className="bg-sky-500 mt-5" onClick={() => setShowForm(true)}>Add Address Record</Button>}
         {showForm && <AddRecordForm name={record.name}/>}
       </div>}
     </div>

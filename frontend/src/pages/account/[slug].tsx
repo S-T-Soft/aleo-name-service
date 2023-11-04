@@ -11,6 +11,7 @@ import {useClient} from "@/lib/hooks/use-client";
 import ResolverView from "@/components/resolver/view";
 import PrivateName from "@/pages/account/private-name";
 import PublicName from "@/pages/account/public-name";
+import SubNameView from "@/components/subname/view";
 
 
 const ManageNamePage: NextPageWithLayout = () => {
@@ -19,6 +20,7 @@ const ManageNamePage: NextPageWithLayout = () => {
   const {getAddress} = useClient();
   const {convertToPrivate, convertToPublic, setPrimaryName, unsetPrimaryName, transfer} = useANS();
   const {records} = useRecords();
+  const [activeTab, setActiveTab] = useState('profile');
   const [available, setAvailable] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isPrivate, setIsPrivate] = useState(true);
@@ -28,14 +30,6 @@ const ManageNamePage: NextPageWithLayout = () => {
   const [name, setName] = useState("");
   const [record, setRecord] = useState<Record | undefined>(undefined);
 
-  let {slug} = router.query;
-
-  useEffect(() => {
-    if (typeof slug === 'string') {
-      setName(slug)
-    }
-  }, [slug]);
-
   useEffect(() => {
     if (!loading && name && name.length > 0) {
       if (available || !isMine) {
@@ -43,6 +37,17 @@ const ManageNamePage: NextPageWithLayout = () => {
       }
     }
   }, [loading, isMine, name]);
+
+  useEffect(() => {
+    const tab = router.query.tab;
+    const { slug } = router.query;
+    if (tab) {
+      setActiveTab(tab as string);
+    }
+    if (typeof slug === 'string') {
+      setName(slug)
+    }
+  }, [router.query]);
 
   useEffect(() => {
     // Only do the check if the name is valid and the public key is available
@@ -78,21 +83,50 @@ const ManageNamePage: NextPageWithLayout = () => {
           Manage <span className="text-sky-500">{name}</span>
           {isPrimaryName && <span className="bg-green-700 mx-3 px-2 py-1 rounded-lg text-lg sm:text-xl">PrimaryName</span>}
         </h2>
+        <div>
+            <ul className="flex text-gray-300">
+                <li className="-mb-px mr-2 last:mr-0 flex-auto text-center">
+                  <button
+                      className={`font-bold uppercase px-5 py-3 block leading-normal ${activeTab === 'profile' ? 'text-sky-500' : ''}`}
+                      onClick={() => router.push(name + '?tab=profile')}
+                      style={{ border: 'none', background: 'transparent', outline: 'none', cursor: 'pointer' }}
+                  >
+                      Profile
+                  </button>
+                </li>
+                <li className="-mb-px mr-2 last:mr-0 flex-auto text-center">
+                  <button
+                      className={`font-bold uppercase px-5 py-3 block leading-normal ${activeTab === 'subnames' ? 'text-sky-500' : ''}`}
+                      onClick={() => router.push(name + '?tab=subnames')}
+                      style={{ border: 'none', background: 'transparent', outline: 'none', cursor: 'pointer' }}
+                  >
+                      Subnames
+                  </button>
+                </li>
+              {!loading && !isPrivate && <li className="-mb-px mr-2 last:mr-0 flex-auto text-center">
+                  <button
+                      className={`font-bold uppercase px-5 py-3 block leading-normal ${activeTab === 'resolver' ? 'text-sky-500' : ''}`}
+                      onClick={() => router.push(name + '?tab=resolver')}
+                      style={{ border: 'none', background: 'transparent', outline: 'none', cursor: 'pointer' }}
+                  >
+                      Resolver
+                  </button>
+                </li>}
+            </ul>
+        </div>
         <div
           className="mb-6 rounded-lg bg-white shadow-card dark:bg-light-dark z-50 mx-auto w-full max-w-full">
           <div className="relative items-center justify-between gap-4 p-4">
-            {loading ? (
-              <span>Loading...</span>
-            ) : available || !isMine ? (
-              <span>Redirecting...</span>
-            ) : isPrivate ? (
+          {loading && <span>Loading...</span>}
+          {!loading && available || !isMine && <span>Redirecting...</span>}
+          {!loading && activeTab == "profile" && isPrivate &&
               <PrivateName
                 name={name}
                 setTriggerRecheck={() => {setTriggerRecheck(triggerRecheck + 1)}}
                 convertToPublic={convertToPublic}
                 transfer={transfer}
-              />
-            ) : (
+              />}
+          {!loading && activeTab == "profile" && !isPrivate &&
               <PublicName
                 name={name}
                 isPrimaryName={isPrimaryName}
@@ -101,14 +135,11 @@ const ManageNamePage: NextPageWithLayout = () => {
                 setPrimaryName={setPrimaryName}
                 unsetPrimaryName={unsetPrimaryName}
                 transfer={transfer}
-              />
-            )}
+              />}
+          {!loading && activeTab == "subnames" && <SubNameView record={record!}/>}
+          {!loading && activeTab == "resolver" && !isPrivate && <ResolverView record={record!}/>}
           </div>
         </div>
-        {!loading && !isPrivate && false && <div
-            className="rounded-lg bg-white shadow-card dark:bg-light-dark z-50 mx-auto w-full max-w-full gap-4 p-4">
-            <ResolverView record={record!}/>
-        </div>}
       </div>
     </>
   );

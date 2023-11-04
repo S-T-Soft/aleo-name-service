@@ -33,7 +33,6 @@ export default function PrivateName({name, setTriggerRecheck, convertToPublic, t
       {!converting && <Button className="bg-sky-500 mr-10" onClick={handleConvert}>Convert to Public</Button>}
       {converting && <Button className="bg-sky-500 mr-10" disabled={true}><RefreshIcon
           className="inline motion-safe:animate-spin"/> {convertStatus}</Button>}
-      <Button className="bg-gray-700" disabled={true}>Register Subdomain</Button>
     </div>
     <Transfer name={name} transfer={transfer} setTriggerRecheck={setTriggerRecheck}/>
   </>;

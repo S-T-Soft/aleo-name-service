@@ -106,11 +106,12 @@ export function createRecordContext() {
     return new Promise<Record[]>((resolve, reject) => {
       requestRecords!(NEXT_PUBLIC_PROGRAM!).then((records) => {
         return Promise.all(records.filter((rec) => !rec.spent && rec.recordName === "NFT").map(async (rec) => {
+          const name_hash = rec.data.data.replace(".private", "");
           return {
-            name: await getName(rec.data.data.replace(".private", "")),
+            name: await getName(name_hash),
             private: true,
             isPrimaryName: false,
-            nameHash: rec.data.data,
+            nameHash: name_hash,
             record: rec
           } as Record;
         }));

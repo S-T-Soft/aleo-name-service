@@ -41,6 +41,7 @@ export function useTransaction() {
         case "transfer":
         case "convertToPublic":
         case "register":
+        case "registerSubdomain":
         case "convertToPrivate":
           refreshRecords("manual");
           break;

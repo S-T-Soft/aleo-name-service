@@ -71,12 +71,10 @@ export default function PublicName({
       {!isPrimaryName && !setting && <Button className="bg-sky-500 ml-10" onClick={handleSetting}>Set Primary</Button>}
       {!isPrimaryName && setting && <Button className="bg-sky-500 ml-10" disabled={true}><RefreshIcon
           className="inline motion-safe:animate-spin"/> {settingStatus}</Button>}
-    </div>
-    <div className="leading-10 mt-5">
-      {!converting && <Button className="bg-sky-500 mr-10" onClick={handleConvert}>Convert to Private</Button>}
-      {converting && <Button className="bg-sky-500 mr-10" disabled={true}><RefreshIcon
+
+      {!converting && <Button className="bg-sky-500 ml-10" onClick={handleConvert}>Convert to Private</Button>}
+      {converting && <Button className="bg-sky-500 ml-10" disabled={true}><RefreshIcon
           className="inline motion-safe:animate-spin"/> {convertStatus}</Button>}
-      <Button className="bg-gray-700 mr-10" disabled={true}>Register Subdomain</Button>
     </div>
     <Transfer name={name} transfer={transfer} setTriggerRecheck={setTriggerRecheck}/>
   </>;

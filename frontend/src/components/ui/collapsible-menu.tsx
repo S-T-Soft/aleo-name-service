@@ -92,6 +92,7 @@ export function MenuItem({ name, icon, href, dropdownItems }: MenuItemProps) {
           href={href}
           className="relative flex h-12 items-center whitespace-nowrap rounded-lg px-4 text-sm text-gray-500 transition-all hover:text-brand dark:hover:text-white"
           activeClassName=" !text-white"
+          activeMethod={href == "/" ? "equals" : "startsWith"}
         >
           <span className="relative z-[1] ltr:mr-3 rtl:ml-3">{icon}</span>
           <span className="relative z-[1]"> {name}</span>
