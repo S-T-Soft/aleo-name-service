@@ -1,5 +1,5 @@
 import * as process from "process";
-import {Record} from "@/types";
+import {Record, Resolver} from "@/types";
 
 export function useClient() {
   const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -83,5 +83,44 @@ export function useClient() {
     });
   }
 
-  return {getAddress, getNameHash, getPrimaryName, getName, getSubNames};
+  const getResolvers = async (name: string) => {
+    return new Promise<Array<Resolver>>((resolve, reject) => {
+      fetch(`${NEXT_PUBLIC_API_URL}/resolver/${name}`)
+        .then((response) => response.json())
+        .then((data: Array<{name: string, category: string, name_hash: string}>) => {
+          resolve(data.map(item => {
+            return {
+              key: item.category,
+              value: item.name,
+              nameHash: item.name_hash
+            } as Resolver;
+          }));
+        })
+        .catch((error) => {
+          resolve([]);
+        });
+    });
+  }
+
+  const getPublicDomain = async (publicKey: string) => {
+    return new Promise<Array<Record>>((resolve, reject) => {
+      fetch(`${NEXT_PUBLIC_API_URL}/public_ans/${publicKey}`)
+        .then((response) => response.json())
+        .then((data: Array<{name: string, address: string, name_hash: string, is_primary_name: boolean}>) => {
+          resolve(data.map(item => {
+            return {
+              name: item.name,
+              private: false,
+              isPrimaryName: item.is_primary_name,
+              nameHash: item.name_hash
+            } as Record;
+          }));
+        })
+        .catch((error) => {
+          resolve([]);
+        });
+    });
+  }
+
+  return {getAddress, getNameHash, getPrimaryName, getName, getSubNames, getPublicDomain, getResolvers};
 }

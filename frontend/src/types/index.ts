@@ -24,8 +24,6 @@ export interface Resolver {
   nameHash: string,
   key: string;
   value: string;
-  canRemove: boolean;
-  isCustomResolver: boolean;
 }
 
 export interface Status {

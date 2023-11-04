@@ -2,7 +2,6 @@ import React, {useEffect, useState} from "react";
 import {StatusChangeCallback} from "@/types";
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
 import {useRecords} from "@/lib/hooks/use-records";
-import {useSWRConfig} from "swr";
 import {TypeOptions} from "react-toastify";
 import toast from "@/components/ui/toast";
 
@@ -15,7 +14,6 @@ interface AnsTransaction {
 
 
 export function useTransaction() {
-  const {mutate} = useSWRConfig();
   const {refreshRecords, syncPrimaryName} = useRecords();
   const {transactionStatus} = useWallet();
   const [transactions, setTransactions] = useState<AnsTransaction[]>([]);
@@ -51,7 +49,6 @@ export function useTransaction() {
           break;
         case "setResolver":
         case "unsetResolver":
-          await mutate('getAllResolver');
           break;
       }
 

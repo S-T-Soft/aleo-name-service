@@ -19,7 +19,7 @@ export function useCredit() {
   }, []);
 
   const getCreditRecord = async (amount: number, count: number) => {
-    return new Promise((resolve, reject) => {
+    return new Promise<{plaintext: string}>((resolve, reject) => {
       requestRecordPlaintexts!("credits.aleo")
       .then((records) => {
         records = records.filter((rec) => !rec.spent && rec.data.microcredits !== "0u64.private");

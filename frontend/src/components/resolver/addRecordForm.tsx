@@ -7,8 +7,9 @@ import {DynamicAddressIcon} from "@/assets/address/DynamicAddressIcon";
 import Button from "@/components/ui/button";
 import {RefreshIcon} from "@/components/icons/refresh";
 
-export const AddRecordForm = ({name}: React.PropsWithChildren<{
-  name: string
+export const AddRecordForm = ({name, onSuccess}: React.PropsWithChildren<{
+  name: string,
+  onSuccess: CallableFunction
 }>) => {
   const {setResolver} = useANS();
   const [chooseCoin, setChooseCoin] = useState("");
@@ -26,6 +27,7 @@ export const AddRecordForm = ({name}: React.PropsWithChildren<{
       if (status.message === 'Finalized') {
         setChooseCoin("");
         setContent("");
+        onSuccess();
       }
     });
   }
