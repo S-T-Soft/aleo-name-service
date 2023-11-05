@@ -7,7 +7,6 @@ import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
 import {useEffect, useState} from "react";
 import Button from "@/components/ui/button";
 import {WalletMultiButton} from "@demox-labs/aleo-wallet-adapter-reactui/";
-import { padArray, splitStringToBigInts } from '@/lib/util';
 import * as process from "process";
 import ActiveLink from "@/components/ui/links/active-link";
 import CopyToClipboardText from "@/components/copy_to_clipboard";
@@ -19,6 +18,7 @@ import ToggleSwitch from "@/components/ui/toggle-switch";
 import {useRecords} from "@/lib/hooks/use-records";
 import {useSWRConfig} from "swr";
 import {useCredit} from "@/lib/hooks/use-credit";
+import Head from "next/head";
 
 
 const NamePage: NextPageWithLayout = () => {
@@ -45,13 +45,15 @@ const NamePage: NextPageWithLayout = () => {
   const [isPrivate, setIsPrivate] = useState<boolean>(true);
 
   useEffect(() => {
-    const {slug} = router.query;
-    if (typeof slug === 'string' && slug.endsWith('.ans')) {
-      setName(slug.split('.').slice(0, -1).join('.'))
-    } else if (typeof slug === 'string') {
-      setName(slug);
+    if (router.isReady) {
+      const {slug} = router.query;
+      if (typeof slug === 'string' && slug.endsWith('.ans')) {
+        setName(slug.split('.').slice(0, -1).join('.'))
+      } else if (typeof slug === 'string') {
+        setName(slug);
+      }
     }
-  }, [router.query]);
+  }, [router.isReady && router.query]);
 
   const toggleAleoTools = () => {
     setShowAleoTools(!showAleoTools);
@@ -106,9 +108,12 @@ const NamePage: NextPageWithLayout = () => {
 
   return (
     <>
+      <Head>
+        <title>{`${name} | Search | Aleo Name Service`}</title>
+      </Head>
       <NextSeo
         title={`${name} | Search | Aleo Name Service`}
-        description="Aleo Name Service"
+        description="Aleo Name Service search page"
       />
       <div className="mx-auto w-full px-4 pt-8 pb-14 sm:px-6 sm:pb-20 sm:pt-12 lg:px-8 xl:px-10 2xl:px-0">
         <div className="mb-10">

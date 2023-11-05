@@ -1,6 +1,7 @@
 import type {NextPageWithLayout} from '@/types';
 import {Record} from "@/types";
 import {NextSeo} from 'next-seo';
+import Head from 'next/head';
 import DashboardLayout from '@/layouts/dashboard/_dashboard';
 import {useRouter} from 'next/router'
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
@@ -39,15 +40,17 @@ const ManageNamePage: NextPageWithLayout = () => {
   }, [loading, isMine, name]);
 
   useEffect(() => {
-    const tab = router.query.tab || "profile";
-    const { slug } = router.query;
-    if (tab) {
-      setActiveTab(tab as string);
+    if (router.isReady) {
+      const tab = router.query.tab || "profile";
+      const {slug} = router.query;
+      if (tab) {
+        setActiveTab(tab as string);
+      }
+      if (typeof slug === 'string') {
+        setName(slug)
+      }
     }
-    if (typeof slug === 'string') {
-      setName(slug)
-    }
-  }, [router.query]);
+  }, [router.isReady, router.query]);
 
   useEffect(() => {
     // Only do the check if the name is valid and the public key is available
@@ -74,9 +77,12 @@ const ManageNamePage: NextPageWithLayout = () => {
 
   return (
     <>
+      <Head>
+        <title>{`${name} - ${activeTab} | Manage | Aleo Name Service`}</title>
+      </Head>
       <NextSeo
         title={`${name} - ${activeTab} | Manage | Aleo Name Service`}
-        description="Aleo Name Service"
+        description="Aleo Name Service manage page"
       />
       <div className="mx-auto w-full px-4 pt-8 pb-14 sm:px-6 sm:pb-20 lg:px-8 xl:px-10 2xl:px-0">
         <h2 className="mb-6 text-lg font-medium tracking-wider text-gray-900 dark:text-white sm:mb-10 sm:text-2xl text-left">
