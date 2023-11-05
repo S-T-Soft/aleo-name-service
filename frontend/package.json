@@ -28,6 +28,7 @@
     "classnames": "^2.3.2",
     "framer-motion": "^10.12.18",
     "jotai": "^2.2.2",
+    "json-rpc-2.0": "^1.6.0",
     "lodash": "^4.17.21",
     "next": "12.1.6",
     "next-pwa": "5.5.4",
@@ -51,14 +52,14 @@
     "stream-http": "^3.2.0",
     "swiper": "^10.0.4",
     "swr": "^2.2.1",
-    "uuid": "^9.0.0",
-    "json-rpc-2.0": "^1.6.0"
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.4.1",
     "@types/overlayscrollbars": "^1.12.1",
     "@types/react": "^18.2.14",
     "@types/uuid": "^9.0.2",
+    "@types/gtag.js": "*",
     "autoprefixer": "^10.4.14",
     "husky": "^8.0.3",
     "postcss": "^8.4.25",

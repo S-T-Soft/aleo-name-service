@@ -6,6 +6,8 @@ import Document, {
   NextScript,
 } from 'next/document';
 
+const gtag = `https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`;
+
 class CustomDocument extends Document {
   static async getInitialProps(ctx: DocumentContext) {
     return Document.getInitialProps(ctx);
@@ -19,6 +21,21 @@ class CustomDocument extends Document {
             href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap"
             rel="stylesheet"
           />
+          {(process.env.NODE_ENV === "production") && <>
+          <script async src={gtag} />
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', {
+                  page_path: window.location.pathname
+                });
+              `,
+            }}
+          /></>
+          }
         </Head>
         <body>
           <Main />
