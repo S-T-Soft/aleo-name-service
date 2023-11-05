@@ -120,9 +120,9 @@ const NamePage: NextPageWithLayout = () => {
       await transferCredits("transfer_public_to_private", publicKey, price, (running: boolean, status: Status) => {
         setRegistering(running);
         setStatus(status.message);
-        if (!running) {
+        if (!running && !status.hasError) {
           toast(
-            {type: "success",
+            {type: "warning",
               message: "Please wait a few minutes for the wallet to synchronize, then refresh the page to register the name"},
             {autoClose: 20000}
           );
