@@ -25,10 +25,10 @@ export function useANS() {
   const NEXT_PUBLIC_FEES_TRANSFER_PRIVATE = parseInt(process.env.NEXT_PUBLIC_FEES_TRANSFER_PRIVATE!);
   const NEXT_PUBLIC_FEES_TRANSFER_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_TRANSFER_PUBLIC!);
 
-  const {records, refreshRecords} = useRecords();
+  const {records} = useRecords();
   const {addTransaction} = useTransaction();
   const {getCreditRecord} = useCredit();
-  const {getAddress, getNameHash} = useClient();
+  const {getAddress} = useClient();
   const {publicKey, requestTransaction} = useWallet();
 
   const notify = React.useCallback((type: TypeOptions, message: string) => {

@@ -7,6 +7,7 @@ import {
   FaBug,
   FaExclamationCircle
 } from "react-icons/fa";
+import {ToastOptions} from "react-toastify/dist/types";
 
 export const displayIcon = (type: string) => {
   switch (type) {
@@ -29,14 +30,14 @@ interface ToastMessageProps {
   message: string;
 }
 
-const ToastMessage = ({ type, message }: ToastMessageProps): Id => {
+const ToastMessage = ({ type, message }: ToastMessageProps, options?: ToastOptions): Id => {
   // @ts-ignore
   return toast[type](
     <div className="flex">
       <div className="flex-grow px-2 py-1 text-lg">
         {message}
       </div>
-    </div>
+    </div>, options
   );
 }
 

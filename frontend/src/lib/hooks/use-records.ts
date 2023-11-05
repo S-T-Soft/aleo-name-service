@@ -11,6 +11,8 @@ export function createRecordContext() {
   const {getPrimaryName,getName,getPublicDomain} = useClient();
   const {publicKey, requestRecords} = useWallet();
   const [records, setRecords] = useLocalStorage<Record[]>('records', []);
+  const [names, setNames] = useState<string[]>([]);
+  const [namesHash, setNamesHash] = useState<string[]>([]);
   const [primaryName, setPrimaryName] = useLocalStorage('primaryName', '');
   const [storedAddress, setStoredAddress] = useLocalStorage('address', '');
   const [lastUpdateTime, setLastUpdateTime] = useLocalStorage('lastUpdateTime', 0);
@@ -24,6 +26,13 @@ export function createRecordContext() {
           return rec;
         }));
   }, [primaryNameMemo]);
+
+  useEffect(() => {
+    if (records) {
+      setNames(records.map(item => item.name));
+      setNamesHash(records.map(item => item.nameHash!))
+    }
+  }, [records]);
 
   const getBalance = async () => {
     if (publicKey) {
@@ -67,6 +76,11 @@ export function createRecordContext() {
     });
   }
 
+  const clearRecords = () => {
+    setPrimaryName("");
+    setLastUpdateTime(0);
+    setRecords([]);
+  }
 
   const refreshRecords = async (mode: string) => {
     if (mode !== "manual" && storedAddress === publicKey) {
@@ -77,9 +91,7 @@ export function createRecordContext() {
     if (publicKey) {
       setLoading(true);
       if (storedAddress !== publicKey) {
-        setPrimaryName("");
-        setLastUpdateTime(0);
-        setRecords([]);
+        clearRecords();
       }
       Promise.all([loadPrivateRecords(), getPublicDomain(publicKey)])
         .then(([records, publicRecords]) => {
@@ -100,11 +112,13 @@ export function createRecordContext() {
           setLoading(false);
         }
       );
+    } else {
+      clearRecords();
     }
   }
 
   useEffect(() => {
-    syncPrimaryName();
+    refreshRecords("auto");
   }, [publicKey]);
 
   const addRecord = (record: Record) => {
@@ -131,20 +145,24 @@ export function createRecordContext() {
   }
 
   return {
-    records: records,
-    publicBalance: publicBalance,
-    primaryName: primaryName,
-    loading: loading,
-    refreshRecords: refreshRecords,
-    addRecord: addRecord,
-    removeRecord: removeRecord,
-    replaceRecord: replaceRecord,
-    syncPrimaryName: syncPrimaryName
+    records,
+    names,
+    namesHash,
+    publicBalance,
+    primaryName,
+    loading,
+    refreshRecords,
+    addRecord,
+    removeRecord,
+    replaceRecord,
+    syncPrimaryName
   };
 }
 
 interface RecordContextState {
   records?: Record[];
+  names?: string[];
+  namesHash?: string[];
   publicBalance: number;
   primaryName?: string;
   loading: boolean;
@@ -157,6 +175,8 @@ interface RecordContextState {
 
 const DEFAULT = {
   records: [],
+  names: [],
+  namesHash: [],
   publicBalance: 0,
   primaryName: "",
   loading: false,

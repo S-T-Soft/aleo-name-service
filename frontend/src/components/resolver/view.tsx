@@ -54,17 +54,17 @@ const AddressRecordItem = ({ resolver }: { resolver: Resolver }) => {
     <span className="w-20 flex-none pl-2">{resolver.key.toUpperCase()}</span>
     <span className="text-gray-500 flex-1 truncate">{setting ? status : resolver.value}</span>
     <span className="text-gray-500 px-1">{copied ? <Check className="inline text-green-700"/> : <Copy className="inline"/>}</span>
-    {!setting && <span className="rounded-lg text-red-900 px-2 transform hover:bg-red-900 hover:text-white hover:scale-x-2 transition-all duration-300" onClick={removeRecord}>
+    {resolver.canDelete && !setting && <span className="rounded-lg text-red-900 px-2 transform hover:bg-red-900 hover:text-white hover:scale-x-2 transition-all duration-300" onClick={removeRecord}>
         <Close className="inline"/>
     </span>}
-    {setting && <span className="rounded-lg px-2 transform bg-red-900 text-white scale-x-2">
+    {resolver.canDelete && setting && <span className="rounded-lg px-2 transform bg-red-900 text-white scale-x-2">
         <RefreshIcon className="inline motion-safe:animate-spin"/>
     </span>}
   </div>
 }
 
 
-export default function ResolverView({ record, ...props }: {record: Record}) {
+export default function ResolverView({ record, onlyView = false, ...props }: {record: Record, onlyView: boolean}) {
   const {getResolvers} = useClient();
   const [canAddResolver, setCanAddResolver] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -76,6 +76,9 @@ export default function ResolverView({ record, ...props }: {record: Record}) {
     if (record) {
       setLoading(true);
       getResolvers(record.name).then((resolvers) => {
+        onlyView && resolvers.forEach((resolver) => {
+          resolver.canDelete = !onlyView;
+        });
         setAddresses(resolvers);
       }).finally(() => {
         setLoading(false);
@@ -97,7 +100,7 @@ export default function ResolverView({ record, ...props }: {record: Record}) {
       {addresses.map((address) => (
         <AddressRecordItem key={'address-'+address.key} resolver={address}/>
       ))}
-      {canAddResolver && <div className="mt-5 border-t-[1px] border-t-gray-500 flex justify-end">
+      {!onlyView && canAddResolver && <div className="mt-5 border-t-[1px] border-t-gray-500 flex justify-end">
         {!showForm && <Button className="bg-sky-500 mt-5" onClick={() => setShowForm(true)}>Add Address Record</Button>}
         {showForm && <AddRecordForm name={record.name} onSuccess={doRefresh}/>}
       </div>}
