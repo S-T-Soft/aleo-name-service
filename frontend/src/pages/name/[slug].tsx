@@ -1,10 +1,10 @@
-import type {NextPageWithLayout} from '@/types';
+import type {NextPageWithLayout, Record} from '@/types';
 import {NextSeo} from 'next-seo';
 import DashboardLayout from '@/layouts/dashboard/_dashboard';
 import SearchView from "@/components/search/view";
 import {useRouter} from 'next/router'
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
-import {useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import Button from "@/components/ui/button";
 import {WalletMultiButton} from "@demox-labs/aleo-wallet-adapter-reactui/";
 import * as process from "process";
@@ -19,6 +19,8 @@ import {useRecords} from "@/lib/hooks/use-records";
 import {useSWRConfig} from "swr";
 import {useCredit} from "@/lib/hooks/use-credit";
 import Head from "next/head";
+import ResolverView from "@/components/resolver/view";
+import toast from "@/components/ui/toast";
 
 
 const NamePage: NextPageWithLayout = () => {
@@ -26,10 +28,11 @@ const NamePage: NextPageWithLayout = () => {
   const router = useRouter();
   const {publicKey} = useWallet();
   const {mutate} = useSWRConfig();
+  const {transferCredits} = useCredit();
   const {register, calcPrice, getFormattedNameInput} = useANS();
   const {getAddress} = useClient();
   const {getCreditRecord} = useCredit();
-  const {publicBalance} = useRecords();
+  const {names, publicBalance} = useRecords();
   const [available, setAvailable] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isValid, setIsValid] = useState(false);
@@ -60,9 +63,14 @@ const NamePage: NextPageWithLayout = () => {
   }
 
   useEffect(() => {
+    setOwner("");
     setLoading(true);
     const is_valid = /^[a-z0-9-_]{1,64}$/.test(name);
     setIsValid(is_valid);
+    if (names?.includes(name + ".ans")) {
+      router.push(`/account/${name}.ans`);
+      return;
+    }
     if (is_valid) {
       const ans_price = calcPrice(name);
       setPrice(ans_price / 1000000);
@@ -93,7 +101,7 @@ const NamePage: NextPageWithLayout = () => {
         setLoading(false);
       });
     }
-  }, [name, publicKey, triggerRecheck]);
+  }, [name, names, publicKey, triggerRecheck]);
 
   const handleRegister = async (event: any) => {
     event.preventDefault();
@@ -104,6 +112,23 @@ const NamePage: NextPageWithLayout = () => {
         setTriggerRecheck(triggerRecheck + 1);
       }
     });
+  };
+
+  const handleConvert = async (event: any) => {
+    event.preventDefault();
+    if (publicKey) {
+      await transferCredits("transfer_public_to_private", publicKey, price, (running: boolean, status: Status) => {
+        setRegistering(running);
+        setStatus(status.message);
+        if (!running) {
+          toast(
+            {type: "success",
+              message: "Please wait a few minutes for the wallet to synchronize, then refresh the page to register the name"},
+            {autoClose: 20000}
+          );
+        }
+      });
+    }
   };
 
   return (
@@ -140,7 +165,12 @@ const NamePage: NextPageWithLayout = () => {
                               className="mt-3 text-sm tracking-tighter text-gray-600 dark:text-gray-400 sm:block place-content-center">
                             {publicKey && !registering &&
                                 <div className="flex items-center">
-                                    <Button className="bg-sky-500 mr-5" onClick={handleRegister}>Register</Button>
+                                  {(record == "" && publicBalance > price * 1000000) && <>
+                                      <Button className="bg-sky-500 mr-5" onClick={handleConvert}>Create Record</Button>
+                                      <Button className="bg-gray-700 mr-5" disabled={true}>Register</Button>
+                                  </>}
+                                  {(record != "" || publicBalance <= price * 1000000) &&
+                                      <Button className="bg-sky-500 mr-5" onClick={handleRegister}>Register</Button>}
                                     <ToggleSwitch label="Private fee" isToggled={isPrivate} setIsToggled={setIsPrivate} />
                                 </div>
                             }
@@ -193,6 +223,10 @@ const NamePage: NextPageWithLayout = () => {
             </div>
           </div>
         </div>
+        {owner.length > 60 &&
+            <div className="rounded-lg bg-white p-5 shadow-card dark:bg-light-dark z-50 mx-auto w-full max-w-full xs:w-[480px] sm:w-[600px] lg:w-[900px]">
+                <ResolverView record={{ name: name + ".ans" } as Record} onlyView={true}/>
+            </div>}
       </div>
     </>
   );

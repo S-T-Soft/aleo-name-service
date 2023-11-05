@@ -74,14 +74,14 @@ export function useCredit() {
         onStatusChange && onStatusChange(false, {hasError: true, message});
         return;
       }
-    } else {
-      const message = `Recipient must be a valid ANS (****.ans)`;
+    } else if (recipient.trim().length < 63) {
+      const message = `Recipient must be a valid address or ANS (****.ans)`;
       notify("error", message);
       onStatusChange && onStatusChange(false, {hasError: true, message});
       return;
     }
 
-    if (recipient === publicKey) {
+    if (recipient === publicKey && (method == "transfer_private" || method == "transfer_public")) {
       const message = "You cannot transfer to yourself";
       notify("error", message);
       onStatusChange && onStatusChange(false, {hasError: true, message});
@@ -98,7 +98,7 @@ export function useCredit() {
             "credits.aleo",
             method,
             [record, recipient, amount + "u64"],
-            method === "transfer_private" ? 3000 : 1507000
+            method == "transfer_private" ? 3000 : 137000
           );
           if (requestTransaction)
             return requestTransaction(aleoTransaction);
@@ -112,7 +112,8 @@ export function useCredit() {
             "credits.aleo",
             method,
             [recipient, amount + "u64"],
-            method === "transfer_public" ? 3016000 : 1514000
+            method === "transfer_public" ? 264000 : 137000,
+            false
           );
           if (requestTransaction)
             return requestTransaction(aleoTransaction);

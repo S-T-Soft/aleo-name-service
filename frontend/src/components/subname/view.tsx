@@ -10,8 +10,7 @@ import {useRecords} from "@/lib/hooks/use-records";
 
 export default function SubNameView({record, ...props}: { record: Record }) {
   const {getSubNames} = useClient();
-  const {records} = useRecords();
-  const [myNames, setMyNames] = useState<string[]>([]);
+  const {namesHash} = useRecords();
   const [loading, setLoading] = useBoolean(true);
   const [refresh, setRefresh] = useState(0);
   const [subnames, setSubnames] = useState<Record[]>([]);
@@ -26,12 +25,6 @@ export default function SubNameView({record, ...props}: { record: Record }) {
       })
     }
   }, [record, refresh]);
-
-  useEffect(() => {
-    if (records) {
-      setMyNames(records.map(item => item.nameHash!));
-    }
-  }, [records]);
 
   const doRefresh = () => {
     setRefresh(refresh + 1);
@@ -65,7 +58,7 @@ export default function SubNameView({record, ...props}: { record: Record }) {
                     {!subName.private && <span className="bg-gray-600 mx-3 px-2 py-1 rounded-lg">Public</span>}
                   </td>
                   <td className="text-center">
-                    {myNames.includes(subName.nameHash!) && <AnchorLink href={`/account/${subName.name}.${record.name}`}>
+                    {(namesHash || []).includes(subName.nameHash!) && <AnchorLink href={`/account/${subName.name}.${record.name}`}>
                       <Button className="bg-sky-500 px-4 py-1 h-8 sm:h-8 sm:px-4">
                         Manage
                       </Button>

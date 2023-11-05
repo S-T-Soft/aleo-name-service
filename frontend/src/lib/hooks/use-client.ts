@@ -22,7 +22,7 @@ export function useClient() {
 
   const getNameHash = async (name: string) => {
     return new Promise<string>((resolve, reject) => {
-      fetch(`${NEXT_PUBLIC_API_URL}/name_to_hash/${name}.ans`)
+      fetch(`${NEXT_PUBLIC_API_URL}/name_to_hash/${name}`)
         .then((response) => response.json())
         .then((data) => {
           resolve(data.name_hash);
@@ -92,7 +92,8 @@ export function useClient() {
             return {
               key: item.category,
               value: item.name,
-              nameHash: item.name_hash
+              nameHash: item.name_hash,
+              canDelete: true
             } as Resolver;
           }));
         })

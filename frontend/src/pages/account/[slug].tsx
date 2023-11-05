@@ -17,7 +17,7 @@ import SubNameView from "@/components/subname/view";
 
 const ManageNamePage: NextPageWithLayout = () => {
   const router = useRouter();
-  const {publicKey} = useWallet();
+  const {wallet, publicKey} = useWallet();
   const {getAddress} = useClient();
   const {convertToPrivate, convertToPublic, setPrimaryName, unsetPrimaryName, transfer} = useANS();
   const {records} = useRecords();
@@ -72,6 +72,8 @@ const ManageNamePage: NextPageWithLayout = () => {
       }).finally(() => {
         setLoading(false);
       });
+    } else if (!wallet?.adapter.connected && name && name.length > 0) {
+      router.push(`/name/${name}`);
     }
   }, [records, name, publicKey, triggerRecheck]);
 
