@@ -8,13 +8,18 @@ import Hamburger from '@/components/ui/hamburger';
 import { MenuItems } from '@/layouts/_layout-menu';
 import React from 'react';
 import { WalletMultiButton } from '@demox-labs/aleo-wallet-adapter-reactui/';
+import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
+import {useRecords} from "@/lib/hooks/use-records";
 
 require('@demox-labs/aleo-wallet-adapter/dist/ui/styles.css');
 
 function HeaderRightArea() {
   const isMounted = useIsMounted();
   const breakpoint = useBreakpoint();
+  const { wallet } = useWallet();
+  const {primaryName} = useRecords();
   const { openDrawer, isOpen } = useDrawer();
+
   return (
     <div className="order-last flex shrink-0 items-center">
       <div className="ltr:mr-3.5 rtl:ml-3.5 ltr:sm:mr-5 rtl:sm:ml-5 xl:hidden">
@@ -30,7 +35,8 @@ function HeaderRightArea() {
             <SearchButton variant="transparent" className="dark:text-white" />
           </div>
         )}
-        <WalletMultiButton className="bg-[#1253fa]" />
+        {!wallet && <WalletMultiButton className="bg-[#1253fa]">Connect Wallet</WalletMultiButton>}
+        {wallet && <WalletMultiButton className="bg-[#1253fa]">{primaryName}</WalletMultiButton>}
       </div>
 
       <div className="lg:hidden">
