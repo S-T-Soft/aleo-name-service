@@ -75,7 +75,7 @@ const ManageNamePage: NextPageWithLayout = () => {
   return (
     <>
       <NextSeo
-        title="Aleo Name Service | Getting Started"
+        title={`${name} - ${activeTab} | Manage | Aleo Name Service`}
         description="Aleo Name Service"
       />
       <div className="mx-auto w-full px-4 pt-8 pb-14 sm:px-6 sm:pb-20 lg:px-8 xl:px-10 2xl:px-0">
