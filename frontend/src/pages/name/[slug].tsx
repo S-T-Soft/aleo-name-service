@@ -21,6 +21,7 @@ import {useCredit} from "@/lib/hooks/use-credit";
 import Head from "next/head";
 import ResolverView from "@/components/resolver/view";
 import toast from "@/components/ui/toast";
+import AnchorLink from "@/components/ui/links/anchor-link";
 
 
 const NamePage: NextPageWithLayout = () => {
@@ -210,7 +211,14 @@ const NamePage: NextPageWithLayout = () => {
                   }
                   {!loading && !available &&
                       <div className="mt-3 text-sm tracking-tighter text-gray-600 dark:text-gray-400 sm:block">
-                          Owned by <span className="bg-gray-700 p-1 pl-2 pr-2 rounded-lg text-gray-300">{owner}</span>
+                          Owned by
+                          <span className="bg-gray-700 ml-2 p-1 pl-2 pr-2 rounded-lg text-gray-300">
+                            {owner.length > 60 &&
+                                <AnchorLink href={`/names/${owner}`}>
+                                  {owner}
+                                </AnchorLink>}
+                            {owner.length < 60 && owner }
+                          </span>
                       </div>
                   }
                 </div>}

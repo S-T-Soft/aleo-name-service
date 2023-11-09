@@ -50,7 +50,7 @@ const ManageNamePage: NextPageWithLayout = () => {
         setName(slug)
       }
     }
-  }, [router.isReady, router.query]);
+  }, [router.isReady && router.query]);
 
   useEffect(() => {
     // Only do the check if the name is valid and the public key is available
