@@ -16,11 +16,6 @@ class CustomDocument extends Document {
     return (
       <Html lang="en-US" dir="ltr" className="light">
         <Head>
-          <link rel="preconnect" href="https://fonts.googleapis.com" />
-          <link
-            href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap"
-            rel="stylesheet"
-          />
           {(process.env.NODE_ENV === "production") && <>
           <script async src={gtag} />
           <script

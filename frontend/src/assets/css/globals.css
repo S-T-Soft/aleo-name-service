@@ -1,3 +1,11 @@
+@font-face {
+  font-family: 'aleo';
+  src: url('/fonts/AleofontSans-Regular.otf');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -47,6 +55,10 @@ input.spin-button-hidden::-webkit-outer-spin-button,
 input.spin-button-hidden::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+
+body {
+  font-family: aleo, sans-serif;
 }
 
 /* html,
