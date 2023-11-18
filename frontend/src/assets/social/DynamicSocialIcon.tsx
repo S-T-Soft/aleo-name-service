@@ -2,6 +2,7 @@
 import dynamic from 'next/dynamic'
 
 import { QuestionCircleSVG } from '@/assets/icons'
+import {useState} from "react";
 
 export const socialIconTypes = {
   'com.discord': dynamic(() => import('./SocialDiscord.svg')),
@@ -20,7 +21,7 @@ export const socialIconColors = {
   'com.discourse': undefined,
   'com.github': '#000000',
   'com.medium': '#000000',
-  'com.twitter': '#65C5FC',
+  'com.twitter': '#F5F5F5',
   'com.youtube': '#FF0000',
   'org.telegram': '#2BABEE',
   'xyz.mirror': undefined,
@@ -30,17 +31,25 @@ export const socialIconColors = {
 export const DynamicSocialIcon = ({
   name,
   showDefault = true,
+  fill,
   ...props
 }: {
   name: keyof typeof socialIconTypes | string
   showDefault?: boolean
   fill?: string
 }) => {
+  const [hover, setHover] = useState(false);
+
   if (name in socialIconTypes) {
     const key = name as keyof typeof socialIconTypes
     const Icon = socialIconTypes[key] as any
-    const fill = socialIconColors[key]
-    return <Icon {...props} fill={fill} />
+    const fillOrigin = fill == undefined ? socialIconColors[key] : fill;
+    const fillHover = socialIconColors[key];
+    return <Icon
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{ fill: hover ? fillHover : fillOrigin }}
+      {...props} />
   }
   if (showDefault) {
     return <QuestionCircleSVG {...props} />
