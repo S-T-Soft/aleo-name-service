@@ -26,13 +26,14 @@ import AnchorLink from "@/components/ui/links/anchor-link";
 
 const NamePage: NextPageWithLayout = () => {
   const NEXT_PUBLIC_REGISTRAR_PROGRAM = process.env.NEXT_PUBLIC_REGISTRAR_PROGRAM;
+  const NEXT_PUBLIC_FEES_REGISTER = parseInt(process.env.NEXT_PUBLIC_FEES_REGISTER!);
   const router = useRouter();
   const {publicKey} = useWallet();
   const {mutate} = useSWRConfig();
   const {transferCredits} = useCredit();
   const {register, calcPrice, getFormattedNameInput} = useANS();
   const {getAddress} = useClient();
-  const {getCreditRecord} = useCredit();
+  const {getCreditRecords} = useCredit();
   const {names, publicBalance} = useRecords();
   const [available, setAvailable] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -46,6 +47,7 @@ const NamePage: NextPageWithLayout = () => {
   const [name, setName] = useState("");
   const [price, setPrice] = useState(2);
   const [record, setRecord] = useState("");
+  const [feeRecord, setFeeRecord] = useState("");
   const [isPrivate, setIsPrivate] = useState<boolean>(true);
 
   useEffect(() => {
@@ -58,6 +60,23 @@ const NamePage: NextPageWithLayout = () => {
       }
     }
   }, [router.isReady && router.query]);
+
+  const checkRecords = () => {
+    const ans_price = calcPrice(name);
+    getCreditRecords(isPrivate ? [ans_price, NEXT_PUBLIC_FEES_REGISTER] : [ans_price]).then((records) => {
+      if (records) {
+        console.log(records);
+        setRecord(records[0].plaintext);
+        isPrivate && setFeeRecord(records.length > 1 ? records[1].plaintext : "");
+      } else {
+        setRecord("");
+        setFeeRecord("");
+      }
+    }).catch((error) => {
+      setRecord("");
+      setFeeRecord("");
+    });
+  }
 
   const toggleAleoTools = () => {
     setShowAleoTools(!showAleoTools);
@@ -86,23 +105,22 @@ const NamePage: NextPageWithLayout = () => {
           // @ts-ignore
           setNameInputs(getFormattedNameInput(name));
           if (publicKey) {
-            getCreditRecord(ans_price, 1).then((record) => {
-              if (record) {
-                setRecord(record.plaintext);
-              } else {
-                setRecord("");
-              }
-            }).catch((error) => {
-              setRecord("");
-            });
+            checkRecords();
           } else {
             setRecord("");
+            setFeeRecord("");
           }
       }).finally(() => {
         setLoading(false);
       });
     }
   }, [name, names, publicKey, triggerRecheck]);
+
+  useEffect(() => {
+    if (publicKey) {
+      checkRecords();
+    }
+  }, [isPrivate, publicKey]);
 
   const handleRegister = async (event: any) => {
     event.preventDefault();
@@ -119,6 +137,23 @@ const NamePage: NextPageWithLayout = () => {
     event.preventDefault();
     if (publicKey) {
       await transferCredits("transfer_public_to_private", publicKey, price, (running: boolean, status: Status) => {
+        setRegistering(running);
+        setStatus(status.message);
+        if (!running && !status.hasError) {
+          toast(
+            {type: "warning",
+              message: "Please wait a few minutes for the wallet to synchronize, then refresh the page to register the name"},
+            {autoClose: 20000}
+          );
+        }
+      });
+    }
+  };
+
+  const handleConvertFee = async (event: any) => {
+    event.preventDefault();
+    if (publicKey) {
+      await transferCredits("transfer_public_to_private", publicKey, NEXT_PUBLIC_FEES_REGISTER, (running: boolean, status: Status) => {
         setRegistering(running);
         setStatus(status.message);
         if (!running && !status.hasError) {
@@ -170,7 +205,11 @@ const NamePage: NextPageWithLayout = () => {
                                       <Button className="bg-sky-500 mr-5" onClick={handleConvert}>Create Record</Button>
                                       <Button className="bg-gray-700 mr-5" disabled={true}>Register</Button>
                                   </>}
-                                  {(record != "" || publicBalance <= price * 1000000) &&
+                                  {(record != "" && feeRecord == "" && isPrivate && publicBalance - NEXT_PUBLIC_FEES_REGISTER > price * 1000000) && <>
+                                      <Button className="bg-sky-500 mr-5" onClick={handleConvertFee}>Create Fee Record</Button>
+                                      <Button className="bg-gray-700 mr-5" disabled={true}>Register</Button>
+                                  </>}
+                                  {((record != "" && (!isPrivate || feeRecord != "")) || publicBalance <= price * 1000000) &&
                                       <Button className="bg-sky-500 mr-5" onClick={handleRegister}>Register</Button>}
                                     <ToggleSwitch label="Private fee" isToggled={isPrivate} setIsToggled={setIsPrivate} />
                                 </div>
@@ -193,7 +232,7 @@ const NamePage: NextPageWithLayout = () => {
                                         {isPrivate && publicKey &&
                                             <>
                                                 <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">Private Fee</span> Turn on</li>
-                                                <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">Fee Record</span> Enter a record that contains at least 0.37 credits.</li>
+                                                <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">Fee Record</span> Enter {feeRecord != ""?<CopyToClipboardText text={feeRecord}/> : ("a record containing at least 0.37 credits")}.</li>
                                            </>
                                         }
                                         <li>Expand the <span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300"> {">"} register_fld</span> function and fill in the following fields</li>

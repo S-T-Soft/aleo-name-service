@@ -10,6 +10,8 @@ import { Close } from '@/components/icons/close';
 import { Sun } from '@/components/icons/sun';
 import {OptionIcon} from "@/components/icons/option";
 import {GridSVG} from "@/assets/icons";
+import {DynamicSocialIcon} from "@/assets/social/DynamicSocialIcon";
+import {BuildWithAleoDarkSVG} from "@/assets/icons";
 
 const menuItems = [
   {
@@ -31,6 +33,21 @@ const menuItems = [
     name: 'Toolbox',
     icon: <OptionIcon />,
     href: routes.toolbox,
+  }
+];
+
+const socialLinks = [
+  {
+    icon: "com.twitter",
+    link: "https://twitter.com/aleonames"
+  },
+  {
+    icon: "com.discord",
+    link: "https://discord.gg/uvWJehUmyK"
+  },
+  {
+    icon: "com.youtube",
+    link: "https://www.youtube.com/@aleonames"
   }
 ];
 
@@ -64,7 +81,7 @@ export default function Sidebar({ className }: SidebarProps) {
       </div>
 
       <Scrollbar style={{ height: 'calc(100% - 96px)' }}>
-        <div className="px-6 pb-5 2xl:px-8">
+        <div className="px-6 pb-5 2xl:px-8 flex flex-col h-full">
           <div className="mt-2">
             {menuItems.map((item, index) => (
               <MenuItem
@@ -74,6 +91,19 @@ export default function Sidebar({ className }: SidebarProps) {
                 icon={item.icon}
               />
             ))}
+          </div>
+
+          <div className="flex-grow"></div>
+
+          <div className="social-links flex flex-row justify-between items-center mb-4 w-full">
+            {socialLinks.map((item, index) => (
+              <a href={item.link} target="_blank" rel="noopener noreferrer" key={index} className="px-2">
+                <DynamicSocialIcon name={item.icon} fill="rgb(107 114 128 / var(--tw-text-opacity))" className="h-8"/>
+              </a>
+            ))}
+            <a href="https://aleo.org" target="_blank" rel="noopener noreferrer">
+                <BuildWithAleoDarkSVG fill="rgb(107 114 128 / var(--tw-text-opacity))" className="h-8"/>
+              </a>
           </div>
         </div>
       </Scrollbar>
