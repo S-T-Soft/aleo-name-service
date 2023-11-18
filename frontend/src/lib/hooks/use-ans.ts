@@ -27,7 +27,7 @@ export function useANS() {
 
   const {records} = useRecords();
   const {addTransaction} = useTransaction();
-  const {getCreditRecord} = useCredit();
+  const {getCreditRecords} = useCredit();
   const {getAddress} = useClient();
   const {publicKey, requestTransaction} = useWallet();
 
@@ -60,14 +60,14 @@ export function useANS() {
 
     let price = calcPrice(name);
 
-    getCreditRecord(price, isPrivate ? 2 : 1)
-      .then((record) => {
+    getCreditRecords(isPrivate ? [price, NEXT_PUBLIC_FEES_REGISTER] : [price])
+      .then((records) => {
         const aleoTransaction = Transaction.createTransaction(
           publicKey,
           WalletAdapterNetwork.Testnet,
           NEXT_PUBLIC_REGISTRAR_PROGRAM!,
           "register_fld",
-          [getFormattedNameInput(name), publicKey, record],
+          [getFormattedNameInput(name), publicKey, records[0]],
           NEXT_PUBLIC_FEES_REGISTER,
           isPrivate // use private fee, or will leak the user address information
         );
