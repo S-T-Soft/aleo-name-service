@@ -7,17 +7,14 @@ import { useDrawer } from '@/components/drawer-views/context';
 import Hamburger from '@/components/ui/hamburger';
 import { MenuItems } from '@/layouts/_layout-menu';
 import React from 'react';
-import { WalletMultiButton } from '@demox-labs/aleo-wallet-adapter-reactui/';
-import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
-import {useRecords} from "@/lib/hooks/use-records";
+import {WalletMultiButton} from "@/components/WalletMultiButton";
+
 
 require('@demox-labs/aleo-wallet-adapter/dist/ui/styles.css');
 
 function HeaderRightArea() {
   const isMounted = useIsMounted();
   const breakpoint = useBreakpoint();
-  const { wallet } = useWallet();
-  const {primaryName} = useRecords();
   const { openDrawer, isOpen } = useDrawer();
 
   return (
@@ -35,8 +32,7 @@ function HeaderRightArea() {
             <SearchButton variant="transparent" className="dark:text-white" />
           </div>
         )}
-        {!wallet && <WalletMultiButton className="bg-[#1253fa]">Connect Wallet</WalletMultiButton>}
-        {wallet && <WalletMultiButton className="bg-[#1253fa]">{primaryName}</WalletMultiButton>}
+        <WalletMultiButton>Connect Wallet</WalletMultiButton>
       </div>
 
       <div className="lg:hidden">

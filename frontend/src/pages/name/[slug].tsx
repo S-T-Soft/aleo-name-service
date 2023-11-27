@@ -6,7 +6,6 @@ import {useRouter} from 'next/router'
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
 import React, {useEffect, useState} from "react";
 import Button from "@/components/ui/button";
-import {WalletMultiButton} from "@demox-labs/aleo-wallet-adapter-reactui/";
 import * as process from "process";
 import ActiveLink from "@/components/ui/links/active-link";
 import CopyToClipboardText from "@/components/copy_to_clipboard";
@@ -22,6 +21,7 @@ import Head from "next/head";
 import ResolverView from "@/components/resolver/view";
 import toast from "@/components/ui/toast";
 import AnchorLink from "@/components/ui/links/anchor-link";
+import {WalletMultiButton} from "@/components/WalletMultiButton";
 
 
 const NamePage: NextPageWithLayout = () => {
@@ -42,7 +42,7 @@ const NamePage: NextPageWithLayout = () => {
   const [owner, setOwner] = useState("");
   const [status, setStatus] = useState("Registering");
   const [triggerRecheck, setTriggerRecheck] = useState(0);
-  const [nameInputs, setNameInputs] = useState(['', '', '', '']);
+  const [nameInputs, setNameInputs] = useState("");
   const [showAleoTools, setShowAleoTools] = useState(false);
   const [name, setName] = useState("");
   const [price, setPrice] = useState(2);
@@ -103,7 +103,7 @@ const NamePage: NextPageWithLayout = () => {
           mutate('getBalance');
           setAvailable(true);
           // @ts-ignore
-          setNameInputs(getFormattedNameInput(name));
+          setNameInputs(getFormattedNameInput(name, 4));
           if (publicKey) {
             checkRecords();
           } else {
@@ -217,8 +217,7 @@ const NamePage: NextPageWithLayout = () => {
                             {publicKey && registering &&
                                 <Button className="bg-sky-500" disabled={true}><RefreshIcon className="inline motion-safe:animate-spin"/> {status}</Button>
                             }
-                            {!publicKey && <WalletMultiButton className="bg-sky-500">Connect Wallet to
-                                Register</WalletMultiButton>}
+                            {!publicKey && <WalletMultiButton>Connect Wallet to Register</WalletMultiButton>}
                               <div className="mt-5">
                                   <div onClick={toggleAleoTools} className="cursor-pointer block text-xs font-medium uppercase tracking-wider text-gray-900 dark:text-white sm:text-sm">OR REGISTRATION VIA <span className="text-sky-500">aleo.tools</span>{showAleoTools ? " < " : " > "}</div>
                                   <div className={`overflow-hidden transition-max-height duration-500 ${showAleoTools ? 'max-h-120' : 'max-h-0'}`}>
@@ -237,7 +236,7 @@ const NamePage: NextPageWithLayout = () => {
                                         }
                                         <li>Expand the <span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300"> {">"} register_fld</span> function and fill in the following fields</li>
                                         <ol className="list-disc">
-                                            <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">r0</span> Enter <CopyToClipboardText text={'[' + nameInputs.join(",") + ']'}/></li>
+                                            <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">r0</span> Enter <CopyToClipboardText text={nameInputs}/></li>
                                             <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">r1</span> Enter {publicKey?<CopyToClipboardText text={publicKey}/> : "the address which will own the name"}</li>
                                             <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">r2</span> Enter {record != ""?<CopyToClipboardText text={record}/> : ("a record containing at least " + price + " credits")}.</li>
                                             <li>Click the <span className="bg-green-700 p-1 pl-2 pr-2 rounded-lg text-white">Run</span> button</li>

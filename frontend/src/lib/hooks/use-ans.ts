@@ -40,9 +40,9 @@ export function useANS() {
     return `${bint}u128`;
   }
 
-  const getFormattedNameInput = (name: string) => {
-    const nameInputs = padArray(splitStringToBigInts(name), 4);
-    return [`${nameInputs[0]}u128`, `${nameInputs[1]}u128`, `${nameInputs[2]}u128`, `${nameInputs[3]}u128`];
+  const getFormattedNameInput = (name: string, length: number) => {
+    const nameInputs = padArray(splitStringToBigInts(name), length);
+    return `[${nameInputs.map(i => i + 'u128').join(",")}]`;
   }
 
   const calcPrice = (name: string) => {
@@ -67,7 +67,7 @@ export function useANS() {
           WalletAdapterNetwork.Testnet,
           NEXT_PUBLIC_REGISTRAR_PROGRAM!,
           "register_fld",
-          [getFormattedNameInput(name), publicKey, records[0]],
+          [getFormattedNameInput(name, 4), publicKey, records[0]],
           NEXT_PUBLIC_FEES_REGISTER,
           isPrivate // use private fee, or will leak the user address information
         );
@@ -98,7 +98,7 @@ export function useANS() {
       WalletAdapterNetwork.Testnet,
       NEXT_PUBLIC_PROGRAM!,
       "register_" + (parentRecord.private ? "private" : "public"),
-      [getFormattedNameInput(name),
+      [getFormattedNameInput(name, 4),
         parentRecord.private ? parentRecord.record : parentRecord.nameHash,
         publicKey, '0u128'],
       NEXT_PUBLIC_FEES_REGISTER_PUBLIC,
@@ -336,14 +336,14 @@ export function useANS() {
         WalletAdapterNetwork.Testnet,
         NEXT_PUBLIC_PROGRAM!,
         "set_resolver_record",
-        [record.nameHash, getFormattedU128Input(category), getFormattedNameInput(content)],
+        [record.nameHash, getFormattedU128Input(category), getFormattedNameInput(content, 8)],
         NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD,
         false
       );
 
       requestTransaction && requestTransaction(aleoTransaction)
         .then((txId) => {
-          addTransaction("setResolver", txId, [name], onStatusChange);
+          addTransaction("setResolverRecord", txId, [name], onStatusChange);
         }).catch((error) => {
         notify("error", error.message);
         onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
@@ -382,7 +382,7 @@ export function useANS() {
 
       requestTransaction && requestTransaction(aleoTransaction)
         .then((txId) => {
-          addTransaction("unsetResolver", txId, [name], onStatusChange);
+          addTransaction("unsetResolverRecord", txId, [name], onStatusChange);
         }).catch((error) => {
         notify("error", error.message);
         onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
@@ -396,6 +396,6 @@ export function useANS() {
   }
 
   return {register, transfer, convertToPrivate, convertToPublic, setPrimaryName, unsetPrimaryName,
-    setResolver: setResolverRecord, unsetResolver: unsetResolverRecord, calcPrice, getFormattedNameInput,
+    setResolverRecord, unsetResolverRecord, calcPrice, getFormattedNameInput,
     registerSubName};
 }

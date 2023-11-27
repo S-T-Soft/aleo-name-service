@@ -85,13 +85,13 @@ export function useClient() {
 
   const getResolvers = async (name: string) => {
     return new Promise<Array<Resolver>>((resolve, reject) => {
-      fetch(`${NEXT_PUBLIC_API_URL}/resolver/${name}`)
+      fetch(`${NEXT_PUBLIC_API_URL}/resolvers/${name}`)
         .then((response) => response.json())
-        .then((data: Array<{name: string, category: string, name_hash: string}>) => {
+        .then((data: Array<{content: string, category: string, name_hash: string}>) => {
           resolve(data.map(item => {
             return {
               key: item.category,
-              value: item.name,
+              value: item.content,
               nameHash: item.name_hash,
               canDelete: true
             } as Resolver;
@@ -99,6 +99,25 @@ export function useClient() {
         })
         .catch((error) => {
           resolve([]);
+        });
+    });
+  }
+
+  const getResolver = async (name: string, category: string) => {
+    return new Promise<Resolver | null>((resolve, reject) => {
+      fetch(`${NEXT_PUBLIC_API_URL}/resolver?name=${name}&category=${category}`)
+        .then((response) => response.json())
+        .then((data: {content: string, category: string, name_hash: string}) => {
+          resolve({
+              key: data.category,
+              value: data.content,
+              nameHash: data.name_hash,
+              canDelete: false
+            } as Resolver
+          );
+        })
+        .catch((error) => {
+          resolve(null);
         });
     });
   }
@@ -123,5 +142,5 @@ export function useClient() {
     });
   }
 
-  return {getAddress, getNameHash, getPrimaryName, getName, getSubNames, getPublicDomain, getResolvers};
+  return {getAddress, getNameHash, getPrimaryName, getName, getSubNames, getPublicDomain, getResolvers, getResolver};
 }

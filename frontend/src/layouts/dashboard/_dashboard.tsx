@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import {useEffect, useState} from 'react';
 import cn from 'classnames';
 import { useWindowScroll } from '@/lib/hooks/use-window-scroll';
 import Hamburger from '@/components/ui/hamburger';
@@ -6,22 +6,16 @@ import { useIsMounted } from '@/lib/hooks/use-is-mounted';
 import { useDrawer } from '@/components/drawer-views/context';
 import Sidebar from '@/layouts/dashboard/_sidebar';
 import React, { FC, useMemo } from 'react';
-import { WalletMultiButton } from '@demox-labs/aleo-wallet-adapter-reactui';
 import SearchButton from "@/components/search/button";
-import {useRecords} from "@/lib/hooks/use-records";
-import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
+import {WalletMultiButton} from "@/components/WalletMultiButton";
 
 require('@demox-labs/aleo-wallet-adapter-reactui/dist/styles.css');
 
 function HeaderRightArea() {
-  const { wallet } = useWallet();
-  const {primaryName} = useRecords();
-
   return (
     <div className="relative order-last flex shrink-0 items-center gap-3 sm:gap-6 lg:gap-8">
       <SearchButton/>
-      {!wallet && <WalletMultiButton className="bg-[#1253fa]">Connect Wallet</WalletMultiButton>}
-      {wallet && <WalletMultiButton className="bg-[#1253fa]">{primaryName}</WalletMultiButton>}
+      <WalletMultiButton>Connect Wallet</WalletMultiButton>
     </div>
   );
 }

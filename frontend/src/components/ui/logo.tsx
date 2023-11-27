@@ -17,7 +17,7 @@ const Logo: React.FC<React.SVGAttributes<{}>> = (props) => {
       {...props}
     >
   <span className="relative flex overflow-hidden">
-    {isMounted && (isDarkMode ? <LogoIcon width="flex-shrink-0"/> : <LogoIcon width="flex-shrink-0"/>)}
+    {isMounted && (isDarkMode ? <LogoIcon width="48"/> : <LogoIcon width="48"/>)}
   </span>
     </AnchorLink>
   );

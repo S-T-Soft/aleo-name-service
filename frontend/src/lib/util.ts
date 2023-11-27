@@ -33,13 +33,22 @@ export function bigIntToString(bigIntValue: bigint): string {
 }
 
 export function splitStringToBigInts(input: string): bigint[] {
-  const chunkSize = 16; // Chunk size to split the string
-  const numChunks = Math.ceil(input.length / chunkSize);
+  const encoder = new TextEncoder(); // Create a new TextEncoder instance
+  const inputBytes = encoder.encode(input); // Encode the input string as bytes
+  const chunkSize = 16; // Chunk size to split the string in bytes
+  const numChunks = Math.ceil(inputBytes.length / chunkSize);
   const bigInts: bigint[] = [];
 
   for (let i = 0; i < numChunks; i++) {
-    const chunk = input.substr(i * chunkSize, chunkSize);
-    const bigIntValue = stringToBigInt(chunk);
+    const chunkStart = i * chunkSize;
+    const chunkEnd = chunkStart + chunkSize;
+    const chunk = inputBytes.slice(chunkStart, chunkEnd);
+    let bigIntValue = BigInt(0);
+    for (let i = 0; i < chunk.length; i++) {
+      const byteValue = BigInt(chunk[i]);
+      const shiftedValue = byteValue << BigInt(8 * i);
+      bigIntValue = bigIntValue | shiftedValue;
+    }
     bigInts.push(bigIntValue);
   }
 

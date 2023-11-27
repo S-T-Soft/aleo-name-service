@@ -94,10 +94,10 @@ const AddSubName = ({record, onSuccess}: React.PropsWithChildren<{
               <ToggleSwitch label="Private fee" isToggled={isPrivate} setIsToggled={setIsPrivate} />
             </div>
             <div className="flex flex-col md:flex-row justify-between">
-              <Button className="w-full mb-2 md:mb-0 md:w-2/5 bg-gray-700 text-white"
+              {!registering && <Button className="w-full mb-2 md:mb-0 md:w-2/5 bg-gray-700 text-white"
                       onClick={() => setShowModal(false)}>
                 Cancel
-              </Button>
+              </Button>}
               {!registering && <Button
                   className={`w-full md:w-2/5 ${(!available) ? 'bg-gray-700' : 'bg-sky-500'}`}
                   disabled={!available}
@@ -105,7 +105,7 @@ const AddSubName = ({record, onSuccess}: React.PropsWithChildren<{
               >
                 {checking ? "Checking..." : "Register"}
               </Button>}
-              {registering && <Button className="w-full md:w-2/5 bg-sky-500" disabled={true}><RefreshIcon
+              {registering && <Button className="w-full md:w-full bg-sky-500" disabled={true}><RefreshIcon
             className="inline motion-safe:animate-spin"/> {status}</Button>}
             </div>
           </div>
