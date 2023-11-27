@@ -10,10 +10,12 @@ import {useANS} from "@/lib/hooks/use-ans";
 import {RefreshIcon} from "@/components/icons/refresh";
 import {useBoolean} from "react-use";
 import {useClient} from "@/lib/hooks/use-client";
+import coinsWithIcons from "@/constants/coinsWithIcons.json";
+import coinsWithoutIcons from "@/constants/coinsWithoutIcons.json";
 
 
 const AddressRecordItem = ({ resolver }: { resolver: Resolver }) => {
-  const {unsetResolver} = useANS();
+  const {unsetResolverRecord} = useANS();
   const [copied, setCopied] = useState(false);
   const [setting, setSetting] = useState(false);
   const [status, setStatus] = useState("");
@@ -38,7 +40,7 @@ const AddressRecordItem = ({ resolver }: { resolver: Resolver }) => {
 
   const removeRecord = async (event: any) => {
     event.preventDefault();
-    await unsetResolver(resolver.nameHash, resolver.key, (running: boolean, status: Status) => {
+    await unsetResolverRecord(resolver.nameHash, resolver.key, (running: boolean, status: Status) => {
       setSetting(running);
       setStatus(status.message);
       if (status.message === 'Finalized') {
@@ -76,15 +78,20 @@ export default function ResolverView({ record, onlyView = false, ...props }: {re
     if (record) {
       setLoading(true);
       getResolvers(record.name).then((resolvers) => {
-        onlyView && resolvers.forEach((resolver) => {
+        const addressList: Resolver[] = [];
+        resolvers.forEach((resolver) => {
           resolver.canDelete = !onlyView;
+          // check if resolver.key is in coinsWithIcons and coinsWithoutIcons
+          if (coinsWithIcons.includes(resolver.key) || coinsWithoutIcons.includes(resolver.key)) {
+            addressList.push(resolver);
+          }
         });
-        setAddresses(resolvers);
+        setAddresses(addressList);
       }).finally(() => {
         setLoading(false);
       })
     }
-  }, [record, refresh]);
+  }, [refresh]);
 
   const doRefresh = () => {
     setRefresh(refresh + 1);

@@ -55,7 +55,14 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
           <WalletProvider
             wallets={wallets}
             decryptPermission={DecryptPermission.OnChainHistory}
-            programs={["credits.aleo", process.env.NEXT_PUBLIC_PROGRAM!]}
+            programs={["credits.aleo",
+              "ans_registrar_v4.aleo",
+              "ans_registrar_v5.aleo",
+              "ans_registrar_v6.aleo",
+              "aleo_name_service_registry_v4.aleo",
+              "aleo_name_service_registry_v5.aleo",
+              "aleo_name_service_registry_v6.aleo",
+              process.env.NEXT_PUBLIC_PROGRAM!]}
             autoConnect
           >
             <WalletModalProvider>

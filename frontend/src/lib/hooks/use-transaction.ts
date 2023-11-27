@@ -47,8 +47,8 @@ export function useTransaction() {
         case "unsetPrimaryName":
           syncPrimaryName();
           break;
-        case "setResolver":
-        case "unsetResolver":
+        case "setResolverRecord":
+        case "unsetResolverRecord":
           break;
       }
 

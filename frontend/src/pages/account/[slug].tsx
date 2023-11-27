@@ -136,8 +136,7 @@ const ManageNamePage: NextPageWithLayout = () => {
               />}
           {!loading && activeTab == "profile" && !isPrivate &&
               <PublicName
-                name={name}
-                isPrimaryName={isPrimaryName}
+                record={record}
                 setTriggerRecheck={() => {setTriggerRecheck(triggerRecheck + 1)}}
                 convertToPrivate={convertToPrivate}
                 setPrimaryName={setPrimaryName}

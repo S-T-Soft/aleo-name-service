@@ -11,7 +11,7 @@ export const AddRecordForm = ({name, onSuccess}: React.PropsWithChildren<{
   name: string,
   onSuccess: CallableFunction
 }>) => {
-  const {setResolver} = useANS();
+  const {setResolverRecord} = useANS();
   const [chooseCoin, setChooseCoin] = useState("");
   const [content, setContent] = useState("");
   const [setting, setSetting] = useState(false);
@@ -21,7 +21,7 @@ export const AddRecordForm = ({name, onSuccess}: React.PropsWithChildren<{
     if (!content || content.length == 0) {
       return;
     }
-    await setResolver(name, chooseCoin, content, (running: boolean, status: Status) => {
+    await setResolverRecord(name, chooseCoin, content, (running: boolean, status: Status) => {
       setSetting(running);
       setStatus(status.message);
       if (status.message === 'Finalized') {

@@ -5,20 +5,27 @@ import {Record} from "@/types";
 import {useClient} from "@/lib/hooks/use-client";
 import useSWR from 'swr';
 import {getPublicBalance} from "@/lib/rpc";
+import * as process from "process";
+
+const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL
+  ? process.env.NEXT_PUBLIC_GATEWAY_URL
+  : "https://gateway.pinata.cloud/ipfs/";
 
 export function createRecordContext() {
   const NEXT_PUBLIC_PROGRAM = process.env.NEXT_PUBLIC_PROGRAM;
-  const {getPrimaryName,getName,getPublicDomain} = useClient();
+  const {getPrimaryName,getName,getPublicDomain,getResolver} = useClient();
   const {publicKey, requestRecords} = useWallet();
   const [records, setRecords] = useLocalStorage<Record[]>('records', []);
   const [names, setNames] = useState<string[]>([]);
   const [namesHash, setNamesHash] = useState<string[]>([]);
   const [primaryName, setPrimaryName] = useLocalStorage('primaryName', '');
+  const [avatar, setAvatar] = useLocalStorage('avatar', '');
   const [storedAddress, setStoredAddress] = useLocalStorage('address', '');
   const [lastUpdateTime, setLastUpdateTime] = useLocalStorage('lastUpdateTime', 0);
   const [loading, setLoading] = useState(false);
   const primaryNameMemo = useMemo(() => primaryName, [primaryName]);
   const {data: publicBalance} = useSWR('getBalance', () => getBalance(), {refreshInterval: 1000 * 60});
+  useSWR('refreshRecords', () => refreshRecords("auto"), {refreshInterval: 1000 * 10});
 
   useEffect(() => {
     setRecords((records || []).map((rec) => {
@@ -29,8 +36,12 @@ export function createRecordContext() {
 
   useEffect(() => {
     if (records) {
-      setNames(records.map(item => item.name));
-      setNamesHash(records.map(item => item.nameHash!))
+      const curNames = records.map(item => item.name);
+      // check if curNames is different from names
+      if (JSON.stringify(curNames) !== JSON.stringify(names)) {
+        setNames(curNames);
+        setNamesHash(records.map(item => item.nameHash!))
+      }
     }
   }, [records]);
 
@@ -54,13 +65,23 @@ export function createRecordContext() {
     });
   }
 
+  const getNameByHash = async (nameHash: string): Promise<string> => {
+    // check whether nameHash is in namesHash
+    if (namesHash.includes(nameHash)) {
+      // return from names
+      const index = namesHash.indexOf(nameHash);
+      return names[index];
+    }
+    return getName(nameHash);
+  }
+
   const loadPrivateRecords = async () => {
     return new Promise<Record[]>((resolve, reject) => {
       requestRecords!(NEXT_PUBLIC_PROGRAM!).then((records) => {
         return Promise.all(records.filter((rec) => !rec.spent && rec.data.nft_owner === undefined).map(async (rec) => {
           const name_hash = rec.data.data.replace(".private", "");
           return {
-            name: await getName(name_hash),
+            name: await getNameByHash(name_hash),
             private: true,
             isPrimaryName: false,
             nameHash: name_hash,
@@ -78,6 +99,7 @@ export function createRecordContext() {
 
   const clearRecords = () => {
     setPrimaryName("");
+    setAvatar("");
     setLastUpdateTime(0);
     setRecords([]);
   }
@@ -94,15 +116,26 @@ export function createRecordContext() {
         clearRecords();
       }
       Promise.all([loadPrivateRecords(), getPublicDomain(publicKey)])
-        .then(([records, publicRecords]) => {
+        .then(([privateRecords, publicRecords]) => {
           setStoredAddress(publicKey);
           setLastUpdateTime(Date.now());
-          setRecords(sortRecords([...records, ...publicRecords]));
+          const newRecords = sortRecords([...privateRecords, ...publicRecords]);
+          // check if newRecords is different from records
+          if (JSON.stringify(newRecords) !== JSON.stringify(records)) {
+            setRecords(newRecords);
+          }
           publicRecords.forEach(rec => {
             if (rec.isPrimaryName) {
-              setPrimaryName(rec.name);
+              if (primaryName != rec.name) {
+                setPrimaryName(rec.name);
+                getResolver(rec.name, "avatar").then((resolver) => {
+                  if (resolver != null) {
+                    setAvatar(resolver.value.replace("ipfs://", GATEWAY_URL));
+                  }
+                });
+              }
             }
-          })
+          });
         })
         .catch((error) => {
           console.log(error);
@@ -138,9 +171,15 @@ export function createRecordContext() {
       getPrimaryName(publicKey)
         .then((primaryName) => {
           setPrimaryName(primaryName);
+          return getResolver(primaryName, "avatar");
+        }).then((resolver) => {
+          if (resolver != null) {
+            setAvatar(resolver.value.replace("ipfs://", "https://ipfs.io/ipfs/"));
+          }
         });
     } else {
       setPrimaryName("");
+      setAvatar("");
     }
   }
 
@@ -150,6 +189,7 @@ export function createRecordContext() {
     namesHash,
     publicBalance,
     primaryName,
+    avatar,
     loading,
     refreshRecords,
     addRecord,
@@ -165,6 +205,7 @@ interface RecordContextState {
   namesHash?: string[];
   publicBalance: number;
   primaryName?: string;
+  avatar?: string;
   loading: boolean;
   refreshRecords: (mode: string) => void;
   addRecord: (record: Record) => void;
@@ -179,6 +220,7 @@ const DEFAULT = {
   namesHash: [],
   publicBalance: 0,
   primaryName: "",
+  avatar: "",
   loading: false,
   refreshRecords: () => {},
   addRecord: () => {},

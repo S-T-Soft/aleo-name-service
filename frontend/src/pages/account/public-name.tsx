@@ -1,12 +1,13 @@
 import {useState} from "react";
-import {Status} from "@/types";
+import {Status, Record} from "@/types";
 import Button from "@/components/ui/button";
 import {RefreshIcon} from "@/components/icons/refresh";
 import Transfer from "@/pages/account/transfer";
+import Avatar from "@/components/resolver/avatar";
+
 
 export default function PublicName({
-                             name,
-                             isPrimaryName,
+                             record,
                              setTriggerRecheck,
                              convertToPrivate,
                              setPrimaryName,
@@ -14,8 +15,7 @@ export default function PublicName({
                              transfer
                            }:
                              React.PropsWithChildren<{
-                               name: string,
-                               isPrimaryName: boolean,
+                               record: Record,
                                setTriggerRecheck: CallableFunction,
                                convertToPrivate: CallableFunction,
                                setPrimaryName: CallableFunction,
@@ -29,7 +29,7 @@ export default function PublicName({
 
   const handleConvert = async (event: any) => {
     event.preventDefault();
-    await convertToPrivate(name, (running: boolean, status: Status) => {
+    await convertToPrivate(record.name, (running: boolean, status: Status) => {
       setConverting(running);
       setConvertStatus(status.message);
       if (!running) {
@@ -40,7 +40,7 @@ export default function PublicName({
 
   const handleSetting = async (event: any) => {
     event.preventDefault();
-    if (isPrimaryName) {
+    if (record.isPrimaryName) {
       await unsetPrimaryName((running: boolean, status: Status) => {
         setSetting(running);
         setSettingStatus(status.message);
@@ -49,7 +49,7 @@ export default function PublicName({
         }
       });
     } else {
-      await setPrimaryName(name, (running: boolean, status: Status) => {
+      await setPrimaryName(record.name, (running: boolean, status: Status) => {
         setSetting(running);
         setSettingStatus(status.message);
         if (!running) {
@@ -60,22 +60,28 @@ export default function PublicName({
   }
 
   return <>
-    <div className="leading-10">
-      Visibility: <span className="rounded-lg bg-gray-700 px-2 py-1">Public</span>
+    <div className="leading-10 mb-5 flex items-center">
+      <span className="mr-4">Avatar: </span>
+      <Avatar record={record} onlyView={false}/>
     </div>
-    <div className="leading-10 mt-5">
-      Primary Name:
-      {isPrimaryName && !setting && <Button className="bg-sky-500 ml-10" onClick={handleSetting}>Unset Primary</Button>}
-      {isPrimaryName && setting && <Button className="bg-sky-500 ml-10" disabled={true}><RefreshIcon
+
+    <div className="leading-10 mb-5">
+      <span className="mr-4">Visibility: </span>
+      <span className="rounded-lg bg-gray-700 px-2 py-1">Public</span>
+    </div>
+    <div className="leading-10">
+      <span className="mr-4">Primary Name:</span>
+      {record && record.isPrimaryName && !setting && <Button className="bg-sky-500 mr-4" onClick={handleSetting}>Unset Primary</Button>}
+      {record && record.isPrimaryName && setting && <Button className="bg-sky-500 mr-4" disabled={true}><RefreshIcon
           className="inline motion-safe:animate-spin"/> {settingStatus}</Button>}
-      {!isPrimaryName && !setting && <Button className="bg-sky-500 ml-10" onClick={handleSetting}>Set Primary</Button>}
-      {!isPrimaryName && setting && <Button className="bg-sky-500 ml-10" disabled={true}><RefreshIcon
+      {record && !record.isPrimaryName && !setting && <Button className="bg-sky-500 mr-4" onClick={handleSetting}>Set Primary</Button>}
+      {record && !record.isPrimaryName && setting && <Button className="bg-sky-500 mr-4" disabled={true}><RefreshIcon
           className="inline motion-safe:animate-spin"/> {settingStatus}</Button>}
 
-      {!converting && <Button className="bg-sky-500 ml-10" onClick={handleConvert}>Convert to Private</Button>}
-      {converting && <Button className="bg-sky-500 ml-10" disabled={true}><RefreshIcon
+      {!converting && <Button className="bg-sky-500 mr-4" onClick={handleConvert}>Convert to Private</Button>}
+      {converting && <Button className="bg-sky-500 mr-4" disabled={true}><RefreshIcon
           className="inline motion-safe:animate-spin"/> {convertStatus}</Button>}
     </div>
-    <Transfer name={name} transfer={transfer} setTriggerRecheck={setTriggerRecheck}/>
+    {record && <Transfer name={record.name} transfer={transfer} setTriggerRecheck={setTriggerRecheck}/>}
   </>;
 }
