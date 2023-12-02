@@ -21,6 +21,7 @@ import { WalletModalProvider } from '@demox-labs/aleo-wallet-adapter-reactui';
 import {Analytics} from "@vercel/analytics/react";
 import {RecordProvider} from "@/components/record-provider";
 import {FoxWalletAdapter} from "@/lib/wallet-adapter/foxwallet";
+import { AxiomWebVitals } from 'next-axiom';
 
 type AppPropsWithLayout = AppProps & {
   Component: NextPageWithLayout;
@@ -93,6 +94,7 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
         pauseOnHover
       />
       <Analytics />
+      <AxiomWebVitals />
     </>
   );
 }

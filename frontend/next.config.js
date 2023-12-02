@@ -4,8 +4,9 @@ const webpack = require('webpack');
 const withPWA = require('next-pwa');
 const runtimeCaching = require('next-pwa/cache');
 const path = require('path');
+const { withAxiom } = require('next-axiom');
 
-module.exports = withPWA({
+module.exports = withAxiom(withPWA({
   reactStrictMode: true,
   pwa: {
     dest: 'public',
@@ -20,7 +21,6 @@ module.exports = withPWA({
       ignoreDuringBuilds: true,
     },
   }),
-  webpack5: true,
   webpack: (config, options) => {
     config.ignoreWarnings = [/Failed to parse source map/];
     const fallback = config.resolve.fallback || {};
@@ -52,4 +52,4 @@ module.exports = withPWA({
     });
     return config;
   },
-});
+}));
