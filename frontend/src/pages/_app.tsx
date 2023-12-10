@@ -1,6 +1,6 @@
 import type { AppProps } from 'next/app';
 import type { NextPageWithLayout } from '@/types';
-import { useMemo, useState } from 'react';
+import {useEffect, useMemo, useState} from 'react';
 import Head from 'next/head';
 import { Hydrate, QueryClient, QueryClientProvider } from 'react-query';
 import { ReactQueryDevtools } from 'react-query/devtools';
@@ -18,7 +18,6 @@ import { LeoWalletAdapter } from '@demox-labs/aleo-wallet-adapter-leo';
 import { DecryptPermission } from '@demox-labs/aleo-wallet-adapter-base';
 import { WalletProvider } from '@demox-labs/aleo-wallet-adapter-react';
 import { WalletModalProvider } from '@demox-labs/aleo-wallet-adapter-reactui';
-import {Analytics} from "@vercel/analytics/react";
 import {RecordProvider} from "@/components/record-provider";
 import {FoxWalletAdapter} from "@/lib/wallet-adapter/foxwallet";
 import { AxiomWebVitals } from 'next-axiom';

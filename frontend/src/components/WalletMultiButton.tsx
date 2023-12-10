@@ -73,7 +73,17 @@ export const WalletMultiButton: FC<ButtonProps> = ({ children, ...props }) => {
               onClick={openDropdown}
               {...props}
             >
-                {avatar && <img src={avatar} className="inline w-8 h-8 rounded-full mr-2" alt={primaryName}/>}
+                {avatar && (
+                    <div className="inline-block relative mr-2">
+                      <img src={avatar} className="inline w-8 h-8 rounded-full mr-2" alt={primaryName}/>
+                      <img src={wallet.adapter.icon} alt={`${wallet.adapter.name}`} className="inline w-4 h-4 rounded-full absolute top-0 right-0"/>
+                    </div>
+                  )}
+                {!avatar && (
+                    <div className="inline-block relative mr-2">
+                      <img src={wallet.adapter.icon} alt={`${wallet.adapter.name}`} className="inline w-8 h-8 rounded-full mr-2"/>
+                    </div>
+                  )}
                 <span className="font-bold">{content}</span>
             </Button>
             <ul

@@ -22,8 +22,9 @@ export function useCredit() {
     return new Promise<{plaintext: string}[]>((resolve, reject) => {
       requestRecordPlaintexts!("credits.aleo")
       .then((originalRecords) => {
+        console.log(originalRecords);
         originalRecords = originalRecords.filter((rec) => !rec.spent && rec.data.microcredits !== "0u64.private");
-
+        console.log(originalRecords);
         // sort amounts in descending order
         let sortedAmounts = amounts
           .map((value, index) => ({ value, index }))
