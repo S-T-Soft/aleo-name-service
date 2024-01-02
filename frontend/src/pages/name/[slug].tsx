@@ -65,7 +65,6 @@ const NamePage: NextPageWithLayout = () => {
     const ans_price = calcPrice(name);
     getCreditRecords(isPrivate ? [ans_price, NEXT_PUBLIC_FEES_REGISTER] : [ans_price]).then((records) => {
       if (records) {
-        console.log(records);
         setRecord(records[0].plaintext);
         isPrivate && setFeeRecord(records.length > 1 ? records[1].plaintext : "");
       } else {

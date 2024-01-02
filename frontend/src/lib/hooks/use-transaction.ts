@@ -29,7 +29,7 @@ export function useTransaction() {
     }
     tx.onStatusChange && tx.onStatusChange(true, {hasError: false, message: status});
     console.log(tx.id, status);
-    if (status === "Failed") {
+    if (status === "Failed" || status === "Reject") {
       setTransactions(transactions.filter((t) => t.id !== tx.id));
       tx.onStatusChange && tx.onStatusChange(false, {hasError: true, message: status});
     } else if (status === "Finalized") {
@@ -72,7 +72,7 @@ export function useTransaction() {
         transactions.forEach((tx) => {
           getTransactionStatus(tx);
         });
-      }, 1000);
+      }, 2_000);
     }
 
     // Clear the timer when the component unmounts

@@ -1,6 +1,5 @@
 import {
     BaseMessageSignerWalletAdapter,
-    EventEmitter,
     scopePollingDetectionStrategy,
     WalletConnectionError,
     WalletDisconnectionError,

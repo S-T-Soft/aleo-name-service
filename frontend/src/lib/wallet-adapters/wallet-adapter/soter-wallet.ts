@@ -1,6 +1,5 @@
 import {
     BaseMessageSignerWalletAdapter,
-    EventEmitter,
     scopePollingDetectionStrategy,
     WalletConnectionError,
     WalletDisconnectionError,
@@ -19,12 +18,6 @@ import {
     WalletTransactionError,
 } from '@demox-labs/aleo-wallet-adapter-base';
 import {LeoWallet} from "@demox-labs/aleo-wallet-adapter-leo";
-
-export interface SoterWalletEvents {
-    connect(...args: unknown[]): unknown;
-
-    disconnect(...args: unknown[]): unknown;
-}
 
 export interface SoterWindow extends Window {
     soterWallet?: LeoWallet;
@@ -49,7 +42,6 @@ export class SoterWalletAdapter extends BaseMessageSignerWalletAdapter {
     private _wallet: LeoWallet | null;
     private _publicKey: string | null;
     private _decryptPermission: string;
-    private _viewKey: string | null;
     private _readyState: WalletReadyState =
         typeof window === 'undefined' || typeof document === 'undefined'
             ? WalletReadyState.Unsupported
@@ -61,7 +53,6 @@ export class SoterWalletAdapter extends BaseMessageSignerWalletAdapter {
         this._wallet = null;
         this._publicKey = null;
         this._decryptPermission = DecryptPermission.NoDecrypt;
-        this._viewKey = null;
 
         if (this._readyState !== WalletReadyState.Unsupported) {
             scopePollingDetectionStrategy(() => {
@@ -77,10 +68,6 @@ export class SoterWalletAdapter extends BaseMessageSignerWalletAdapter {
 
     get publicKey() {
         return this._publicKey;
-    }
-
-    get viewKey() {
-        return this._viewKey;
     }
 
     get decryptPermission() {
@@ -134,17 +121,8 @@ export class SoterWalletAdapter extends BaseMessageSignerWalletAdapter {
 
             try {
                 const result = await wallet.requestRecords(program);
-                return result.records.map((record: any) => {
-                    return {
-                        ...record,
-                        owner: record.address,
-                        nftName: record.identifier,
-                        program_id: record.progranId,
-                        plaintext: record.record,
-                        spent: false,
-                        data: JSON.parse(record.record.replace(/(\w+):/g, '"$1":').replace(/: *(\w+\.\w+)/g, ':"$1"'))
-                    };
-                });
+                console.log("requestRecords:", result);
+                return result.records;
             } catch (error: any) {
                 throw new WalletRecordsError(error?.message, error);
             }
@@ -159,17 +137,13 @@ export class SoterWalletAdapter extends BaseMessageSignerWalletAdapter {
             const wallet = this._wallet;
             if (!wallet || !this.publicKey) throw new WalletNotConnectedError();
             try {
-                transaction.transitions = transaction.transitions.map((transition) => {
-                    transition.inputs = transition.inputs.map((input) => {
-                        if (typeof input === 'object' && input.record) {
-                            return input.record;
-                        }
-                        return input;
-                    });
-                    return transition;
-                })
+                transaction.fee = 10;
                 const result = await wallet.requestTransaction(transaction);
-                return result.transactionId ? result.transactionId : "";
+                const transactionId = result.transactionId;
+                if (!transactionId || transactionId.length == 0) {
+                    throw new WalletTransactionError("Permission Not Granted");
+                }
+                return transactionId;
             } catch (error: any) {
                 throw new WalletTransactionError(error?.message, error);
             }
@@ -217,6 +191,7 @@ export class SoterWalletAdapter extends BaseMessageSignerWalletAdapter {
             if (!wallet || !this.publicKey) throw new WalletNotConnectedError();
             try {
                 const result = await wallet.transactionStatus(transactionId);
+                console.log("transactionStatus:", transactionId, result);
                 return result.status ? result.status : "";
             } catch (error: any) {
                 throw new WalletTransactionError(error?.message, error);
@@ -248,7 +223,21 @@ export class SoterWalletAdapter extends BaseMessageSignerWalletAdapter {
     }
 
     async requestRecordPlaintexts(program: string): Promise<any[]> {
-        return this.requestRecords(program);
+        try {
+            const wallet = this._wallet;
+            if (!wallet || !this.publicKey) throw new WalletNotConnectedError();
+
+            try {
+                const result = await wallet.requestRecordPlaintexts(program);
+                console.log("requestRecordPlaintexts:", result);
+                return result.records;
+            } catch (error: any) {
+                throw new WalletRecordsError(error?.message, error);
+            }
+        } catch (error: any) {
+            this.emit('error', error);
+            throw error;
+        }
     }
 
     async requestTransactionHistory(program: string): Promise<any[]> {
@@ -268,7 +257,7 @@ export class SoterWalletAdapter extends BaseMessageSignerWalletAdapter {
         }
     }
 
-    async connect(decryptPermission: DecryptPermission, network: WalletAdapterNetwork): Promise<void> {
+    async connect(decryptPermission: DecryptPermission, network: WalletAdapterNetwork, programs?: string[]): Promise<void> {
         try {
             if (this.connected || this.connecting) return;
             if (this._readyState !== WalletReadyState.Installed) throw new WalletNotReadyError();
@@ -279,7 +268,7 @@ export class SoterWalletAdapter extends BaseMessageSignerWalletAdapter {
             const wallet = window.soterWallet! || window.soter!;
 
             try {
-                await wallet.connect(decryptPermission, network);
+                await wallet.connect(decryptPermission, network, programs);
                 if (!wallet?.publicKey) {
                     throw new WalletConnectionError();
                 }
@@ -290,7 +279,6 @@ export class SoterWalletAdapter extends BaseMessageSignerWalletAdapter {
 
             this._wallet = wallet;
             this._decryptPermission = decryptPermission;
-            this._viewKey = this._viewKey;
 
             this.emit('connect', this._publicKey);
         } catch (error: any) {
@@ -325,8 +313,13 @@ export class SoterWalletAdapter extends BaseMessageSignerWalletAdapter {
             if (!wallet || !this.publicKey) throw new WalletNotConnectedError();
 
             try {
-                const signature = await wallet.signMessage(message);
-                return signature.signature;
+                // @ts-ignore
+                const signature: {signature: {errorCode: number, result: string}} = await wallet.signMessage(message);
+                console.log("signMessage:", signature);
+                if (signature.signature.errorCode != 0) {
+                    throw new Error("Permission Not Granted");
+                }
+                return new TextEncoder().encode(signature.signature.result);
             } catch (error: any) {
                 throw new WalletSignTransactionError(error?.message, error);
             }
