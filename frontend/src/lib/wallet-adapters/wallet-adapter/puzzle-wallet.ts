@@ -220,15 +220,13 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
       this._connecting = true;
 
       try {
-        const session = await connect()
-        if (!session?.self.publicKey) {
-          throw new WalletConnectionError();
+        this._wallet = await connect();
+        const account = await getAccount();
+        if (account.error) {
+          throw new Error(account.error);
         }
-        this._wallet = session;
-        getAccount().then(account => {
-          this._publicKey = account.account?.address;
-          this.emit('connect', this._publicKey);
-        })
+        this._publicKey = account.account?.address;
+        this.emit('connect', this._publicKey);
       } catch (error: any) {
         throw new WalletConnectionError(error?.message, error);
       }

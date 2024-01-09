@@ -21,7 +21,7 @@ function HeaderRightArea() {
         (typeof gtag === 'function') && gtag('event', 'wallet_connected', {
             'event_category': 'User Interaction',
             'event_label': wallet.adapter.name,
-            'value': address
+            'value': 1
         });
         console.log('Connect wallet('+wallet.adapter.name+'): ', address);
       });

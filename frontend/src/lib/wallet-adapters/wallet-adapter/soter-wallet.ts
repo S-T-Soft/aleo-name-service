@@ -121,7 +121,6 @@ export class SoterWalletAdapter extends BaseMessageSignerWalletAdapter {
 
             try {
                 const result = await wallet.requestRecords(program);
-                console.log("requestRecords:", result);
                 return result.records;
             } catch (error: any) {
                 throw new WalletRecordsError(error?.message, error);
@@ -191,7 +190,6 @@ export class SoterWalletAdapter extends BaseMessageSignerWalletAdapter {
             if (!wallet || !this.publicKey) throw new WalletNotConnectedError();
             try {
                 const result = await wallet.transactionStatus(transactionId);
-                console.log("transactionStatus:", transactionId, result);
                 return result.status ? result.status : "";
             } catch (error: any) {
                 throw new WalletTransactionError(error?.message, error);
@@ -229,7 +227,6 @@ export class SoterWalletAdapter extends BaseMessageSignerWalletAdapter {
 
             try {
                 const result = await wallet.requestRecordPlaintexts(program);
-                console.log("requestRecordPlaintexts:", result);
                 return result.records;
             } catch (error: any) {
                 throw new WalletRecordsError(error?.message, error);
@@ -315,7 +312,6 @@ export class SoterWalletAdapter extends BaseMessageSignerWalletAdapter {
             try {
                 // @ts-ignore
                 const signature: {signature: {errorCode: number, result: string}} = await wallet.signMessage(message);
-                console.log("signMessage:", signature);
                 if (signature.signature.errorCode != 0) {
                     throw new Error("Permission Not Granted");
                 }

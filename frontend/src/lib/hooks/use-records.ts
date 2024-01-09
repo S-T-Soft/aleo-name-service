@@ -78,7 +78,6 @@ export function createRecordContext() {
   const loadPrivateRecords = async () => {
     return new Promise<Record[]>((resolve, reject) => {
       requestRecords!(NEXT_PUBLIC_PROGRAM!).then((records) => {
-        console.log(records);
         return Promise.all(records.filter((rec) => !rec.spent && rec.data.nft_owner === undefined).map(async (rec) => {
           const name_hash = rec.data.data.replace(".private", "");
           try {

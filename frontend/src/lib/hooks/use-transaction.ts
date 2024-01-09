@@ -29,6 +29,8 @@ export function useTransaction() {
     }
     tx.onStatusChange && tx.onStatusChange(true, {hasError: false, message: status});
     console.log(tx.id, status);
+    // if tx.id no tin transactions, return
+    if (!transactions.find((t) => t.id === tx.id)) return;
     if (status === "Failed" || status === "Reject") {
       setTransactions(transactions.filter((t) => t.id !== tx.id));
       tx.onStatusChange && tx.onStatusChange(false, {hasError: true, message: status});
