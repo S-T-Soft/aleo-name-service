@@ -24,7 +24,7 @@
     "@tailwindcss/typography": "^0.5.9",
     "@uiw/codemirror-theme-tokyo-night": "^4.21.8",
     "@uiw/react-codemirror": "^4.21.8",
-    "axios": "^1.4.0",
+    "axios": "^1.6.0",
     "browserify-fs": "^1.0.0",
     "classnames": "^2.3.2",
     "form-data": "^4.0.0",
