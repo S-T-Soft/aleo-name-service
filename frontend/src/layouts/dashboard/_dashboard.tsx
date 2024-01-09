@@ -8,10 +8,26 @@ import Sidebar from '@/layouts/dashboard/_sidebar';
 import React, { FC, useMemo } from 'react';
 import SearchButton from "@/components/search/button";
 import {WalletMultiButton} from "@/components/WalletMultiButton";
+import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
 
 require('@demox-labs/aleo-wallet-adapter-reactui/dist/styles.css');
 
 function HeaderRightArea() {
+  const { wallet } = useWallet();
+
+  useEffect(() => {
+    if (wallet) {
+      wallet.adapter.on('connect', (address) => {
+        (typeof gtag === 'function') && gtag('event', 'wallet_connected', {
+            'event_category': 'User Interaction',
+            'event_label': wallet.adapter.name,
+            'value': 1
+        });
+        console.log('Connect wallet('+wallet.adapter.name+'): ', address);
+      });
+    }
+  }, [wallet]);
+
   return (
     <div className="relative order-last flex shrink-0 items-center gap-3 sm:gap-6 lg:gap-8">
       <SearchButton/>

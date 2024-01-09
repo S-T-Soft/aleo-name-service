@@ -134,7 +134,7 @@ const ManageNamePage: NextPageWithLayout = () => {
                 convertToPublic={convertToPublic}
                 transfer={transfer}
               />}
-          {!loading && activeTab == "profile" && !isPrivate &&
+          {!loading && record && activeTab == "profile" && !isPrivate &&
               <PublicName
                 record={record}
                 setTriggerRecheck={() => {setTriggerRecheck(triggerRecheck + 1)}}
@@ -144,7 +144,7 @@ const ManageNamePage: NextPageWithLayout = () => {
                 transfer={transfer}
               />}
           {!loading && activeTab == "subnames" && <SubNameView record={record!}/>}
-          {!loading && activeTab == "resolver" && !isPrivate && <ResolverView record={record!}/>}
+          {!loading && activeTab == "resolver" && record && !isPrivate && <ResolverView record={record} onlyView={false}/>}
           </div>
         </div>
       </div>

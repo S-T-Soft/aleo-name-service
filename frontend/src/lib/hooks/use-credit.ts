@@ -23,7 +23,6 @@ export function useCredit() {
       requestRecordPlaintexts!("credits.aleo")
       .then((originalRecords) => {
         originalRecords = originalRecords.filter((rec) => !rec.spent && rec.data.microcredits !== "0u64.private");
-
         // sort amounts in descending order
         let sortedAmounts = amounts
           .map((value, index) => ({ value, index }))
