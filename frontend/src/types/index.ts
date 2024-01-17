@@ -32,6 +32,13 @@ export interface Status {
   message: string;
 }
 
+export interface Statistic {
+  totalNames24h: number,
+  totalNames: number,
+  totalPriNames: number,
+  totalNFTOwners: number
+}
+
 export interface StatusChangeCallback {
   (loading: boolean, status: Status): void;
 }

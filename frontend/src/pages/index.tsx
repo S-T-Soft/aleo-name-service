@@ -2,6 +2,7 @@ import type {NextPageWithLayout} from '@/types';
 import {NextSeo} from 'next-seo';
 import DashboardLayout from '@/layouts/dashboard/_dashboard';
 import SearchView from "@/components/search/view";
+import Stats from "@/components/stats";
 
 
 const GettingStartedPage: NextPageWithLayout = () => {
@@ -15,9 +16,10 @@ const GettingStartedPage: NextPageWithLayout = () => {
         <h2 className="mb-6 text-lg font-medium tracking-wider text-gray-900 dark:text-white sm:mb-10 sm:text-2xl text-center">
           Your Aleo identity starts here.
         </h2>
-        <div className="mb-3">
+        <div className="mb-6">
           <SearchView/>
         </div>
+        <Stats/>
       </div>
     </>
   );

@@ -1,8 +1,26 @@
 import * as process from "process";
-import {Record, Resolver} from "@/types";
+import {Record, Resolver, Statistic} from "@/types";
 
 export function useClient() {
   const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+  const getStatistic = async () => {
+    return new Promise<Statistic>((resolve, reject) => {
+      fetch(`${NEXT_PUBLIC_API_URL}/statistic`)
+        .then((response) => response.json())
+        .then((data) => {
+          resolve({
+            totalNames: data.total_names,
+            totalPriNames: data.total_pri_names,
+            totalNFTOwners: data.total_nft_owners,
+            totalNames24h: data.total_names_24h
+          } as Statistic);
+        })
+        .catch((error) => {
+          reject({message: `Error load statistic`});
+        });
+    });
+  }
 
   const getAddress = async (name: string) => {
     if (!name.endsWith(".ans")) {
@@ -142,5 +160,5 @@ export function useClient() {
     });
   }
 
-  return {getAddress, getNameHash, getPrimaryName, getName, getSubNames, getPublicDomain, getResolvers, getResolver};
+  return {getAddress, getNameHash, getPrimaryName, getName, getSubNames, getPublicDomain, getResolvers, getResolver, getStatistic};
 }

@@ -1,7 +1,7 @@
 import {useLocalStorage} from "react-use";
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
 import {createContext, useContext, useEffect, useMemo, useState} from "react";
-import {Record} from "@/types";
+import {Record, Statistic} from "@/types";
 import {useClient} from "@/lib/hooks/use-client";
 import useSWR from 'swr';
 import {getPublicBalance} from "@/lib/rpc";
@@ -13,9 +13,10 @@ const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL
 
 export function createRecordContext() {
   const NEXT_PUBLIC_PROGRAM = process.env.NEXT_PUBLIC_PROGRAM;
-  const {getPrimaryName,getName,getPublicDomain,getResolver} = useClient();
+  const {getPrimaryName,getName,getPublicDomain,getResolver,getStatistic} = useClient();
   const {publicKey, requestRecords} = useWallet();
   const [records, setRecords] = useLocalStorage<Record[]>('records', []);
+  const [statistic, setStatistic] = useState<Statistic>({totalNFTOwners: 0, totalPriNames: 0, totalNames: 0, totalNames24h: 0} as Statistic);
   const [names, setNames] = useState<string[]>([]);
   const [namesHash, setNamesHash] = useState<string[]>([]);
   const [primaryName, setPrimaryName] = useLocalStorage('primaryName', '');
@@ -116,6 +117,9 @@ export function createRecordContext() {
         return;
       }
     }
+    getStatistic().then((statistic) => {
+      setStatistic(statistic);
+    });
     if (publicKey) {
       setLoading(true);
       if (storedAddress !== publicKey) {
@@ -191,6 +195,7 @@ export function createRecordContext() {
 
   return {
     records,
+    statistic,
     names,
     namesHash,
     publicBalance,
@@ -207,6 +212,7 @@ export function createRecordContext() {
 
 interface RecordContextState {
   records?: Record[];
+  statistic?: Statistic;
   names?: string[];
   namesHash?: string[];
   publicBalance: number;
@@ -222,6 +228,7 @@ interface RecordContextState {
 
 const DEFAULT = {
   records: [],
+  statistic: {} as Statistic,
   names: [],
   namesHash: [],
   publicBalance: 0,
