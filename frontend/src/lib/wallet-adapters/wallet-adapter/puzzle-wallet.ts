@@ -234,8 +234,8 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
         if (account.error) {
           throw new Error(account.error);
         }
-        this._publicKey = account.account?.address;
-        this.emit('connect', this._publicKey);
+        //this._publicKey = account.account?.address;
+        //this.emit('connect', this._publicKey);
       } catch (error: any) {
         throw new WalletConnectionError(error?.message, error);
       }
