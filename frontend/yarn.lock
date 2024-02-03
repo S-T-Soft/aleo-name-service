@@ -1424,12 +1424,12 @@
   resolved "https://registry.npmjs.org/@pkgjs/parseargs/-/parseargs-0.11.0.tgz"
   integrity sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==
 
-"@puzzlehq/sdk@0.1.52":
-  version "0.1.52"
-  resolved "https://registry.npmjs.org/@puzzlehq/sdk/-/sdk-0.1.52.tgz"
-  integrity sha512-esAnHPCKvjYHhDbdHHHX09IGhz+QZf2m2+mWCDIuPqrIdOVQWDeHtZq3MGw7myplhgJysIWFWofs3hlRoPXXfQ==
+"@puzzlehq/sdk@0.2.1":
+  version "0.2.1"
+  resolved "https://registry.npmjs.org/@puzzlehq/sdk/-/sdk-0.2.1.tgz"
+  integrity sha512-tRa2FNg4NSUQX8uCZMuj21RjMXspyZeZh3P0+sxD5KtT/mJnrzzenRhqYf8wzV2hBr2n7t+IjIgsg+Mbx6xgXA==
   dependencies:
-    "@puzzlehq/types" "1.0.8"
+    "@puzzlehq/types" "1.0.9"
     "@tanstack/react-query" "^4.29.5"
     "@tanstack/react-query-devtools" "^5.13.5"
     "@trpc/client" "^10.9.0"
@@ -1450,10 +1450,10 @@
     ws "^8.13.0"
     zustand "^4.3.9"
 
-"@puzzlehq/types@1.0.8":
-  version "1.0.8"
-  resolved "https://registry.npmjs.org/@puzzlehq/types/-/types-1.0.8.tgz"
-  integrity sha512-rYLhMBU6NAqWmw9mApWN2f7jwswDgAZ/YV5MfEx7vPmulqm2+3gkFJoRXT+AfB/NhfIcRPNtp3Ct0x+Phwk36Q==
+"@puzzlehq/types@1.0.9":
+  version "1.0.9"
+  resolved "https://registry.npmjs.org/@puzzlehq/types/-/types-1.0.9.tgz"
+  integrity sha512-SwIu0snTd3POyOxRRClzPQVgJ6Y6625tpcmh8SD3JKOU/KHW/w20kBZT0K+w7yEFMz5QfE9jz02SJryZVALclA==
   dependencies:
     zod "3.21.1"
 
