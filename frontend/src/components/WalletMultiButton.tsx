@@ -5,6 +5,22 @@ import Button, {ButtonProps} from "@/components/ui/button";
 import {useWalletModal, WalletConnectButton, WalletModalButton} from "@demox-labs/aleo-wallet-adapter-reactui";
 import {useRecords} from "@/lib/hooks/use-records";
 import AnchorLink from "@/components/ui/links/anchor-link";
+import {DynamicSocialIcon} from "@/assets/social/DynamicSocialIcon";
+
+const socialLinks = [
+  {
+    icon: "com.twitter",
+    link: "https://x.com/aleonames"
+  },
+  {
+    icon: "com.discord",
+    link: "https://discord.gg/uvWJehUmyK"
+  },
+  {
+    icon: "com.youtube",
+    link: "https://www.youtube.com/@aleonames"
+  }
+];
 
 export const WalletMultiButton: FC<ButtonProps> = ({ children, ...props }) => {
     const { publicKey, wallet, disconnect } = useWallet();
@@ -61,14 +77,13 @@ export const WalletMultiButton: FC<ButtonProps> = ({ children, ...props }) => {
         };
     }, [ref, closeDropdown]);
 
-    if (!wallet) return <WalletModalButton className="bg-[#1253fa]" {...props}>{children}</WalletModalButton>;
-    if (!base58) return <WalletConnectButton className="bg-[#1253fa]" {...props}>{children}</WalletConnectButton>;
+    if (!wallet) return <WalletModalButton className="!bg-aquamarine !text-black !font-normal" {...props}>{children}</WalletModalButton>;
+    if (!base58) return <WalletConnectButton className="!bg-aquamarine !text-black !font-normal" {...props}>{children}</WalletConnectButton>;
 
     return (
         <div className="wallet-adapter-dropdown">
             <Button
               aria-expanded={active}
-              className="bg-[#1253fa] hover:bg-sky-500"
               style={{pointerEvents: active ? 'none' : 'auto', ...props.style}}
               onClick={openDropdown}
               {...props}
@@ -88,21 +103,40 @@ export const WalletMultiButton: FC<ButtonProps> = ({ children, ...props }) => {
             </Button>
             <ul
               aria-label="dropdown-list"
-              className={`wallet-adapter-dropdown-list ${active && 'wallet-adapter-dropdown-list-active'}`}
-                ref={ref}
-                role="menu"
+              className={`w-full wallet-adapter-dropdown-list ${active && 'wallet-adapter-dropdown-list-active'}`}
+              ref={ref}
+              role="menu"
             >
-                {primaryName && <li onClick={closeDropdown} className="flex flex-row justify-center border-none outline-none cursor-pointer whitespace-nowrap box-border px-4 py-2 w-full rounded-md hover:bg-sky-500" role="menuitem">
+                {primaryName && <li onClick={closeDropdown}
+                                    className="flex flex-row justify-center border-none outline-none cursor-pointer whitespace-nowrap box-border px-4 py-2 w-full rounded-md hover:text-aquamarine"
+                                    role="menuitem">
                     <AnchorLink href={`/account/${primaryName}`}>Profile</AnchorLink>
                 </li>}
-                <li onClick={copyAddress} className="flex flex-row justify-center border-none outline-none cursor-pointer whitespace-nowrap box-border px-4 py-2 w-full rounded-md hover:bg-sky-500" role="menuitem">
+                <li onClick={copyAddress}
+                    className="flex flex-row justify-center border-none outline-none cursor-pointer whitespace-nowrap box-border px-4 py-2 w-full rounded-md hover:text-aquamarine"
+                    role="menuitem">
                     {copied ? 'Copied' : 'Copy address'}
                 </li>
-                <li onClick={openModal} className="flex flex-row justify-center border-none outline-none cursor-pointer whitespace-nowrap box-border px-4 py-2 w-full rounded-md hover:bg-sky-500" role="menuitem">
+                <li onClick={openModal}
+                    className="flex flex-row justify-center border-none outline-none cursor-pointer whitespace-nowrap box-border px-4 py-2 w-full rounded-md hover:text-aquamarine"
+                    role="menuitem">
                     Change wallet
                 </li>
-                <li onClick={disconnect} className="flex flex-row justify-center border-none outline-none cursor-pointer whitespace-nowrap box-border px-4 py-2 w-full rounded-md hover:bg-sky-500" role="menuitem">
+                <li onClick={disconnect}
+                    className="flex flex-row justify-center border-none outline-none cursor-pointer whitespace-nowrap box-border px-4 py-2 w-full rounded-md hover:text-aquamarine"
+                    role="menuitem">
                     Disconnect
+                </li>
+                <li>
+                    <hr/>
+                </li>
+                <li className="flex flex-row justify-center border-none outline-none whitespace-nowrap box-border px-4 py-2 w-full rounded-md"
+                    role="menuitem">
+                  {socialLinks.map((item, index) => (
+                    <a href={item.link} target="_blank" rel="noopener noreferrer" key={index} className="px-2">
+                      <DynamicSocialIcon name={item.icon} fill="rgb(107 114 128 / var(--tw-text-opacity))" className="h-8"/>
+                    </a>
+                  ))}
                 </li>
             </ul>
         </div>

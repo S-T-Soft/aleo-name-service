@@ -30,9 +30,9 @@ export default function PrivateName({name, setTriggerRecheck, convertToPublic, t
       Visibility: <span className="rounded-lg bg-gray-700 px-2 py-1">Private</span>
     </div>
     <div className="leading-10 mt-5">
-      {!converting && <Button className="bg-sky-500 mr-10" onClick={handleConvert}>Convert to Public</Button>}
-      {converting && <Button className="bg-sky-500 mr-10" disabled={true}><RefreshIcon
-          className="inline motion-safe:animate-spin"/> {convertStatus}</Button>}
+      {!converting && <Button className="mr-10" onClick={handleConvert}>Convert to Public</Button>}
+      {converting && <Button color={"gray"} className="mr-10" disabled={true}><RefreshIcon
+          className="inline text-aquamarine motion-safe:animate-spin"/> {convertStatus}</Button>}
     </div>
     <Transfer name={name} transfer={transfer} setTriggerRecheck={setTriggerRecheck}/>
   </>;

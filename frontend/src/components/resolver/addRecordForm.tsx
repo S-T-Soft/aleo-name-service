@@ -68,7 +68,7 @@ export const AddRecordForm = ({name, onSuccess}: React.PropsWithChildren<{
               </span>}
       <label className="flex w-full items-center ">
         <input
-          className="h-16 w-full appearance-none rounded-full border-2 border-gray-200 py-1 text-lg tracking-tighter text-gray-900 outline-none transition-all placeholder:text-gray-600 hover:border-sky-900 focus:border-sky-500 px-24 dark:border-gray-600 dark:bg-light-dark dark:text-white dark:placeholder:text-gray-500 dark:hover:border-sky-900 dark:focus:border-sky-500"
+          className="h-16 w-full appearance-none rounded-full border-2 border-gray-200 py-1 text-lg tracking-tighter text-gray-900 outline-none transition-all placeholder:text-gray-600 hover:border-teal focus:border-aquamarine px-24 dark:border-gray-600 dark:bg-light-dark dark:text-white dark:placeholder:text-gray-500"
           value={content}
           placeholder={chooseCoin ? `Please enter the ${chooseCoin.toUpperCase()} address` : "Please select a coin first"}
           onChange={(event) => setContent(event.currentTarget.value)}
@@ -77,10 +77,10 @@ export const AddRecordForm = ({name, onSuccess}: React.PropsWithChildren<{
       </label>
       <span
         className="absolute flex h-full w-15 cursor-pointer items-center justify-center text-gray-900 hover:text-gray-900 ltr:right-2 ltr:pr-2 rtl:left-2 rtl:pl-2 dark:text-white ">
-                {!setting && <Button className={(!chooseCoin || content === "") ? "bg-gray-700" : "bg-sky-500"}
+                {!setting && <Button className={(!chooseCoin || content === "") ? "bg-gray-700" : ""}
                                      onClick={handleSetting} disabled={!chooseCoin || content === ""}>Set</Button>}
-        {setting && <Button className="bg-sky-500" disabled={true}><RefreshIcon
-            className="inline motion-safe:animate-spin"/> {status}</Button>}
+        {setting && <Button color={"gray"} disabled={true}><RefreshIcon
+            className="inline text-aquamarine motion-safe:animate-spin"/> {status}</Button>}
               </span>
     </div>
   </div>;

@@ -60,7 +60,7 @@ const AddressRecordItem = ({ resolver }: { resolver: Resolver }) => {
         <Close className="inline"/>
     </span>}
     {resolver.canDelete && setting && <span className="rounded-lg px-2 transform bg-red-900 text-white scale-x-2">
-        <RefreshIcon className="inline motion-safe:animate-spin"/>
+        <RefreshIcon className="inline text-aquamarine motion-safe:animate-spin"/>
     </span>}
   </div>
 }
@@ -108,7 +108,7 @@ export default function ResolverView({ record, onlyView = false, ...props }: {re
         <AddressRecordItem key={'address-'+address.key} resolver={address}/>
       ))}
       {!onlyView && canAddResolver && <div className="mt-5 border-t-[1px] border-t-gray-500 flex justify-end">
-        {!showForm && <Button className="bg-sky-500 mt-5" onClick={() => setShowForm(true)}>Add Address Record</Button>}
+        {!showForm && <Button className="mt-5" onClick={() => setShowForm(true)}>Add Address Record</Button>}
         {showForm && <AddRecordForm name={record.name} onSuccess={doRefresh}/>}
       </div>}
     </div>

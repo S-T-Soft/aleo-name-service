@@ -23,9 +23,6 @@ export function useClient() {
   }
 
   const getAddress = async (name: string) => {
-    if (!name.endsWith(".ans")) {
-      name = `${name}.ans`;
-    }
     return new Promise<string>((resolve, reject) => {
       fetch(`${NEXT_PUBLIC_API_URL}/address/${name}`)
         .then((response) => response.json())

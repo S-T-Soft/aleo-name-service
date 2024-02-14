@@ -4,7 +4,7 @@ import React from "react";
 import * as process from "process";
 import {Transaction, WalletAdapterNetwork, WalletNotConnectedError} from "@demox-labs/aleo-wallet-adapter-base";
 import {useRecords} from "@/lib/hooks/use-records";
-import {Record, StatusChangeCallback} from "@/types";
+import {CouponCard, Record, StatusChangeCallback, TLD} from "@/types";
 import toast from "@/components/ui/toast";
 import {TypeOptions} from "react-toastify";
 import {useTransaction} from "@/lib/hooks/use-transaction";
@@ -14,8 +14,10 @@ import {useClient} from "@/lib/hooks/use-client";
 
 export function useANS() {
   const NEXT_PUBLIC_PROGRAM = process.env.NEXT_PUBLIC_PROGRAM;
-  const NEXT_PUBLIC_REGISTRAR_PROGRAM = process.env.NEXT_PUBLIC_REGISTRAR_PROGRAM;
+  const NEXT_PUBLIC_COUPON_CARD_PROGRAM = process.env.NEXT_PUBLIC_COUPON_CARD_PROGRAM;
   const NEXT_PUBLIC_FEES_REGISTER = parseInt(process.env.NEXT_PUBLIC_FEES_REGISTER!);
+  const NEXT_PUBLIC_FEES_REGISTER_FREE = parseInt(process.env.NEXT_PUBLIC_FEES_REGISTER_FREE!);
+  const NEXT_PUBLIC_FEES_REGISTER_COUPON = parseInt(process.env.NEXT_PUBLIC_FEES_REGISTER_COUPON!);
   const NEXT_PUBLIC_FEES_REGISTER_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_REGISTER_PUBLIC!);
   const NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC!);
   const NEXT_PUBLIC_FEES_CONVERT_TO_PRIVATE = parseInt(process.env.NEXT_PUBLIC_FEES_CONVERT_TO_PRIVATE!);
@@ -28,8 +30,8 @@ export function useANS() {
   const {records} = useRecords();
   const {addTransaction} = useTransaction();
   const {getCreditRecords} = useCredit();
-  const {getAddress} = useClient();
-  const {publicKey, requestTransaction} = useWallet();
+  const {getAddress, getName} = useClient();
+  const {publicKey, requestTransaction, requestRecordPlaintexts} = useWallet();
 
   const notify = React.useCallback((type: TypeOptions, message: string) => {
     toast({ type, message });
@@ -45,30 +47,91 @@ export function useANS() {
     return `[${nameInputs.map(i => i + 'u128').join(",")}]`;
   }
 
-  const calcPrice = (name: string) => {
-    let price = 1250000000;
-    for (let i = 1; i < name.length; i++) {
-      price = Math.max(2000000, price / 5);
+  const calcPrice = (name: string, tld: TLD, card: CouponCard | null) => {
+    const length = name.length;
+    const maxKey = Math.max(...Object.keys(tld.prices).map(Number));
+    const priceKey = Math.min(length, maxKey);
+    const price = tld.prices[priceKey];
+    if (card && card.limit_name_length <= name.length) {
+      return price * card.discount_percent / 100;
     }
     return price;
   }
 
-  const register = async (name: string, isPrivate: boolean, onStatusChange?: StatusChangeCallback) => {
+  const getCouponCards = async (name: string, tld: TLD) => {
+    return new Promise<CouponCard[]>((resolve, reject) => {
+      requestRecordPlaintexts!(NEXT_PUBLIC_COUPON_CARD_PROGRAM!).then((records) => {
+        return Promise.all(records.filter((rec) => !rec.spent).map(async (rec) => {
+          const limit_name_length = parseInt(rec.data.limit_name_length.replace("u8.private", ""));
+          let tld = rec.data.tld.replace(".private", "");
+          if (tld == '0field') {
+            tld = "";
+          } else {
+            tld = await getName(tld);
+          }
+          return {
+            id: rec.ciphertext,
+            discount_percent: parseInt(rec.data.discount_percent.replace("u8.private", "")),
+            limit_name_length,
+            tld: tld,
+            enable: limit_name_length <= name.length,
+            record: rec
+          } as CouponCard;
+        }));
+      }).then((records) => {
+        resolve(records.filter(rec => rec.tld == "" || rec.tld == tld.name)
+          .sort((a, b) => {
+            if (a.enable === b.enable) {
+              if (a.limit_name_length === b.limit_name_length) {
+                return a.discount_percent - b.discount_percent;
+              }
+              return b.limit_name_length - a.limit_name_length;
+            }
+            return a.enable ? -1 : 1;
+          }))
+      }).catch(() => {
+        resolve([]);
+      });
+    })
+  }
+
+  const register = async (name: string, tld: TLD, card: CouponCard | null, isPrivate: boolean, onStatusChange?: StatusChangeCallback) => {
     if (!publicKey) throw new WalletNotConnectedError();
 
     onStatusChange && onStatusChange(true, {hasError: false, message: "Registering"});
 
-    let price = calcPrice(name);
+    let price = calcPrice(name, tld, card);
+    let functionName = "register_fld";
+    let fee = NEXT_PUBLIC_FEES_REGISTER;
+    let amounts = [price];
+    if (price === 0) {
+      functionName = "register_free";
+      fee = NEXT_PUBLIC_FEES_REGISTER_FREE;
+      amounts = [];
+    } else if (card) {
+      functionName = "register_fld_with_coupon";
+      fee = NEXT_PUBLIC_FEES_REGISTER_COUPON;
+    }
+    if (isPrivate) {
+      amounts.push(NEXT_PUBLIC_FEES_REGISTER);
+    }
 
-    getCreditRecords(isPrivate ? [price, NEXT_PUBLIC_FEES_REGISTER] : [price])
+    getCreditRecords(amounts)
       .then((records) => {
+        let inputs: any[] = [getFormattedNameInput(name, 4), tld.hash, publicKey];
+        if (functionName != "register_free") {
+          inputs.push(records[0]);
+        }
+        if (card) {
+          inputs.push(card.record);
+        }
         const aleoTransaction = Transaction.createTransaction(
           publicKey,
           WalletAdapterNetwork.Testnet,
-          NEXT_PUBLIC_REGISTRAR_PROGRAM!,
-          "register_fld",
-          [getFormattedNameInput(name, 4), publicKey, records[0]],
-          NEXT_PUBLIC_FEES_REGISTER,
+          tld.registrar,
+          functionName,
+          inputs,
+          fee,
           isPrivate // use private fee, or will leak the user address information
         );
 
@@ -397,5 +460,5 @@ export function useANS() {
 
   return {register, transfer, convertToPrivate, convertToPublic, setPrimaryName, unsetPrimaryName,
     setResolverRecord, unsetResolverRecord, calcPrice, getFormattedNameInput,
-    registerSubName};
+    registerSubName, getCouponCards};
 }

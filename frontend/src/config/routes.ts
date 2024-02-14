@@ -1,7 +1,7 @@
 const routes = {
-  gettingStarted: '/',
+  index: '/',
   account: '/account',
-  docs: '/docs',
+  docs: 'https://docs.aleonames.id/developer-guide/integrate-ans-into-frontend',
   toolbox: '/toolbox',
 };
 

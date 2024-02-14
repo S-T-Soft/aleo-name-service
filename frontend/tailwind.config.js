@@ -14,7 +14,16 @@ module.exports = {
       xl: '1280px',
       '2xl': '1440px',
       '3xl': '1780px',
-      '4xl': '2160px', // only need to control product grid mode in ultra 4k device
+      '4xl': '2160px',
+      mq1050: {
+        raw: "screen and (max-width: 1050px)",
+      },
+      mq750: {
+        raw: "screen and (max-width: 750px)",
+      },
+      mq450: {
+        raw: "screen and (max-width: 450px)",
+      },
     },
     extend: {
       colors: {
@@ -22,6 +31,32 @@ module.exports = {
         body: '#fcfcfc',
         dark: '#0D1321',
         'light-dark': '#171e2e',
+        gray: {
+          "100": "#222",
+          "200": "#050505",
+        },
+        aquamarine: "#68ffc9",
+        "slate-300": "#b3b4b7",
+        darkslategray: {
+          "100": "#454545",
+          "200": "#00505b",
+          "300": "#373737",
+        },
+        teal: "#267582",
+        "cobalt-100": "#dfebff",
+        white: "#fff",
+        gainsboro: {
+          "100": "#dfdfdf",
+          "200": "#d9d9d9",
+        },
+        darkgray: "#9f9ea0",
+        dimgray: {
+          "100": "#6b6b6b",
+          "200": "#505050",
+        },
+        whitesmoke: "#f5f5f5",
+        mediumseagreen: "#36cc96",
+        black: "#000",
       },
       spacing: {
         13: '3.375rem',
@@ -58,7 +93,7 @@ module.exports = {
         main: '0px 4px 8px rgba(0, 0, 0, 0.08)',
       },
       backgroundImage: {
-        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))'
       },
       animation: {
         blink: 'blink 1.4s infinite both;',
@@ -119,6 +154,18 @@ module.exports = {
           '100%': { transform: 'scale(1)' },
         },
       },
+    },
+    fontSize: {
+      lg: "18px",
+      base: "16px",
+      "9xl-4": "28.4px",
+      "4xl": "23px",
+      sm: "14px",
+      "61xl": "80px",
+      "5xl": "24px",
+      "21xl": "40px",
+      "3xs-5": "9.5px",
+      inherit: "inherit",
     },
   },
   plugins: [require('@tailwindcss/typography'), require('@tailwindcss/forms')],

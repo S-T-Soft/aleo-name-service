@@ -6,10 +6,8 @@ import React from "react";
 import {TypeOptions} from "react-toastify";
 import toast from "@/components/ui/toast";
 import {useClient} from "@/lib/hooks/use-client";
-import {useModal} from "@/components/modal-views/context";
 
 export function useCredit() {
-  const { openModal } = useModal();
   const {addTransaction} = useTransaction();
   const {getAddress} = useClient();
   const {publicKey, requestRecordPlaintexts, requestTransaction} = useWallet();
@@ -20,6 +18,10 @@ export function useCredit() {
 
   const getCreditRecords = async (amounts: number[]) => {
     return new Promise<{plaintext: string}[]>((resolve, reject) => {
+      if (amounts.length === 0) {
+        resolve([]);
+        return;
+      }
       requestRecordPlaintexts!("credits.aleo")
       .then((originalRecords) => {
         originalRecords = originalRecords.filter((rec) => !rec.spent && rec.data.microcredits !== "0u64.private");
@@ -63,7 +65,7 @@ export function useCredit() {
     if (!publicKey) throw new WalletNotConnectedError();
     onStatusChange && onStatusChange(true, {hasError: false, message: "Transferring"});
 
-    if (recipient.endsWith(".ans")) {
+    if (recipient.indexOf(".") > -1) {
       try {
         const address = await getAddress(recipient);
         if (address.startsWith("Private")) {
