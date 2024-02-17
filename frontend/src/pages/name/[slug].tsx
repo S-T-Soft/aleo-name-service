@@ -319,10 +319,24 @@ const NamePage: NextPageWithLayout = () => {
                                         }
                                         <li>Expand the <span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300"> {">"} register_fld</span> function and fill in the following fields</li>
                                         <ol className="list-disc">
-                                            <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">r0</span> Enter <CopyToClipboardText text={nameInputs}/></li>
-                                            <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">r1</span> Enter {publicKey?<CopyToClipboardText text={publicKey}/> : "the address which will own the name"}</li>
-                                            <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">r2</span> Enter {record != ""?<CopyToClipboardText text={record}/> : ("a record containing at least " + price + " credits")}</li>
-                                            <li>Click the <span className="bg-green-700 p-1 pl-2 pr-2 rounded-lg text-white">Run</span> button</li>
+                                            <li><span
+                                                className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">r0</span> Enter <CopyToClipboardText
+                                                text={nameInputs}/></li>
+                                            <li><span
+                                                className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">r1</span> Enter <CopyToClipboardText
+                                                text={tld.hash}/></li>
+                                            <li><span
+                                                className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">r2</span> Enter {publicKey ?
+                                              <CopyToClipboardText
+                                                text={publicKey}/> : "the address which will own the name"}</li>
+                                            <li><span
+                                                className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">r3</span> Enter {record != "" ?
+                                              <CopyToClipboardText
+                                                text={record}/> : ("a record containing at least " + price + " credits")}
+                                            </li>
+                                            <li>Click the <span
+                                                className="bg-green-700 p-1 pl-2 pr-2 rounded-lg text-white">Run</span> button
+                                            </li>
                                         </ol>
                                     </ol>
                                   </div>
