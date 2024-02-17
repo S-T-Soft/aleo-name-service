@@ -6,8 +6,9 @@ import { useIsMounted } from '@/lib/hooks/use-is-mounted';
 import { useDrawer } from '@/components/drawer-views/context';
 import Hamburger from '@/components/ui/hamburger';
 import { MenuItems } from '@/layouts/_layout-menu';
-import React from 'react';
+import React, {useEffect} from 'react';
 import {WalletMultiButton} from "@/components/WalletMultiButton";
+import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
 
 
 require('@demox-labs/aleo-wallet-adapter-reactui/dist/styles.css');
@@ -16,6 +17,20 @@ function HeaderRightArea() {
   const isMounted = useIsMounted();
   const breakpoint = useBreakpoint();
   const { openDrawer, isOpen } = useDrawer();
+  const { wallet } = useWallet();
+
+  useEffect(() => {
+    if (wallet) {
+      wallet.adapter.on('connect', (address) => {
+        (typeof gtag === 'function') && gtag('event', 'wallet_connected', {
+            'event_category': 'User Interaction',
+            'event_label': wallet.adapter.name,
+            'value': 1
+        });
+        console.log('Connect wallet('+wallet.adapter.name+'): ', address);
+      });
+    }
+  }, [wallet]);
 
   return (
     <div className="order-last flex shrink-0 items-center">
