@@ -39,6 +39,26 @@ export interface Statistic {
   totalNFTOwners: number
 }
 
+export interface CouponCard {
+  discount_percent: number,
+  limit_name_length: number,
+  tld: string,
+  enable: boolean,
+  id: string
+  record: any
+}
+
+interface Prices {
+  [key: number]: number;
+}
+
+export interface TLD {
+  name: string,
+  hash: string,
+  registrar: string,
+  prices: Prices
+}
+
 export interface StatusChangeCallback {
   (loading: boolean, status: Status): void;
 }

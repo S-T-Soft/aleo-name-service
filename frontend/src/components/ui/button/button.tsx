@@ -22,17 +22,26 @@ const shapes: Record<ShapeNames, string[]> = {
 };
 const variants: Record<VariantNames, string[]> = {
   ghost: ['bg-transparent'],
-  solid: ['text-white'],
+  solid: ['text-black'],
   transparent: ['bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800'],
 };
 const colors: Record<ColorNames, string[]> = {
-  primary: ['text-brand', 'bg-brand', 'border-brand'],
+  primary: ['text-black', 'bg-aquamarine', 'border-aquamarine'],
   white: ['text-gray-900', 'bg-white', 'border-white'],
   gray: ['text-gray-900', 'bg-gray-100', 'border-gray-100'],
   success: ['text-green-500', 'bg-green-500', 'border-green-500'],
   info: ['text-blue-500', 'bg-blue-500', 'border-blue-500'],
   warning: ['text-yellow-500', 'bg-yellow-500', 'border-yellow-500'],
   danger: ['text-red-500', 'bg-red-500', 'border-red-500'],
+};
+const hover: Record<ColorNames, string[]> = {
+  primary: ['hover:text-black', 'hover:bg-mediumseagreen', 'hover:border-aquamarine'],
+  white: ['hover:text-gray-900', 'hover:bg-white', 'hover:border-white'],
+  gray: ['hover:text-gray-900', 'hover:bg-gray-100', 'hover:border-gray-100'],
+  success: ['hover:text-green-500', 'hover:bg-green-500', 'hover:border-green-500'],
+  info: ['hover:text-blue-500', 'hover:bg-blue-500', 'hover:border-blue-500'],
+  warning: ['hover:text-yellow-500', 'hover:bg-yellow-500', 'hover:border-yellow-500'],
+  danger: ['hover:text-red-500', 'hover:bg-red-500', 'hover:border-red-500'],
 };
 const sizes: Record<SizeNames, string[]> = {
   large: ['px-7 sm:px-9 h-11 sm:h-13', 'w-11 h-11 sm:w-13 sm:h-13'],
@@ -78,6 +87,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     let [dripX, setDripX] = useState<number>(0);
     let [dripY, setDripY] = useState<number>(0);
     const colorClassNames = colors[color];
+    const hoverColorClassNames = hover[color];
     const sizeClassNames = sizes[size];
     const buttonRef = useRef<HTMLButtonElement>(null);
     useImperativeHandle(ref, () => buttonRef.current);
@@ -100,7 +110,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     let buttonDripColor = '';
     switch (variant) {
       case 'ghost':
-        buttonColorClassNames = `border-2 border-solid ${colorClassNames[0]} ${colorClassNames[2]}`;
+        buttonColorClassNames = `border-2 border-solid ${colorClassNames[0]} ${colorClassNames[2]} ${hoverColorClassNames[0]} ${hoverColorClassNames[2]}`;
         buttonDripColor = 'rgba(0, 0, 0, 0.1)';
         break;
 
@@ -114,7 +124,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         break;
 
       default:
-        buttonColorClassNames = `${colorClassNames[1]} ${colorClassNames[2]}`;
+        buttonColorClassNames = `${colorClassNames[1]} ${colorClassNames[2]} ${hoverColorClassNames[1]} ${hoverColorClassNames[2]}`;
         buttonDripColor = 'rgba(255, 255, 255, 0.3)';
         break;
     }
@@ -127,7 +137,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           'relative inline-flex shrink-0 items-center justify-center overflow-hidden text-center text-xs font-medium tracking-wider outline-none transition-all sm:text-sm',
           !disabled
             ? buttonColorClassNames
-            : 'cursor-not-allowed bg-gray-100 text-gray-400',
+            : 'cursor-not-allowed bg-gray-700 text-gray-400',
           disabled || isLoading || variant === 'transparent'
             ? ''
             : 'hover:-translate-y-0.5 hover:shadow-large focus:-translate-y-0.5 focus:shadow-large focus:outline-none',

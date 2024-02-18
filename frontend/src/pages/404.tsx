@@ -1,6 +1,5 @@
 import { NextSeo } from 'next-seo';
 import type { NextPageWithLayout } from '@/types';
-import DashboardLayout from '@/layouts/dashboard/_dashboard';
 import Image from '@/components/ui/image';
 import AnchorLink from '@/components/ui/links/anchor-link';
 import routes from '@/config/routes';
@@ -9,6 +8,7 @@ import { useIsMounted } from '@/lib/hooks/use-is-mounted';
 import { useIsDarkMode } from '@/lib/hooks/use-is-dark-mode';
 import ErrorLightImage from '@/assets/images/404-light.svg';
 import ErrorDarkImage from '@/assets/images/404-dark.svg';
+import Layout from "@/layouts/_layout";
 
 const ErrorPage: NextPageWithLayout = () => {
   const isMounted = useIsMounted();
@@ -37,8 +37,8 @@ const ErrorPage: NextPageWithLayout = () => {
           Sorry, the page you are looking for might be renamed, removed, or
           might never exist.
         </p>
-        <AnchorLink href={routes?.gettingStarted}>
-          <Button shape="rounded">Back to Home</Button>
+        <AnchorLink href={routes?.index}>
+          <Button>Back to Home</Button>
         </AnchorLink>
       </div>
     </>
@@ -47,9 +47,9 @@ const ErrorPage: NextPageWithLayout = () => {
 
 ErrorPage.getLayout = function getLayout(page) {
   return (
-    <DashboardLayout contentClassName="flex items-center justify-center">
+    <Layout>
       {page}
-    </DashboardLayout>
+    </Layout>
   );
 };
 

@@ -2,7 +2,6 @@ import type {NextPageWithLayout} from '@/types';
 import {Record} from "@/types";
 import {NextSeo} from 'next-seo';
 import Head from 'next/head';
-import DashboardLayout from '@/layouts/dashboard/_dashboard';
 import {useRouter} from 'next/router'
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
 import {useEffect, useState} from "react";
@@ -13,6 +12,8 @@ import ResolverView from "@/components/resolver/view";
 import PrivateName from "@/pages/account/private-name";
 import PublicName from "@/pages/account/public-name";
 import SubNameView from "@/components/subname/view";
+import Layout from "@/layouts/_layout";
+import {Unlocked} from "@/components/icons/unlocked";
 
 
 const ManageNamePage: NextPageWithLayout = () => {
@@ -86,16 +87,16 @@ const ManageNamePage: NextPageWithLayout = () => {
         title={`${name} - ${activeTab} | Manage | Aleo Name Service`}
         description="Aleo Name Service manage page"
       />
-      <div className="mx-auto w-full px-4 pt-8 pb-14 sm:px-6 sm:pb-20 lg:px-8 xl:px-10 2xl:px-0">
-        <h2 className="mb-6 text-lg font-medium tracking-wider text-gray-900 dark:text-white sm:mb-10 sm:text-2xl text-left">
-          Manage <span className="text-sky-500">{name}</span>
+      <div className="w-full pt-8">
+        <h2 className="mb-6 text-4xl font-medium tracking-wider text-gray-900 dark:text-white sm:mb-10 text-left">
+          Manage <span className="text-aquamarine">{name}</span>
           {isPrimaryName && <span className="bg-green-700 mx-3 px-2 py-1 rounded-lg text-lg sm:text-xl">PrimaryName</span>}
         </h2>
         <div>
             <ul className="flex text-gray-300">
                 <li className="-mb-px mr-2 last:mr-0 flex-auto text-center">
                   <button
-                      className={`font-bold uppercase px-5 py-3 block leading-normal ${activeTab === 'profile' ? 'text-sky-500' : ''}`}
+                      className={`font-bold uppercase px-5 py-3 block leading-normal ${activeTab === 'profile' ? 'text-aquamarine' : ''}`}
                       onClick={() => router.push(name)}
                       style={{ border: 'none', background: 'transparent', outline: 'none', cursor: 'pointer' }}
                   >
@@ -104,7 +105,7 @@ const ManageNamePage: NextPageWithLayout = () => {
                 </li>
                 <li className="-mb-px mr-2 last:mr-0 flex-auto text-center">
                   <button
-                      className={`font-bold uppercase px-5 py-3 block leading-normal ${activeTab === 'subnames' ? 'text-sky-500' : ''}`}
+                      className={`font-bold uppercase px-5 py-3 block leading-normal ${activeTab === 'subnames' ? 'text-aquamarine' : ''}`}
                       onClick={() => router.push(name + '?tab=subnames')}
                       style={{ border: 'none', background: 'transparent', outline: 'none', cursor: 'pointer' }}
                   >
@@ -113,7 +114,7 @@ const ManageNamePage: NextPageWithLayout = () => {
                 </li>
               {!loading && !isPrivate && <li className="-mb-px mr-2 last:mr-0 flex-auto text-center">
                   <button
-                      className={`font-bold uppercase px-5 py-3 block leading-normal ${activeTab === 'resolver' ? 'text-sky-500' : ''}`}
+                      className={`font-bold uppercase px-5 py-3 block leading-normal ${activeTab === 'resolver' ? 'text-aquamarine' : ''}`}
                       onClick={() => router.push(name + '?tab=resolver')}
                       style={{ border: 'none', background: 'transparent', outline: 'none', cursor: 'pointer' }}
                   >
@@ -123,7 +124,7 @@ const ManageNamePage: NextPageWithLayout = () => {
             </ul>
         </div>
         <div
-          className="mb-6 rounded-lg bg-white shadow-card dark:bg-light-dark z-50 mx-auto w-full max-w-full">
+          className="mb-6 rounded-lg bg-white shadow-card z-50 mx-auto w-full max-w-full [background:linear-gradient(180deg,_#2e2e2e,_rgba(46,_46,_46,_0))]">
           <div className="relative items-center justify-between gap-4 p-4">
           {loading && <span>Loading...</span>}
           {!loading && available || !isMine && <span>Redirecting...</span>}
@@ -153,7 +154,7 @@ const ManageNamePage: NextPageWithLayout = () => {
 };
 
 ManageNamePage.getLayout = function getLayout(page) {
-  return <DashboardLayout>{page}</DashboardLayout>;
+  return <Layout>{page}</Layout>;
 };
 
 export default ManageNamePage;

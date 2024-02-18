@@ -71,7 +71,7 @@ const AddSubName = ({record, onSuccess}: React.PropsWithChildren<{
           Subnames let you create additional names from your existing name.
         </div>
         <div className="flex-auto md:text-right">
-          <Button className="w-full md:w-auto bg-sky-500" onClick={() => setShowModal(true)}>New Subname</Button>
+          <Button className="w-full md:w-auto" onClick={() => setShowModal(true)}>New Subname</Button>
         </div>
       </div>
       {showModal && (
@@ -79,12 +79,13 @@ const AddSubName = ({record, onSuccess}: React.PropsWithChildren<{
           className="fixed z-50 top-0 left-0 w-full h-full bg-gray-900 bg-opacity-50 flex items-center justify-center">
           <div className="bg-gray-800 p-4 rounded-lg w-full md:w-3/4 max-w-3xl">
             <h2 className="mb-4 text-white text-center font-bold">Create Subname</h2>
-            <div className="flex mb-4 border-2 border-gray-600 md:focus-within:border-sky-500 rounded-full">
+            <div className="flex mb-4 border-2 border-gray-600 md:focus-within:border-aquamarine rounded-full">
               <input
-                className="h-16 flex-grow appearance-none rounded-full md:rounded-l-full md:rounded-r-none border-r-0 py-1 text-lg tracking-tighter text-gray-900 outline-none transition-all placeholder:text-gray-600 hover:border-sky-900 focus:border-sky-500 ltr:pl-8 rtl:pr-8 dark:border-gray-600 dark:bg-light-dark dark:text-white dark:placeholder:text-gray-500 dark:hover:border-sky-900 dark:focus:border-sky-500"
+                className="h-16 flex-grow appearance-none rounded-full md:rounded-l-full md:rounded-r-none border-r-0 py-1 text-lg tracking-tighter text-gray-900 outline-none transition-all placeholder:text-gray-600 hover:border-teal focus:border-aquamarine ltr:pl-8 rtl:pr-8 dark:border-gray-600 dark:bg-light-dark dark:text-white dark:placeholder:text-gray-500"
                 type="text"
                 autoComplete={"off"}
                 value={inputValue}
+                disabled={registering}
                 onChange={handleInput}
               />
               <span
@@ -99,14 +100,14 @@ const AddSubName = ({record, onSuccess}: React.PropsWithChildren<{
                 Cancel
               </Button>}
               {!registering && <Button
-                  className={`w-full md:w-2/5 ${(!available) ? 'bg-gray-700' : 'bg-sky-500'}`}
+                  className={`w-full md:w-2/5 ${(!available) ? 'bg-gray-700' : ''}`}
                   disabled={!available}
                   onClick={handleRegistering}
               >
                 {checking ? "Checking..." : "Register"}
               </Button>}
-              {registering && <Button className="w-full md:w-full bg-sky-500" disabled={true}><RefreshIcon
-            className="inline motion-safe:animate-spin"/> {status}</Button>}
+              {registering && <Button color={"gray"} className="w-full md:w-full" disabled={true}><RefreshIcon
+            className="inline text-aquamarine motion-safe:animate-spin"/> {status}</Button>}
             </div>
           </div>
         </div>

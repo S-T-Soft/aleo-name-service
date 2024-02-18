@@ -14,7 +14,7 @@ import '@/assets/css/globals.css';
 import '@/assets/css/range-slider.css';
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
-import { DecryptPermission } from '@demox-labs/aleo-wallet-adapter-base';
+import {DecryptPermission, WalletAdapterNetwork} from '@demox-labs/aleo-wallet-adapter-base';
 import { WalletProvider } from '@demox-labs/aleo-wallet-adapter-react';
 import { WalletModalProvider } from '@demox-labs/aleo-wallet-adapter-reactui';
 import {RecordProvider} from "@/components/record-provider";
@@ -78,10 +78,11 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
           <WalletProvider
             wallets={wallets}
             decryptPermission={DecryptPermission.OnChainHistory}
+            network={WalletAdapterNetwork.Testnet}
             programs={["credits.aleo",
-              "ans_registrar_v4.aleo",
-              "ans_registrar_v5.aleo",
-              "ans_registrar_v6.aleo",
+              "ans_coupon_card_v1.aleo",
+              "ans_coupon_card_v2.aleo",
+              "ans_coupon_card_v3.aleo",
               "aleo_name_service_registry_v4.aleo",
               "aleo_name_service_registry_v5.aleo",
               "aleo_name_service_registry_v6.aleo",

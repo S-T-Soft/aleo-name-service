@@ -34,7 +34,7 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ isToggled, setIsToggled, la
               checked={isToggled}
               onChange={handleToggle}
             />
-            <div className={`toggle__line w-10 h-6 ${isToggled ? 'bg-sky-500' : 'bg-gray-400'} rounded-full shadow-inner`}></div>
+            <div className={`toggle__line w-10 h-6 ${isToggled ? 'bg-aquamarine' : 'bg-gray-400'} rounded-full shadow-inner`}></div>
             <div className={`toggle__dot absolute w-6 h-6 bg-white rounded-full shadow inset-y-0 left-0 ${isToggled ? 'left-full' : 'left-0'}`}></div>
           </div>
           {label && <span className={`ml-3 text-gray-${isToggled ? 400 : 700}`}>{label}</span>}

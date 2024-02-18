@@ -36,7 +36,7 @@ export default function SubNameView({record, ...props}: { record: Record }) {
     >
       {record && <AddSubName record={record} onSuccess={doRefresh} />}
       <div className="mt-5 border-t-[1px] border-t-gray-500 flex justify-end">
-        <table className="table-fixed w-full rounded-lg bg-gray-800 px-5">
+        <table className="table-fixed w-full rounded-lg px-5">
             <thead>
               <tr className="h-14">
                 <th>Aleo Name</th>
@@ -59,7 +59,7 @@ export default function SubNameView({record, ...props}: { record: Record }) {
                   </td>
                   <td className="text-center">
                     {(namesHash || []).includes(subName.nameHash!) && <AnchorLink href={`/account/${subName.name}.${record.name}`}>
-                      <Button className="bg-sky-500 px-4 py-1 h-8 sm:h-8 sm:px-4">
+                      <Button className="px-4 py-1 h-8 sm:h-8 sm:px-4">
                         Manage
                       </Button>
                     </AnchorLink>}

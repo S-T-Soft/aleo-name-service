@@ -15,9 +15,9 @@ import {BuildWithAleoDarkSVG} from "@/assets/icons";
 
 const menuItems = [
   {
-    name: 'Getting Started',
+    name: 'Home',
     icon: <HomeIcon />,
-    href: routes.gettingStarted,
+    href: routes.index,
   },
   {
     name: 'My Names',
@@ -39,7 +39,7 @@ const menuItems = [
 const socialLinks = [
   {
     icon: "com.twitter",
-    link: "https://twitter.com/aleonames"
+    link: "https://x.com/aleonames"
   },
   {
     icon: "com.discord",
@@ -65,7 +65,7 @@ export default function Sidebar({ className }: SidebarProps) {
       )}
     >
       <div className="relative flex flex-col items-center justify-between px-6 py-4 2xl:px-8">
-        <Logo />
+        <Logo size='l'/>
         <div className="md:hidden">
           <Button
             title="Close"

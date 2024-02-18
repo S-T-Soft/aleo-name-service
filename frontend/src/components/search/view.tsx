@@ -2,13 +2,14 @@ import {useState, useRef, SyntheticEvent} from 'react';
 import { SearchIcon } from '@/components/icons/search';
 import Button from "@/components/ui/button";
 import {useRouter} from "next/router";
+import tlds from "@/config/tlds";
 
 
 type SearchFromProps = {
   placeholder?: string;
 };
 
-export function SearchFrom({ placeholder = 'Search ANS Name...' }: SearchFromProps) {
+export function SearchFrom({ placeholder = 'Search for a name...' }: SearchFromProps) {
   const router = useRouter();
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
@@ -29,7 +30,7 @@ export function SearchFrom({ placeholder = 'Search ANS Name...' }: SearchFromPro
     setError('');
     setSearch("");
     // redirect to /name/{search}
-    await router.push(`/name/${search}.ans`);
+    await router.push(`/name/${search}.${tlds[0].name}`);
   }
 
   const onSearch = async (event: any) => {
@@ -48,7 +49,7 @@ export function SearchFrom({ placeholder = 'Search ANS Name...' }: SearchFromPro
       >
         <label className="flex w-full items-center ">
           <input
-            className="h-16 w-full appearance-none rounded-full border-2 border-gray-200 py-1 text-lg tracking-tighter text-gray-900 outline-none transition-all placeholder:text-gray-600 hover:border-sky-900 focus:border-sky-500 ltr:pr-24 ltr:pl-8 rtl:pl-24 rtl:pr-8 dark:border-gray-600 dark:bg-light-dark dark:text-white dark:placeholder:text-gray-500 dark:hover:border-sky-900 dark:focus:border-sky-500 sm:ltr:pr-24 sm:rtl:pl-24 xl:ltr:pr-24 xl:rtl:pl-24"
+            className="h-16 w-full appearance-none rounded-full border-2 border-gray-200 py-1 text-lg tracking-tighter text-gray-900 outline-none transition-all placeholder:text-gray-600 hover:border-teal focus:border-aquamarine ltr:pr-24 ltr:pl-8 rtl:pl-24 rtl:pr-8 dark:border-gray-600 dark:bg-light-dark dark:text-white dark:placeholder:text-gray-500 dark:hover:border-teal dark:focus:border-aquamarine sm:ltr:pr-24 sm:rtl:pl-24 xl:ltr:pr-24 xl:rtl:pl-24"
             placeholder={placeholder}
             value={search}
             onChange={onSearch}
@@ -57,7 +58,7 @@ export function SearchFrom({ placeholder = 'Search ANS Name...' }: SearchFromPro
         </label>
         <span className="absolute flex h-full w-15 cursor-pointer items-center justify-center text-gray-900 hover:text-gray-900 ltr:right-4 ltr:pr-2 rtl:left-4 rtl:pl-2 dark:text-white sm:w-14 sm:ltr:pr-3 sm:rtl:pl-3 xl:w-16">
           <Button type="submit">
-            <SearchIcon className="h-5 w-5 text-sky-500" />
+            <SearchIcon className="h-5 w-5 text-black" />
           </Button>
         </span>
       </form>

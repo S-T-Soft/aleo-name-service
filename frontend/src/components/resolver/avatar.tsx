@@ -118,6 +118,8 @@ export default function Avatar({record, onlyView = false, ...props}: { record: R
           className="rounded-full w-24 h-24"
         />
       )}
+      {avatar === "" && <div
+          className="w-24 h-24 flex-1 relative rounded-full [background:conic-gradient(from_180deg_at_50%_50%,_#68ffc9_0deg,_#888_82.8deg,_#5b5b5b_151.2deg,_#7bff66_226.8deg,_#00505b_286.2deg)] z-[1]"></div>}
     </div>
     <input
       type="file"
@@ -128,13 +130,13 @@ export default function Avatar({record, onlyView = false, ...props}: { record: R
     />
     {!setting && <Button
         disabled={uploading || loading}
-        className="bg-sky-500"
+        color={loading || uploading || avatar !== "" ? "gray": "primary"}
         size="mini"
         onClick={() => inputFile.current.click()}
     >
       {loading ? "Loading" : uploading ? "Uploading..." : avatar === "" ? "Set" : "Change"}
     </Button>}
-    {setting && <Button className="bg-sky-500" size="mini" disabled={true}><RefreshIcon
-        className="inline motion-safe:animate-spin"/> {status}</Button>}
+    {setting && <Button size="mini" color={"gray"} disabled={true}><RefreshIcon
+        className="inline text-aquamarine motion-safe:animate-spin"/> {status}</Button>}
   </>
 }

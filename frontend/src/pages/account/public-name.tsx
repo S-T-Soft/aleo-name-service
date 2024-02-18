@@ -71,16 +71,16 @@ export default function PublicName({
     </div>
     <div className="leading-10">
       <span className="mr-4">Primary Name:</span>
-      {record && record.isPrimaryName && !setting && <Button className="bg-sky-500 mr-4" onClick={handleSetting}>Unset Primary</Button>}
-      {record && record.isPrimaryName && setting && <Button className="bg-sky-500 mr-4" disabled={true}><RefreshIcon
-          className="inline motion-safe:animate-spin"/> {settingStatus}</Button>}
-      {record && !record.isPrimaryName && !setting && <Button className="bg-sky-500 mr-4" onClick={handleSetting}>Set Primary</Button>}
-      {record && !record.isPrimaryName && setting && <Button className="bg-sky-500 mr-4" disabled={true}><RefreshIcon
-          className="inline motion-safe:animate-spin"/> {settingStatus}</Button>}
+      {record && record.isPrimaryName && !setting && <Button className="mr-4" onClick={handleSetting}>Unset Primary</Button>}
+      {record && record.isPrimaryName && setting && <Button color={"gray"} className="mr-4" disabled={true}><RefreshIcon
+          className="inline text-aquamarine motion-safe:animate-spin"/> {settingStatus}</Button>}
+      {record && !record.isPrimaryName && !setting && <Button className="mr-4" onClick={handleSetting}>Set Primary</Button>}
+      {record && !record.isPrimaryName && setting && <Button color={"gray"} className="mr-4" disabled={true}><RefreshIcon
+          className="inline text-aquamarine motion-safe:animate-spin"/> {settingStatus}</Button>}
 
-      {!converting && <Button className="bg-sky-500 mr-4" onClick={handleConvert}>Convert to Private</Button>}
-      {converting && <Button className="bg-sky-500 mr-4" disabled={true}><RefreshIcon
-          className="inline motion-safe:animate-spin"/> {convertStatus}</Button>}
+      {!converting && <Button className="mr-4" onClick={handleConvert}>Convert to Private</Button>}
+      {converting && <Button color={"gray"} className="mr-4" disabled={true}><RefreshIcon
+          className="inline text-aquamarine motion-safe:animate-spin"/> {convertStatus}</Button>}
     </div>
     {record && <Transfer name={record.name} transfer={transfer} setTriggerRecheck={setTriggerRecheck}/>}
   </>;

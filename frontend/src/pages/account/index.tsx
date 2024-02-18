@@ -1,12 +1,12 @@
 import type {NextPageWithLayout} from '@/types';
 import {NextSeo} from 'next-seo';
-import DashboardLayout from '@/layouts/dashboard/_dashboard';
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
 import Button from "@/components/ui/button";
 import {useRecords} from "@/lib/hooks/use-records";
 import {RefreshIcon} from "@/components/icons/refresh";
 import AnchorLink from "@/components/ui/links/anchor-link";
 import {useEffect} from "react";
+import Layout from "@/layouts/_layout";
 
 const AccountPage: NextPageWithLayout = () => {
   const {publicKey} = useWallet();
@@ -22,15 +22,17 @@ const AccountPage: NextPageWithLayout = () => {
         title="Account | Aleo Name Service"
         description="Aleo Name Service account page"
       />
-      <div className="mx-auto w-full px-4 pt-8 pb-14 sm:px-6 sm:pb-20 sm:pt-12 lg:px-8 xl:px-10 2xl:px-0">
+      <div className="w-full pt-8">
         <h2 className="mb-6 text-lg font-medium tracking-wider text-gray-900 dark:text-white sm:mb-10 sm:text-2xl text-left">
           My Domain Names
-          <Button className="bg-sky-500 float-right" disabled={loading} onClick={() => refreshRecords("manual")}>
-            <RefreshIcon className={loading?"motion-safe:animate-spin":""} />
+          {publicKey &&
+          <Button color={"gray"} className="float-right" disabled={loading} onClick={() => refreshRecords("manual")}>
+            <RefreshIcon className={loading?"text-aquamarine motion-safe:animate-spin":""} />
           </Button>
+          }
         </h2>
-        <div className="mb-3">
-          {publicKey && <table className="table-fixed w-full rounded-lg bg-gray-800 px-5">
+        <div className="mb-5">
+          {publicKey && <table className="table-fixed w-full rounded-lg [background:linear-gradient(180deg,_#2e2e2e,_rgba(46,_46,_46,_0))]">
               <thead>
                 <tr className="uppercase h-16">
                   <th>Aleo Name</th>
@@ -46,9 +48,9 @@ const AccountPage: NextPageWithLayout = () => {
                       {record.isPrimaryName && <span className="bg-green-700 mx-3 px-2 py-1 rounded-lg">PrimaryName</span>}
                       {!record.private && !record.isPrimaryName && <span className="bg-gray-600 mx-3 px-2 py-1 rounded-lg">Public</span>}
                     </td>
-                    <td className="text-center">
+                    <td>
                       <AnchorLink href={`/account/${record.name}`}>
-                        <Button className="bg-sky-500 px-4 py-1 h-8 sm:h-8 sm:px-4">
+                        <Button className="px-4 py-1 h-8 sm:h-8 sm:px-4 mr-5">
                           Manage
                         </Button>
                       </AnchorLink>
@@ -67,7 +69,7 @@ const AccountPage: NextPageWithLayout = () => {
 };
 
 AccountPage.getLayout = function getLayout(page) {
-  return <DashboardLayout>{page}</DashboardLayout>;
+  return <Layout>{page}</Layout>;
 };
 
 export default AccountPage;

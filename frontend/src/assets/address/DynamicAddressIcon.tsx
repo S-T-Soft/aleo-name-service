@@ -5,18 +5,20 @@ import { DynamicAddressIconName, dynamicAddressIcons } from './dynamicAddressIco
 export const DynamicAddressIcon = ({
   name,
   showDefault = true,
+  className = "",
   ...props
 }: {
   name: DynamicAddressIconName | string
+  className: string
   showDefault?: boolean
 }) => {
   if (name.toLowerCase() in dynamicAddressIcons) {
     const key = name.toLowerCase() as DynamicAddressIconName
     const Icon = dynamicAddressIcons[key] as any
-    return <Icon {...props} />
+    return <Icon className={className} {...props} />
   }
   if (showDefault) {
-    return <QuestionCircleSVG {...props} />
+    return <QuestionCircleSVG className={className} {...props} />
   }
   return null
 }
