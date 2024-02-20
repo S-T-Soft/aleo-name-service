@@ -24,6 +24,7 @@ import {
   SoterWalletAdapter,
   LeoWalletAdapter,
   PuzzleWalletAdapter,
+  AvailWalletAdapter,
   configureConnectionForPuzzle
 } from '@/lib/wallet-adapters';
 
@@ -47,7 +48,10 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
       }),
       new SoterWalletAdapter({
         appName: 'Aleo Name Service',
-      })
+      }),
+      new AvailWalletAdapter({
+        appName: 'Aleo Name Service',
+      }),
     ],
     []
   );
