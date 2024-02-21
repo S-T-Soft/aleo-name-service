@@ -1530,10 +1530,10 @@
   resolved "https://registry.yarnpkg.com/@pkgjs/parseargs/-/parseargs-0.11.0.tgz#a77ea742fab25775145434eb1d2328cf5013ac33"
   integrity sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==
 
-"@puzzlehq/sdk@0.2.4":
-  version "0.2.4"
-  resolved "https://registry.yarnpkg.com/@puzzlehq/sdk/-/sdk-0.2.4.tgz#7c6de32604b8418abbf616431337bdeadb547d1f"
-  integrity sha512-QiZVYvyhE+SNsj/3uBsvSv/rez53fji8zuA0TQTe3d+neW3kYttHgOx7tJqYod2r3ZHCOqr7lHxUBxbhIzdA1A==
+"@puzzlehq/sdk@0.2.5":
+  version "0.2.5"
+  resolved "https://registry.yarnpkg.com/@puzzlehq/sdk/-/sdk-0.2.5.tgz#45be4d1623fa89cb8b0edb99cd607a4f05bbf0c3"
+  integrity sha512-yLRsszfS1R8aCPEYQUcDYjo4sTjBj7v+Lzo2bDv5wBk7haZVHtbuMbKZa7sDIswJEIUB9Pa3jEM0mAJF6HOgNQ==
   dependencies:
     "@puzzlehq/types" "1.0.11"
     "@tanstack/react-query" "^4.29.5"
