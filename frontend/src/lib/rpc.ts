@@ -1,7 +1,6 @@
 import { JSONRPCClient } from 'json-rpc-2.0';
 import * as process from "process";
 
-const ALEO_URL = process.env.NEXT_PUBLIC_ALEO_URL!;
 const API_URL = process.env.NEXT_PUBLIC_RPC_URL!;
 const PROGRAM = process.env.NEXT_PUBLIC_PROGRAM!;
 
@@ -9,13 +8,6 @@ export async function getHeight(): Promise<number> {
   const client = getClient();
   const height = await client.request('getHeight', {});
   return height;
-}
-
-export async function getPublicBalance(address: string): Promise<number> {
-  const response = await fetch(`${ALEO_URL}program/credits.aleo/mapping/account/${address}`);
-  return response.text().then((balance) => {
-    return parseInt(balance.replaceAll('"', '')) || 0;
-  });
 }
 
 export async function getTransactionsForProgram(programId: string, functionName: string): Promise<any> {

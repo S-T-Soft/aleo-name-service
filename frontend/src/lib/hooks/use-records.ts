@@ -4,7 +4,6 @@ import {createContext, useContext, useEffect, useMemo, useState} from "react";
 import {Record, Statistic} from "@/types";
 import {useClient} from "@/lib/hooks/use-client";
 import useSWR from 'swr';
-import {getPublicBalance} from "@/lib/rpc";
 import * as process from "process";
 
 const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL
@@ -13,7 +12,7 @@ const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL
 
 export function createRecordContext() {
   const NEXT_PUBLIC_PROGRAM = process.env.NEXT_PUBLIC_PROGRAM;
-  const {getPrimaryName,getName,getPublicDomain,getResolver,getStatistic} = useClient();
+  const {getPrimaryName,getName,getPublicDomain,getResolver,getStatistic,getPublicBalance} = useClient();
   const {publicKey, requestRecords} = useWallet();
   const [records, setRecords] = useLocalStorage<Record[]>('records', []);
   const [statistic, setStatistic] = useState<Statistic>({totalNFTOwners: 0, totalPriNames: 0, totalNames: 0, totalNames24h: 0} as Statistic);
@@ -73,7 +72,7 @@ export function createRecordContext() {
       const index = namesHash.indexOf(nameHash);
       return names[index];
     }
-    return getName(nameHash);
+    return (await getName(nameHash)).name;
   }
 
   const loadPrivateRecords = async () => {

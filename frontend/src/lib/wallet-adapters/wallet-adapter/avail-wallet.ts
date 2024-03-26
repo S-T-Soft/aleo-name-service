@@ -129,7 +129,7 @@ import {
               }
               return text.plaintexts![0];
             } catch (error: any) {
-              throw new WalletDecryptionError(error?.message, error);
+              throw new WalletDecryptionError(error?.message || "Permission Not Granted", error);
             }
           }
           default:
@@ -164,7 +164,7 @@ import {
             };
           });
         } catch (error: any) {
-          throw new WalletRecordsError(error?.message, error);
+          throw new WalletRecordsError(error?.message || "Permission Not Granted", error);
         }
       } catch (error: any) {
         this.emit('error', error);
@@ -190,7 +190,7 @@ import {
           }
           return result.eventId ? result.eventId : "";
         } catch (error: any) {
-          throw new WalletTransactionError(error?.message, error);
+          throw new WalletTransactionError(error?.message || "Permission Not Granted", error);
         }
       } catch (error: any) {
         this.emit('error', error);
@@ -286,7 +286,7 @@ import {
           // convert signature to Uint8Array
           return new TextEncoder().encode(signature.signature!);
         } catch (error: any) {
-          throw new WalletSignTransactionError(error?.message, error);
+          throw new WalletSignTransactionError(error?.message || "Permission Not Granted", error);
         }
       } catch (error: any) {
         this.emit('error', error);

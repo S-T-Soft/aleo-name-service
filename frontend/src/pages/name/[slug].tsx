@@ -46,6 +46,7 @@ const NamePage: NextPageWithLayout = () => {
   const [status, setStatus] = useState("Registering");
   const [triggerRecheck, setTriggerRecheck] = useState(0);
   const [nameInputs, setNameInputs] = useState("");
+  const [showAleoTool, setShowAleoTool] = useState(true);
   const [showAleoTools, setShowAleoTools] = useState(false);
   const [name, setName] = useState("");
   const [tld, setTld] = useState<TLD>(tlds[0]);
@@ -124,11 +125,11 @@ const NamePage: NextPageWithLayout = () => {
       if (publicKey) {
         getCouponCards(name, tld).then((cards) => {
           setCouponCards(cards);
-          cards.forEach((card) => {
-            if (!card.enable && selectedCard && selectedCard.id == card.id) {
-              setSelectedCard(null);
-            }
-          })
+          if (cards.length === 0) {
+            setSelectedCard(null);
+          } else if (selectedCard && !cards.some(card => card.enable && card.id === selectedCard.id)) {
+            setSelectedCard(null);
+          }
           console.log(cards)
         });
       }
@@ -158,6 +159,7 @@ const NamePage: NextPageWithLayout = () => {
     if (publicKey) {
       checkRecords();
     }
+    setShowAleoTool(!selectedCard);
   }, [isPrivate, publicKey, selectedCard]);
 
   const handleRegister = async (event: any) => {
@@ -235,7 +237,7 @@ const NamePage: NextPageWithLayout = () => {
                           <div className="mt-3 text-xl tracking-tighter text-gray-600 dark:text-gray-400 sm:block">
                               <span className="mr-2">Register Price:</span>
                               {price > 0 && <span className="bg-gray-700 p-1 pl-2 pr-2 rounded-lg text-gray-300 font-bold">
-                                {price} ALEO
+                                {price} Private Credits
                               </span>}
                               {price == 0 && <span className="bg-gray-700 p-1 pl-2 pr-2 rounded-lg text-gray-300 font-bold">
                                 FREE
@@ -283,15 +285,15 @@ const NamePage: NextPageWithLayout = () => {
                               className="mt-5 text-sm tracking-tighter text-gray-600 dark:text-gray-400 sm:block place-content-center">
                               {publicKey && !registering &&
                                 <div className="flex items-center">
-                                  {(record == "" && publicBalance > price * 1000000) && <>
+                                  {(record == "") && <>
                                       <Button className="mr-5" onClick={handleConvert}>Create Record</Button>
                                       <Button className="bg-gray-700 mr-5" disabled={true}>Register</Button>
                                   </>}
-                                  {(record != "" && feeRecord == "" && isPrivate && publicBalance - NEXT_PUBLIC_FEES_REGISTER > price * 1000000) && <>
+                                  {(record != "" && feeRecord == "" && isPrivate) && <>
                                       <Button className="mr-5" onClick={handleConvertFee}>Create Fee Record</Button>
                                       <Button className="bg-gray-700 mr-5" disabled={true}>Register</Button>
                                   </>}
-                                  {((record != "" && (!isPrivate || feeRecord != "")) || publicBalance <= price * 1000000) &&
+                                  {record != "" && (!isPrivate || feeRecord != "") &&
                                       <Button className="mr-5" onClick={handleRegister}>Register</Button>}
                                     <ToggleSwitch label="Private fee" isToggled={isPrivate}
                                                   setIsToggled={setIsPrivate}/>
@@ -301,7 +303,30 @@ const NamePage: NextPageWithLayout = () => {
                                 <Button color="gray" disabled={true}><RefreshIcon className="inline text-aquamarine motion-safe:animate-spin"/> {status}</Button>
                             }
                             {!publicKey && <WalletMultiButton>Connect Wallet to Register</WalletMultiButton>}
-                              <div className="mt-5">
+                            {publicKey && record == "" && <div className="mt-5">
+                                You need <span className="underline">{price} Private Credits</span> to pay for the domain register fee, but currently,
+                                you do not have enough Private Credits. <br/>
+                                Please click on <span className="rounded-full bg-teal text-black p-1">Create Record</span> to convert your Public Credits into Private Credits.<br/>
+                                Alternatively, you can manually perform this conversion within your wallet.<br/>
+                                After the operation, you will need to wait a few minutes for the wallet to synchronize.<br/>
+                                Once you refresh this page and see that the <span className="rounded-full bg-teal text-black p-1">Register</span> button has become clickable,
+                                you can proceed with the registration.
+                            </div>}
+                            {publicKey && record != "" && feeRecord == "" && isPrivate && <div className="mt-5">
+                                You need <span className="underline">0.37 Private Credits</span> for the gas fee,
+                                but you currently lack sufficient Private Credits.<br/>
+                                Please select <span className="rounded-full bg-teal text-black p-1">Create Fee Record</span> to convert Public
+                                Credits into Private Credits, or manually make this conversion in your wallet. <br/>
+                                After this, please wait a few minutes for wallet synchronization. <br/>
+                                Refresh this page, and if the <span className="rounded-full bg-teal text-black p-1">Register</span> button is clickable,
+                                you're ready to register.<br/>
+                                Alternatively, you may opt to disable the <span className="rounded-full bg-teal text-black p-1">Private Fee</span> option for a simpler process.
+                            </div>}
+                            {publicKey && record != "" && feeRecord != "" && !isPrivate && <div className="mt-5">
+                                Please be aware that by disabling the "Private Fee" option,
+                                  your Aleo address will be exposed in the transaction records.
+                            </div>}
+                            {showAleoTool && <div className="mt-5">
                                   <div onClick={toggleAleoTools} className="cursor-pointer block text-xs font-medium uppercase tracking-wider text-gray-900 dark:text-white sm:text-sm">OR REGISTRATION VIA <span className="text-sky-500">aleo.tools</span>{showAleoTools ? " < " : " > "}</div>
                                   <div className={`overflow-hidden transition-max-height duration-500 ${showAleoTools ? 'max-h-120' : 'max-h-0'}`}>
                                     <span className="leading-loose">If registration through the Leo Wallet is not possible, <ActiveLink href="https://aleo.tools/develop" target="_blank" className="text-sky-500 underline">aleo.tools</ActiveLink> is another convenient option for registration. Here are the steps to follow. After clicking the 'Register' button above, the transaction records will be displayed in the confirmation pop-up window, you can copy them to use in aleo.tools</span>
@@ -340,7 +365,7 @@ const NamePage: NextPageWithLayout = () => {
                                         </ol>
                                     </ol>
                                   </div>
-                              </div>
+                              </div>}
                           </div>
                       </>
                   }

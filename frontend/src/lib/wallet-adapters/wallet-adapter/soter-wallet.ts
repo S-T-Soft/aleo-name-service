@@ -136,7 +136,6 @@ export class SoterWalletAdapter extends BaseMessageSignerWalletAdapter {
             const wallet = this._wallet;
             if (!wallet || !this.publicKey) throw new WalletNotConnectedError();
             try {
-                transaction.fee = 10;
                 const result = await wallet.requestTransaction(transaction);
                 const transactionId = result.transactionId;
                 if (!transactionId || transactionId.length == 0) {

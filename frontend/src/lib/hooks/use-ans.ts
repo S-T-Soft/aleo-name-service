@@ -67,7 +67,7 @@ export function useANS() {
           if (tld == '0field') {
             tld = "";
           } else {
-            tld = await getName(tld);
+            tld = (await getName(tld)).name;
           }
           return {
             id: rec.ciphertext,
