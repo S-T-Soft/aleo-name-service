@@ -12,12 +12,19 @@ export interface Attachment {
   thumbnail: string;
 }
 
+export interface NameHashBalance {
+  name: string;
+  nameHash: string;
+  balance: number;
+}
+
 export interface Record {
   name: string;
   private: boolean;
   isPrimaryName: boolean;
   record?: any;
   nameHash?: string;
+  balance?: number;
 }
 
 export interface Resolver {
