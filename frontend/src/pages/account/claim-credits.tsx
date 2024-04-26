@@ -53,7 +53,7 @@ export default function ClaimCredits({record}: React.PropsWithChildren<{
   return <>
     <div className="leading-10 mt-5">
       <span className="mr-4">Balance:</span>
-      <span className="rounded-lg bg-gray-700 px-2 py-1 mr-4">{record.balance / 1000000} ACs</span>
+      <span className="rounded-lg bg-gray-700 px-2 py-1 mr-4">{record && record.balance / 1000000} ACs</span>
       {record && !claiming && record.balance > 0 &&
           <Button className="mr-4" onClick={handleClaim}>Withdraw</Button>}
       {record && claiming && <Button color={"gray"} className="mr-4" disabled={true}><RefreshIcon
