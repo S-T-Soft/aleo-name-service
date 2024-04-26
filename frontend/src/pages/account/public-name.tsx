@@ -4,6 +4,7 @@ import Button from "@/components/ui/button";
 import {RefreshIcon} from "@/components/icons/refresh";
 import Transfer from "@/pages/account/transfer";
 import Avatar from "@/components/resolver/avatar";
+import ClaimCredits from "@/pages/account/claim-credits";
 
 
 export default function PublicName({
@@ -82,6 +83,7 @@ export default function PublicName({
       {converting && <Button color={"gray"} className="mr-4" disabled={true}><RefreshIcon
           className="inline text-aquamarine motion-safe:animate-spin"/> {convertStatus}</Button>}
     </div>
+    {record && <ClaimCredits record={record}/>}
     {record && <Transfer name={record.name} transfer={transfer} setTriggerRecheck={setTriggerRecheck}/>}
   </>;
 }

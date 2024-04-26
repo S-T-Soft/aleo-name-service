@@ -23,7 +23,10 @@ import AnchorLink from "@/components/ui/links/anchor-link";
 import {WalletMultiButton} from "@/components/WalletMultiButton";
 import Layout from "@/layouts/_layout";
 import {Check} from "@/components/icons/check";
+import {getFormattedNameInput} from "@/lib/util";
 import tlds from "@/config/tlds";
+
+import {usePrivateFee} from "@/lib/hooks/use-private-fee";
 
 
 const NamePage: NextPageWithLayout = () => {
@@ -32,7 +35,7 @@ const NamePage: NextPageWithLayout = () => {
   const {publicKey} = useWallet();
   const {mutate} = useSWRConfig();
   const {transferCredits} = useCredit();
-  const {register, calcPrice, getFormattedNameInput, getCouponCards} = useANS();
+  const {register, calcPrice, getCouponCards, matchTld} = useANS();
   const {getAddress} = useClient();
   const {getCreditRecords} = useCredit();
   const {names, publicBalance} = useRecords();
@@ -53,14 +56,13 @@ const NamePage: NextPageWithLayout = () => {
   const [price, setPrice] = useState(2);
   const [record, setRecord] = useState("");
   const [feeRecord, setFeeRecord] = useState("");
-  const [isPrivate, setIsPrivate] = useState<boolean>(true);
+  const {privateFee, setPrivateFee} = usePrivateFee();
 
   useEffect(() => {
     if (router.isReady) {
       const {slug} = router.query;
       if (typeof slug === 'string') {
-        const matchedTld = tlds.find(tld => slug.endsWith(`.${tld.name}`));
-
+        const matchedTld = matchTld(slug);
         if (matchedTld) {
           setName(slug.split('.').slice(0, -1).join('.'));
           setTld(matchedTld);
@@ -84,10 +86,10 @@ const NamePage: NextPageWithLayout = () => {
   const checkRecords = () => {
     const ans_price = calcPrice(name, tld, selectedCard);
     setPrice(ans_price / 1000000);
-    getCreditRecords(isPrivate ? [ans_price, NEXT_PUBLIC_FEES_REGISTER] : [ans_price]).then((records) => {
+    getCreditRecords(privateFee ? [ans_price, NEXT_PUBLIC_FEES_REGISTER] : [ans_price]).then((records) => {
       if (records) {
         setRecord(records[0].plaintext);
-        isPrivate && setFeeRecord(records.length > 1 ? records[1].plaintext : "");
+        privateFee && setFeeRecord(records.length > 1 ? records[1].plaintext : "");
       } else {
         setRecord("");
         setFeeRecord("");
@@ -160,11 +162,11 @@ const NamePage: NextPageWithLayout = () => {
       checkRecords();
     }
     setShowAleoTool(!selectedCard);
-  }, [isPrivate, publicKey, selectedCard]);
+  }, [privateFee, publicKey, selectedCard]);
 
   const handleRegister = async (event: any) => {
     event.preventDefault();
-    await register(name, tld, selectedCard, isPrivate, (running: boolean, status: Status) => {
+    await register(name, tld, selectedCard, privateFee, (running: boolean, status: Status) => {
       setRegistering(running);
       setStatus(status.message);
       if (!running) {
@@ -289,14 +291,14 @@ const NamePage: NextPageWithLayout = () => {
                                       <Button className="mr-5" onClick={handleConvert}>Create Record</Button>
                                       <Button className="bg-gray-700 mr-5" disabled={true}>Register</Button>
                                   </>}
-                                  {(record != "" && feeRecord == "" && isPrivate) && <>
+                                  {(record != "" && feeRecord == "" && privateFee) && <>
                                       <Button className="mr-5" onClick={handleConvertFee}>Create Fee Record</Button>
                                       <Button className="bg-gray-700 mr-5" disabled={true}>Register</Button>
                                   </>}
-                                  {record != "" && (!isPrivate || feeRecord != "") &&
+                                  {record != "" && (!privateFee || feeRecord != "") &&
                                       <Button className="mr-5" onClick={handleRegister}>Register</Button>}
-                                    <ToggleSwitch label="Private fee" isToggled={isPrivate}
-                                                  setIsToggled={setIsPrivate}/>
+                                    <ToggleSwitch label="Private fee" isToggled={privateFee}
+                                                  setIsToggled={setPrivateFee}/>
                                 </div>
                             }
                             {publicKey && registering &&
@@ -312,7 +314,7 @@ const NamePage: NextPageWithLayout = () => {
                                 Once you refresh this page and see that the <span className="rounded-full bg-teal text-black p-1">Register</span> button has become clickable,
                                 you can proceed with the registration.
                             </div>}
-                            {publicKey && record != "" && feeRecord == "" && isPrivate && <div className="mt-5">
+                            {publicKey && record != "" && feeRecord == "" && privateFee && <div className="mt-5">
                                 You need <span className="underline">0.37 Private Credits</span> for the gas fee,
                                 but you currently lack sufficient Private Credits.<br/>
                                 Please select <span className="rounded-full bg-teal text-black p-1">Create Fee Record</span> to convert Public
@@ -322,7 +324,7 @@ const NamePage: NextPageWithLayout = () => {
                                 you're ready to register.<br/>
                                 Alternatively, you may opt to disable the <span className="rounded-full bg-teal text-black p-1">Private Fee</span> option for a simpler process.
                             </div>}
-                            {publicKey && record != "" && feeRecord != "" && !isPrivate && <div className="mt-5">
+                            {publicKey && record != "" && feeRecord != "" && !privateFee && <div className="mt-5">
                                 Please be aware that by disabling the "Private Fee" option,
                                   your Aleo address will be exposed in the transaction records.
                             </div>}
@@ -336,7 +338,7 @@ const NamePage: NextPageWithLayout = () => {
                                         <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">Private Key</span> Enter your PRIVATE_KEY</li>
                                         <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">Execute On-Chain</span> Turn on</li>
                                         <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">Fee</span> Enter <CopyToClipboardText text="0.37"/></li>
-                                        {isPrivate && publicKey &&
+                                        {privateFee && publicKey &&
                                             <>
                                                 <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">Private Fee</span> Turn on</li>
                                                 <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">Fee Record</span> Enter {feeRecord != ""?<CopyToClipboardText text={feeRecord}/> : ("a record containing at least 0.37 credits")}</li>

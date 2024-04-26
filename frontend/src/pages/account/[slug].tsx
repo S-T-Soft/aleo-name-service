@@ -13,7 +13,6 @@ import PrivateName from "@/pages/account/private-name";
 import PublicName from "@/pages/account/public-name";
 import SubNameView from "@/components/subname/view";
 import Layout from "@/layouts/_layout";
-import {Unlocked} from "@/components/icons/unlocked";
 
 
 const ManageNamePage: NextPageWithLayout = () => {
@@ -21,7 +20,7 @@ const ManageNamePage: NextPageWithLayout = () => {
   const {wallet, publicKey} = useWallet();
   const {getAddress} = useClient();
   const {convertToPrivate, convertToPublic, setPrimaryName, unsetPrimaryName, transfer} = useANS();
-  const {records} = useRecords();
+  const {records, updateRecodeBalance} = useRecords();
   const [activeTab, setActiveTab] = useState('profile');
   const [available, setAvailable] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -62,6 +61,7 @@ const ManageNamePage: NextPageWithLayout = () => {
           setAvailable(false);
           const record = records?.find((rec) => rec.name === name);
           setRecord(record);
+          record && updateRecodeBalance(record);
           const isPrivate = address.startsWith("Private");
           if (!isPrivate) {
             setIsPrimaryName(record?.isPrimaryName || false);
@@ -130,7 +130,7 @@ const ManageNamePage: NextPageWithLayout = () => {
           {!loading && available || !isMine && <span>Redirecting...</span>}
           {!loading && activeTab == "profile" && isPrivate &&
               <PrivateName
-                name={name}
+                record={record!}
                 setTriggerRecheck={() => {setTriggerRecheck(triggerRecheck + 1)}}
                 convertToPublic={convertToPublic}
                 transfer={transfer}

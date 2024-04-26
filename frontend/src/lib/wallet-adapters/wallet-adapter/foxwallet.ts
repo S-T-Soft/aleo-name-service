@@ -267,7 +267,7 @@ export class FoxWalletAdapter extends BaseMessageSignerWalletAdapter {
             const wallet = window.foxwallet && window.foxwallet.aleo;
 
             try {
-                await wallet.connect(decryptPermission, network, programs);
+                await wallet?.connect(decryptPermission, network, programs);
                 if (!wallet?.publicKey) {
                     throw new WalletConnectionError();
                 }

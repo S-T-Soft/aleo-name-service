@@ -1,15 +1,23 @@
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
-import {StatusChangeCallback} from "@/types";
+import {StatusChangeCallback, Record} from "@/types";
 import {Transaction, WalletAdapterNetwork, WalletNotConnectedError} from "@demox-labs/aleo-wallet-adapter-base";
 import {useTransaction} from "@/lib/hooks/use-transaction";
 import React from "react";
 import {TypeOptions} from "react-toastify";
 import toast from "@/components/ui/toast";
 import {useClient} from "@/lib/hooks/use-client";
+import * as process from "process";
+import {getFormattedNameInput} from "@/lib/util";
+import {usePrivateFee} from "@/lib/hooks/use-private-fee";
 
 export function useCredit() {
+  const FEES_CREDIT_TRANSFER = parseInt(process.env.NEXT_PUBLIC_FEES_CREDIT_TRANSFER!);
+  const FEES_CREDIT_CLAIM = parseInt(process.env.NEXT_PUBLIC_FEES_CREDIT_CLAIM!);
+  const FEES_CREDIT_CLAIM_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_CREDIT_CLAIM_PUBLIC!);
   const {addTransaction} = useTransaction();
-  const {getAddress} = useClient();
+  const {getAddress, getNameHash} = useClient();
+  const TRANSFER_PROGRAM = process.env.NEXT_PUBLIC_TRANSFER_PROGRAM!;
+  const {privateFee} = usePrivateFee();
   const {publicKey, requestRecordPlaintexts, requestTransaction} = useWallet();
 
   const notify = React.useCallback((type: TypeOptions, message: string) => {
@@ -106,14 +114,15 @@ export function useCredit() {
     }[method];
 
     const createTransactionPromise = (method === "transfer_private" || method === "transfer_private_to_public")
-      ? getCreditRecords([amount, fee!]).then((records) => {
+      ? getCreditRecords(privateFee ? [amount, fee!] : [amount]).then((records) => {
           const aleoTransaction = Transaction.createTransaction(
             publicKey,
             WalletAdapterNetwork.Testnet,
             "credits.aleo",
             method,
             [records[0], recipient, amount + "u64"],
-            fee!
+            fee!,
+            privateFee
           );
           if (requestTransaction)
             return requestTransaction(aleoTransaction);
@@ -128,7 +137,7 @@ export function useCredit() {
             method,
             [recipient, amount + "u64"],
             fee!,
-            false
+            privateFee
           );
           if (requestTransaction)
             return requestTransaction(aleoTransaction);
@@ -145,5 +154,74 @@ export function useCredit() {
     });
   }
 
-  return {getCreditRecords, transferCredits}
+  const transferCreditsToANS = async (recipient: string, amount: number, password: string, onStatusChange?: StatusChangeCallback) => {
+    if (!publicKey) throw new WalletNotConnectedError();
+    onStatusChange && onStatusChange(true, {hasError: false, message: "Transferring"});
+
+    if (recipient.indexOf(".") == -1) {
+      const message = `Recipient must be a valid ANS`;
+      notify("error", message);
+      onStatusChange && onStatusChange(false, {hasError: true, message});
+      return;
+    }
+
+    amount = amount * 1000000;
+
+    Promise.all([getCreditRecords([amount, FEES_CREDIT_TRANSFER]), getNameHash(recipient)])
+      .then(([records, nameHash]) => {
+        const aleoTransaction = Transaction.createTransaction(
+          publicKey,
+          WalletAdapterNetwork.Testnet,
+          TRANSFER_PROGRAM,
+          "transfer_credits",
+          [nameHash, getFormattedNameInput(password, 2), amount + "u64", records[0]],
+          FEES_CREDIT_TRANSFER,
+          privateFee
+        );
+        console.log(aleoTransaction);
+        if (requestTransaction)
+          return requestTransaction(aleoTransaction);
+        else
+          throw new Error("requestTransaction is not defined");
+      })
+      .then((txId) => {
+        addTransaction("transferCreditsToANS", txId, [], onStatusChange);
+      })
+      .catch((error) => {
+        notify("error", error.message);
+        onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
+      });
+  }
+
+  const claimCreditsFromANS = async (record: Record, amount: number, password: string, onStatusChange?: StatusChangeCallback) => {
+    if (!publicKey) throw new WalletNotConnectedError();
+    onStatusChange && onStatusChange(true, {hasError: false, message: "Claiming"});
+
+    const fee = record.private ? FEES_CREDIT_CLAIM : FEES_CREDIT_CLAIM_PUBLIC;
+
+    const aleoTransaction = Transaction.createTransaction(
+      publicKey,
+      WalletAdapterNetwork.Testnet,
+      TRANSFER_PROGRAM,
+      record.private ? "claim_credits_private" : "claim_credits_public",
+      [record.private ? record.record : record.nameHash, getFormattedNameInput(password, 2), amount + "u64"],
+      fee,
+      privateFee
+    );
+    console.log(aleoTransaction);
+    if (requestTransaction) {
+      requestTransaction(aleoTransaction).then((txId) => {
+        addTransaction("claimCreditsFromANS", txId, [], onStatusChange);
+      })
+        .catch((error) => {
+          notify("error", error.message);
+          onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
+        });
+    } else {
+      notify("error", "requestTransaction is not defined");
+      onStatusChange && onStatusChange(false, {hasError: true, message: "requestTransaction is not defined"});
+    }
+  }
+
+  return {getCreditRecords, transferCredits, transferCreditsToANS, claimCreditsFromANS}
 }

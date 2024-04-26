@@ -6,6 +6,9 @@ import {useWalletModal, WalletConnectButton, WalletModalButton} from "@demox-lab
 import {useRecords} from "@/lib/hooks/use-records";
 import AnchorLink from "@/components/ui/links/anchor-link";
 import {DynamicSocialIcon} from "@/assets/social/DynamicSocialIcon";
+import ToggleSwitch from "@/components/ui/toggle-switch";
+
+import {usePrivateFee} from "@/lib/hooks/use-private-fee";
 
 const socialLinks = [
   {
@@ -26,6 +29,7 @@ export const WalletMultiButton: FC<ButtonProps> = ({ children, ...props }) => {
     const { publicKey, wallet, disconnect } = useWallet();
     const { primaryName, avatar} = useRecords();
     const { setVisible } = useWalletModal();
+    const {privateFee, setPrivateFee} = usePrivateFee();
     const [copied, setCopied] = useState(false);
     const [active, setActive] = useState(false);
     const ref = useRef<HTMLUListElement>(null);
@@ -101,44 +105,54 @@ export const WalletMultiButton: FC<ButtonProps> = ({ children, ...props }) => {
                   )}
                 <span className="font-bold">{content}</span>
             </Button>
-            <ul
-              aria-label="dropdown-list"
-              className={`w-full wallet-adapter-dropdown-list ${active && 'wallet-adapter-dropdown-list-active'}`}
-              ref={ref}
-              role="menu"
+          <ul
+            aria-label="dropdown-list"
+            className={`w-full wallet-adapter-dropdown-list ${active && 'wallet-adapter-dropdown-list-active'}`}
+            ref={ref}
+            role="menu"
+          >
+            {primaryName && <li onClick={closeDropdown}
+                                className="flex flex-row justify-center border-none outline-none cursor-pointer whitespace-nowrap box-border px-4 py-2 w-full rounded-md hover:text-aquamarine"
+                                role="menuitem">
+                <AnchorLink href={`/account/${primaryName}`}>Profile</AnchorLink>
+            </li>}
+            <li onClick={copyAddress}
+                className="flex flex-row justify-center border-none outline-none cursor-pointer whitespace-nowrap box-border px-4 py-2 w-full rounded-md hover:text-aquamarine"
+                role="menuitem">
+              {copied ? 'Copied' : 'Copy address'}
+            </li>
+            <li onClick={openModal}
+                className="flex flex-row justify-center border-none outline-none cursor-pointer whitespace-nowrap box-border px-4 py-2 w-full rounded-md hover:text-aquamarine"
+                role="menuitem">
+              Change wallet
+            </li>
+            <li onClick={disconnect}
+                className="flex flex-row justify-center border-none outline-none cursor-pointer whitespace-nowrap box-border px-4 py-2 w-full rounded-md hover:text-aquamarine text-red-400"
+                role="menuitem">
+              Disconnect
+            </li>
+            <li>
+              <hr/>
+            </li>
+            <li
+              className="flex flex-row justify-between border-none outline-none whitespace-nowrap box-border px-4 py-2 w-full rounded-md"
             >
-                {primaryName && <li onClick={closeDropdown}
-                                    className="flex flex-row justify-center border-none outline-none cursor-pointer whitespace-nowrap box-border px-4 py-2 w-full rounded-md hover:text-aquamarine"
-                                    role="menuitem">
-                    <AnchorLink href={`/account/${primaryName}`}>Profile</AnchorLink>
-                </li>}
-                <li onClick={copyAddress}
-                    className="flex flex-row justify-center border-none outline-none cursor-pointer whitespace-nowrap box-border px-4 py-2 w-full rounded-md hover:text-aquamarine"
-                    role="menuitem">
-                    {copied ? 'Copied' : 'Copy address'}
-                </li>
-                <li onClick={openModal}
-                    className="flex flex-row justify-center border-none outline-none cursor-pointer whitespace-nowrap box-border px-4 py-2 w-full rounded-md hover:text-aquamarine"
-                    role="menuitem">
-                    Change wallet
-                </li>
-                <li onClick={disconnect}
-                    className="flex flex-row justify-center border-none outline-none cursor-pointer whitespace-nowrap box-border px-4 py-2 w-full rounded-md hover:text-aquamarine"
-                    role="menuitem">
-                    Disconnect
-                </li>
-                <li>
-                    <hr/>
-                </li>
-                <li className="flex flex-row justify-center border-none outline-none whitespace-nowrap box-border px-4 py-2 w-full rounded-md"
-                    role="menuitem">
-                  {socialLinks.map((item, index) => (
-                    <a href={item.link} target="_blank" rel="noopener noreferrer" key={index} className="px-2">
-                      <DynamicSocialIcon name={item.icon} fill="rgb(107 114 128 / var(--tw-text-opacity))" className="h-8"/>
-                    </a>
-                  ))}
-                </li>
-            </ul>
+              <span>Private Fee</span>
+              <ToggleSwitch isToggled={privateFee} setIsToggled={setPrivateFee}/>
+            </li>
+            <li>
+              <hr/>
+            </li>
+            <li
+              className="flex flex-row justify-center border-none outline-none whitespace-nowrap box-border px-4 py-2 w-full rounded-md"
+              role="menuitem">
+              {socialLinks.map((item, index) => (
+                <a href={item.link} target="_blank" rel="noopener noreferrer" key={index} className="px-2">
+                  <DynamicSocialIcon name={item.icon} fill="rgb(107 114 128 / var(--tw-text-opacity))" className="h-8"/>
+                </a>
+              ))}
+            </li>
+          </ul>
         </div>
     );
 };

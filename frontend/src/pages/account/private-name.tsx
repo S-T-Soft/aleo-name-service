@@ -1,12 +1,13 @@
 import {useState} from "react";
-import {Status} from "@/types";
+import {Status, Record} from "@/types";
 import Button from "@/components/ui/button";
 import {RefreshIcon} from "@/components/icons/refresh";
 import Transfer from "@/pages/account/transfer";
+import ClaimCredits from "@/pages/account/claim-credits";
 
-export default function PrivateName({name, setTriggerRecheck, convertToPublic, transfer}:
+export default function PrivateName({record, setTriggerRecheck, convertToPublic, transfer}:
                               React.PropsWithChildren<{
-                                name: string,
+                                record: Record,
                                 setTriggerRecheck: CallableFunction,
                                 convertToPublic: CallableFunction,
                                 transfer: CallableFunction
@@ -16,7 +17,7 @@ export default function PrivateName({name, setTriggerRecheck, convertToPublic, t
 
   const handleConvert = async (event: any) => {
     event.preventDefault();
-    await convertToPublic(name, (running: boolean, status: Status) => {
+    await convertToPublic(record.name, (running: boolean, status: Status) => {
       setConverting(running);
       setConvertStatus(status.message);
       if (!running) {
@@ -34,6 +35,7 @@ export default function PrivateName({name, setTriggerRecheck, convertToPublic, t
       {converting && <Button color={"gray"} className="mr-10" disabled={true}><RefreshIcon
           className="inline text-aquamarine motion-safe:animate-spin"/> {convertStatus}</Button>}
     </div>
-    <Transfer name={name} transfer={transfer} setTriggerRecheck={setTriggerRecheck}/>
+    {record && <ClaimCredits record={record}/>}
+    {record && <Transfer name={record.name} transfer={transfer} setTriggerRecheck={setTriggerRecheck}/>}
   </>;
 }

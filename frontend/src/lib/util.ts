@@ -77,6 +77,16 @@ export function padArray(array: bigint[], length: number): bigint[] {
   return paddedArray;
 }
 
+export function getFormattedNameInput(name: string, length: number): string {
+  const nameInputs = padArray(splitStringToBigInts(name), length);
+  return `[${nameInputs.map(i => i + 'u128').join(",")}]`;
+}
+
+export function getFormattedU128Input(str: string): string {
+  const bint = stringToBigInt(str);
+  return `${bint}u128`;
+}
+
 export function parseStringToBigIntArray(input: string): bigint[] {
   const bigIntRegex = /([0-9]+)u128/g;
   const matches = input.match(bigIntRegex);

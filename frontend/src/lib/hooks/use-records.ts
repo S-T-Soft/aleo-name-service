@@ -66,6 +66,7 @@ export function createRecordContext() {
   }
 
   const getNameByHash = async (nameHash: string): Promise<string> => {
+    console.log("getNameByHash", nameHash);
     // check whether nameHash is in namesHash
     if (namesHash.includes(nameHash)) {
       // return from names
@@ -77,16 +78,18 @@ export function createRecordContext() {
 
   const loadPrivateRecords = async () => {
     return new Promise<Record[]>((resolve, reject) => {
-      requestRecords!(NEXT_PUBLIC_PROGRAM!).then((records) => {
-        return Promise.all(records.filter((rec) => !rec.spent && rec.data.nft_owner === undefined).map(async (rec) => {
+      requestRecords!(NEXT_PUBLIC_PROGRAM!).then((privateRecords) => {
+        return Promise.all(privateRecords.filter((rec) => !rec.spent && rec.data.nft_owner === undefined).map(async (rec) => {
           const name_hash = rec.data.data.replace(".private", "");
           try {
-            return {
+            const existRec = (records || []).filter((rec) => rec.nameHash == name_hash);
+            return existRec.length > 0 ? existRec[0] : {
               name: await getNameByHash(name_hash),
               private: true,
               isPrimaryName: false,
               nameHash: name_hash,
-              record: rec
+              record: rec,
+              balance: 0
             } as Record;
           } catch (e) {
             return {} as Record;
@@ -175,6 +178,15 @@ export function createRecordContext() {
     setRecords((records || []).map((rec) => rec.name === record.name ? record : rec));
   }
 
+  const updateRecodeBalance = (record: Record) => {
+    getName(record.nameHash!).then((nameHashBalance) => {
+      if (record.balance != nameHashBalance.balance) {
+        record.balance = nameHashBalance.balance;
+        replaceRecord(record);
+      }
+    })
+  }
+
   const syncPrimaryName = () => {
     if (publicKey) {
       getPrimaryName(publicKey)
@@ -183,7 +195,7 @@ export function createRecordContext() {
           return getResolver(primaryName, "avatar");
         }).then((resolver) => {
           if (resolver != null) {
-            setAvatar(resolver.value.replace("ipfs://", "https://ipfs.io/ipfs/"));
+            setAvatar(resolver.value.replace("ipfs://", "https://gateway.pinata.cloud/ipfs/"));
           }
         });
     } else {
@@ -205,7 +217,8 @@ export function createRecordContext() {
     addRecord,
     removeRecord,
     replaceRecord,
-    syncPrimaryName
+    syncPrimaryName,
+    updateRecodeBalance
   };
 }
 
@@ -223,6 +236,7 @@ interface RecordContextState {
   removeRecord: (name: string) => void;
   replaceRecord: (record: Record) => void;
   syncPrimaryName: () => void;
+  updateRecodeBalance: (record: Record) => void;
 }
 
 const DEFAULT = {
@@ -238,7 +252,8 @@ const DEFAULT = {
   addRecord: () => {},
   removeRecord: () => {},
   replaceRecord: () => {},
-  syncPrimaryName: () => {}
+  syncPrimaryName: () => {},
+  updateRecodeBalance: () => {}
 }
 
 export const RecordContext = createContext<RecordContextState>(DEFAULT as RecordContextState);

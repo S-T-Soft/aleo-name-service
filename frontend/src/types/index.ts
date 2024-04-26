@@ -24,7 +24,7 @@ export interface Record {
   isPrimaryName: boolean;
   record?: any;
   nameHash?: string;
-  balance?: number;
+  balance: number;
 }
 
 export interface Resolver {

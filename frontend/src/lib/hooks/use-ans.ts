@@ -1,5 +1,5 @@
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
-import {padArray, splitStringToBigInts, stringToBigInt} from "@/lib/util";
+import {getFormattedU128Input, getFormattedNameInput} from "@/lib/util";
 import React from "react";
 import * as process from "process";
 import {Transaction, WalletAdapterNetwork, WalletNotConnectedError} from "@demox-labs/aleo-wallet-adapter-base";
@@ -10,6 +10,8 @@ import {TypeOptions} from "react-toastify";
 import {useTransaction} from "@/lib/hooks/use-transaction";
 import {useCredit} from "@/lib/hooks/use-credit";
 import {useClient} from "@/lib/hooks/use-client";
+import tlds from "@/config/tlds";
+import {usePrivateFee} from "@/lib/hooks/use-private-fee";
 
 
 export function useANS() {
@@ -31,20 +33,19 @@ export function useANS() {
   const {addTransaction} = useTransaction();
   const {getCreditRecords} = useCredit();
   const {getAddress, getName} = useClient();
+  const {privateFee} = usePrivateFee();
   const {publicKey, requestTransaction, requestRecordPlaintexts} = useWallet();
 
   const notify = React.useCallback((type: TypeOptions, message: string) => {
     toast({ type, message });
   }, []);
 
-  const getFormattedU128Input = (str: string) => {
-    const bint = stringToBigInt(str);
-    return `${bint}u128`;
-  }
-
-  const getFormattedNameInput = (name: string, length: number) => {
-    const nameInputs = padArray(splitStringToBigInts(name), length);
-    return `[${nameInputs.map(i => i + 'u128').join(",")}]`;
+  const matchTld = (name: string) => {
+    const is_valid = /^([a-z0-9-_]{1,64}\.)+[a-z]{1,10}$/.test(name);
+    if (!is_valid) {
+      return undefined;
+    }
+    return tlds.find(tld => name.endsWith(`.${tld.name}`));
   }
 
   const calcPrice = (name: string, tld: TLD, card: CouponCard | null) => {
@@ -226,7 +227,7 @@ export function useANS() {
         `transfer_${record.private ? "private" : "public"}`,
         inputs,
         fee,
-        record.private  // private record use private fee, public record use public fee
+        privateFee
       );
       requestTransaction && requestTransaction(aleoTransaction).then((txId) => {
         addTransaction("transfer", txId, [name], onStatusChange);
@@ -262,7 +263,7 @@ export function useANS() {
         "convert_private_to_public",
         [record.record, publicKey],
         NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC,
-        false
+        privateFee
       );
       requestTransaction && requestTransaction(
         aleoTransaction
@@ -301,7 +302,7 @@ export function useANS() {
         "convert_public_to_private",
         [record.nameHash, publicKey],
         NEXT_PUBLIC_FEES_CONVERT_TO_PRIVATE,
-        false
+        privateFee
       );
       if (requestTransaction)
         requestTransaction(aleoTransaction).then((txId) => {
@@ -339,7 +340,7 @@ export function useANS() {
         "set_primary_name",
         [record.nameHash],
         NEXT_PUBLIC_FEES_SET_PRIMARY,
-        false
+        privateFee
       );
 
       requestTransaction && requestTransaction(aleoTransaction)
@@ -368,7 +369,7 @@ export function useANS() {
       "unset_primary_name",
       [],
       NEXT_PUBLIC_FEES_UNSET_PRIMARY,
-      false
+      privateFee
     );
 
     requestTransaction && requestTransaction(aleoTransaction)
@@ -401,7 +402,7 @@ export function useANS() {
         "set_resolver_record",
         [record.nameHash, getFormattedU128Input(category), getFormattedNameInput(content, 8)],
         NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD,
-        false
+        privateFee
       );
 
       requestTransaction && requestTransaction(aleoTransaction)
@@ -440,7 +441,7 @@ export function useANS() {
         "unset_resolver_record",
         [record.nameHash, getFormattedU128Input(category)],
         NEXT_PUBLIC_FEES_UNSET_PRIMARY,
-        false
+        privateFee
       );
 
       requestTransaction && requestTransaction(aleoTransaction)
@@ -459,6 +460,5 @@ export function useANS() {
   }
 
   return {register, transfer, convertToPrivate, convertToPublic, setPrimaryName, unsetPrimaryName,
-    setResolverRecord, unsetResolverRecord, calcPrice, getFormattedNameInput,
-    registerSubName, getCouponCards};
+    setResolverRecord, unsetResolverRecord, calcPrice, registerSubName, getCouponCards, matchTld};
 }

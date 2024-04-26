@@ -4,7 +4,6 @@ import {NameHashBalance, Record, Resolver, Statistic} from "@/types";
 export function useClient() {
   const API_URL = process.env.NEXT_PUBLIC_API_URL!;
   const ALEO_URL = process.env.NEXT_PUBLIC_ALEO_URL!;
-  const TRANSFER_PROGRAM = process.env.NEXT_PUBLIC_TRANSFER_PROGRAM!;
 
   const getStatistic = async () => {
     return new Promise<Statistic>((resolve, reject) => {

@@ -17,7 +17,7 @@ import { ToastContainer } from 'react-toastify';
 import {DecryptPermission, WalletAdapterNetwork} from '@demox-labs/aleo-wallet-adapter-base';
 import { WalletProvider } from '@demox-labs/aleo-wallet-adapter-react';
 import { WalletModalProvider } from '@demox-labs/aleo-wallet-adapter-reactui';
-import {RecordProvider} from "@/components/record-provider";
+import {RecordProvider} from "@/context/record-context";
 import { AxiomWebVitals } from 'next-axiom';
 import {
   FoxWalletAdapter,
@@ -27,6 +27,7 @@ import {
   AvailWalletAdapter,
   configureConnectionForPuzzle
 } from '@/lib/wallet-adapters';
+import {PrivateFeeProvider} from "@/context/private-fee-context";
 
 
 type AppPropsWithLayout = AppProps & {
@@ -94,17 +95,19 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
             autoConnect
           >
             <WalletModalProvider>
-              <RecordProvider>
-                <ThemeProvider
-                  attribute="class"
-                  enableSystem={false}
-                  defaultTheme="dark"
-                >
-                  {getLayout(<Component {...pageProps} />)}
-                  <ModalsContainer />
-                  <DrawersContainer />
-                </ThemeProvider>
-              </RecordProvider>
+              <PrivateFeeProvider>
+                <RecordProvider>
+                  <ThemeProvider
+                    attribute="class"
+                    enableSystem={false}
+                    defaultTheme="dark"
+                  >
+                    {getLayout(<Component {...pageProps} />)}
+                    <ModalsContainer />
+                    <DrawersContainer />
+                  </ThemeProvider>
+                </RecordProvider>
+              </PrivateFeeProvider>
             </WalletModalProvider>
           </WalletProvider>
         </Hydrate>
