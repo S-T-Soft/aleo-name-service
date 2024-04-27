@@ -70,6 +70,16 @@ const ToolBoxPage: NextPageWithLayout = () => {
     }
   }, [amount]);
 
+  const handleAmount = (event: any) => {
+    const value = parseFloat(event.target.value);
+    // make sure the amount is a valid number
+    if (isNaN(value)) {
+      setAmount(0);
+      return false;
+    }
+    setAmount(Math.floor(value * 1e6) / 1e6);
+  }
+
   const onStatusChange = (running: boolean, status: Status) => {
     setLoading(running);
     setTransferStatus(status.message);
@@ -166,7 +176,7 @@ const ToolBoxPage: NextPageWithLayout = () => {
               required={true}
               value={amount}
               placeholder={"amount in credit"}
-              onChange={(event) => setAmount(+event.currentTarget.value)}
+              onChange={handleAmount}
               autoComplete="off"
             />
           </div>

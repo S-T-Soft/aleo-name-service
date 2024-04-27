@@ -26,8 +26,13 @@ export default function ClaimCredits({record}: React.PropsWithChildren<{
   }
 
   const handleAmount = (event: any) => {
-    const value = event.target.value;
-    setAmount(Math.floor(parseFloat(value) * 1000000) / 1000000);
+    const value = parseFloat(event.target.value);
+    // make sure the amount is a valid number
+    if (isNaN(value)) {
+      setAmount(0);
+      return false;
+    }
+    setAmount(Math.floor(value * 1e6) / 1e6);
   }
 
   const handleClaimWithPass = async (event: any) => {
