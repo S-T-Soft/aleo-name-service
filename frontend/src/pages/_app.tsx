@@ -83,14 +83,14 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
           <WalletProvider
             wallets={wallets}
             decryptPermission={DecryptPermission.OnChainHistory}
-            network={WalletAdapterNetwork.Testnet}
+            network={process.env.NEXT_PUBLIC_NETWORK as WalletAdapterNetwork}
             programs={["credits.aleo",
               "ans_coupon_card_v1.aleo",
               "ans_coupon_card_v2.aleo",
               "ans_coupon_card_v3.aleo",
-              "aleo_name_service_registry_v4.aleo",
-              "aleo_name_service_registry_v5.aleo",
-              "aleo_name_service_registry_v6.aleo",
+              "aleo_name_service_registry_v1.aleo",
+              "aleo_name_service_registry_v2.aleo",
+              "aleo_name_service_registry_v3.aleo",
               process.env.NEXT_PUBLIC_PROGRAM!]}
             autoConnect
           >

@@ -3,7 +3,7 @@ import {NextSeo} from 'next-seo';
 import SearchView from "@/components/search/view";
 import {useRouter} from 'next/router'
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import Button from "@/components/ui/button";
 import * as process from "process";
 import ActiveLink from "@/components/ui/links/active-link";
@@ -49,7 +49,7 @@ const NamePage: NextPageWithLayout = () => {
   const [status, setStatus] = useState("Registering");
   const [triggerRecheck, setTriggerRecheck] = useState(0);
   const [nameInputs, setNameInputs] = useState("");
-  const [showAleoTool, setShowAleoTool] = useState(true);
+  const [showAleoTool, setShowAleoTool] = useState(false);
   const [showAleoTools, setShowAleoTools] = useState(false);
   const [name, setName] = useState("");
   const [tld, setTld] = useState<TLD>(tlds[0]);
@@ -57,6 +57,14 @@ const NamePage: NextPageWithLayout = () => {
   const [record, setRecord] = useState("");
   const [feeRecord, setFeeRecord] = useState("");
   const {privateFee, setPrivateFee} = usePrivateFee();
+
+  const needCreateRecord = useMemo(() => {
+    return record == "" && privateFee && price > 0;
+  }, [record, privateFee, price]);
+
+  const needCreateFeeRecord = useMemo(() => {
+    return (record != "" || price == 0) && feeRecord == "" && privateFee;
+  }, [record, feeRecord, privateFee, price]);
 
   useEffect(() => {
     if (router.isReady) {
@@ -86,14 +94,9 @@ const NamePage: NextPageWithLayout = () => {
   const checkRecords = () => {
     const ans_price = calcPrice(name, tld, selectedCard);
     setPrice(ans_price / 1000000);
-    getCreditRecords(privateFee ? [ans_price, NEXT_PUBLIC_FEES_REGISTER] : [ans_price]).then((records) => {
-      if (records) {
-        setRecord(records[0].plaintext);
-        privateFee && setFeeRecord(records.length > 1 ? records[1].plaintext : "");
-      } else {
-        setRecord("");
-        setFeeRecord("");
-      }
+    getCreditRecords(privateFee ? [ans_price, NEXT_PUBLIC_FEES_REGISTER] : [ans_price], false).then((records) => {
+      setRecord(records[0].plaintext);
+      privateFee && setFeeRecord(records[1].plaintext);
     }).catch((error) => {
       setRecord("");
       setFeeRecord("");
@@ -161,7 +164,7 @@ const NamePage: NextPageWithLayout = () => {
     if (publicKey) {
       checkRecords();
     }
-    setShowAleoTool(!selectedCard);
+    // setShowAleoTool(!selectedCard);
   }, [privateFee, publicKey, selectedCard]);
 
   const handleRegister = async (event: any) => {
@@ -239,7 +242,7 @@ const NamePage: NextPageWithLayout = () => {
                           <div className="mt-3 text-xl tracking-tighter text-gray-600 dark:text-gray-400 sm:block">
                               <span className="mr-2">Register Price:</span>
                               {price > 0 && <span className="bg-gray-700 p-1 pl-2 pr-2 rounded-lg text-gray-300 font-bold">
-                                {price} Private Credits
+                                {price} {privateFee ? "Private" : "Public"} Credits
                               </span>}
                               {price == 0 && <span className="bg-gray-700 p-1 pl-2 pr-2 rounded-lg text-gray-300 font-bold">
                                 FREE
@@ -287,16 +290,16 @@ const NamePage: NextPageWithLayout = () => {
                               className="mt-5 text-sm tracking-tighter text-gray-600 dark:text-gray-400 sm:block place-content-center">
                               {publicKey && !registering &&
                                 <div className="flex items-center">
-                                  {(record == "") && <>
-                                      <Button className="mr-5" onClick={handleConvert}>Create Record</Button>
-                                      <Button className="bg-gray-700 mr-5" disabled={true}>Register</Button>
+                                  {needCreateRecord && <>
+                                      <Button className="mr-5" onClick={handleConvert}>Prepare Record</Button>
                                   </>}
-                                  {(record != "" && feeRecord == "" && privateFee) && <>
-                                      <Button className="mr-5" onClick={handleConvertFee}>Create Fee Record</Button>
-                                      <Button className="bg-gray-700 mr-5" disabled={true}>Register</Button>
+                                  {needCreateFeeRecord && <>
+                                      <Button className="mr-5" onClick={handleConvertFee}>Prepare Fee Record</Button>
                                   </>}
-                                  {record != "" && (!privateFee || feeRecord != "") &&
+                                  {(!needCreateRecord && !needCreateFeeRecord) &&
                                       <Button className="mr-5" onClick={handleRegister}>Register</Button>}
+                                  {(needCreateRecord || needCreateFeeRecord) &&
+                                      <Button className="bg-gray-700 mr-5" disabled={true}>Register</Button>}
                                     <ToggleSwitch label="Private fee" isToggled={privateFee}
                                                   setIsToggled={setPrivateFee}/>
                                 </div>
@@ -305,7 +308,7 @@ const NamePage: NextPageWithLayout = () => {
                                 <Button color="gray" disabled={true}><RefreshIcon className="inline text-aquamarine motion-safe:animate-spin"/> {status}</Button>
                             }
                             {!publicKey && <WalletMultiButton>Connect Wallet to Register</WalletMultiButton>}
-                            {publicKey && record == "" && <div className="mt-5">
+                            {publicKey && needCreateRecord && <div className="mt-5">
                                 You need <span className="underline">{price} Private Credits</span> to pay for the domain register fee, but currently,
                                 you do not have enough Private Credits. <br/>
                                 Please click on <span className="rounded-full bg-teal text-black p-1">Create Record</span> to convert your Public Credits into Private Credits.<br/>
@@ -314,8 +317,8 @@ const NamePage: NextPageWithLayout = () => {
                                 Once you refresh this page and see that the <span className="rounded-full bg-teal text-black p-1">Register</span> button has become clickable,
                                 you can proceed with the registration.
                             </div>}
-                            {publicKey && record != "" && feeRecord == "" && privateFee && <div className="mt-5">
-                                You need <span className="underline">0.37 Private Credits</span> for the gas fee,
+                            {publicKey && needCreateFeeRecord && <div className="mt-5">
+                                You need <span className="underline">0.11 Private Credits</span> for the gas fee,
                                 but you currently lack sufficient Private Credits.<br/>
                                 Please select <span className="rounded-full bg-teal text-black p-1">Create Fee Record</span> to convert Public
                                 Credits into Private Credits, or manually make this conversion in your wallet. <br/>
@@ -324,7 +327,7 @@ const NamePage: NextPageWithLayout = () => {
                                 you're ready to register.<br/>
                                 Alternatively, you may opt to disable the <span className="rounded-full bg-teal text-black p-1">Private Fee</span> option for a simpler process.
                             </div>}
-                            {publicKey && record != "" && feeRecord != "" && !privateFee && <div className="mt-5">
+                            {publicKey && !privateFee && <div className="mt-5">
                                 Please be aware that by disabling the "Private Fee" option,
                                   your Aleo address will be exposed in the transaction records.
                             </div>}

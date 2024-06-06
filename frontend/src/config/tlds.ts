@@ -4,7 +4,7 @@ const tlds: TLD[] = [
   {
     name: "ans",
     hash: "3601410589032411677092457044111621862970800028849492457114786804129430260029field",
-    registrar: "ans_registrar_v4.aleo",
+    registrar: process.env.NEXT_PUBLIC_REGISTER_PROGRAM!,
     prices: {
       1: 1250000000,
       2: 250000000,

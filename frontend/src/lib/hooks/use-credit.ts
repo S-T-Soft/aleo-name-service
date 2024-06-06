@@ -14,6 +14,8 @@ export function useCredit() {
   const FEES_CREDIT_TRANSFER = parseInt(process.env.NEXT_PUBLIC_FEES_CREDIT_TRANSFER!);
   const FEES_CREDIT_CLAIM = parseInt(process.env.NEXT_PUBLIC_FEES_CREDIT_CLAIM!);
   const FEES_CREDIT_CLAIM_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_CREDIT_CLAIM_PUBLIC!);
+  const NETWORK = process.env.NEXT_PUBLIC_NETWORK as WalletAdapterNetwork;
+
   const {addTransaction} = useTransaction();
   const {getAddress, getNameHash} = useClient();
   const TRANSFER_PROGRAM = process.env.NEXT_PUBLIC_TRANSFER_PROGRAM!;
@@ -24,7 +26,7 @@ export function useCredit() {
     toast({ type, message });
   }, []);
 
-  const getCreditRecords = async (amounts: number[]) => {
+  const getCreditRecords = async (amounts: number[], errorWhenMissing: boolean = true) => {
     return new Promise<{plaintext: string}[]>((resolve, reject) => {
       if (amounts.length === 0) {
         resolve([]);
@@ -54,10 +56,15 @@ export function useCredit() {
             matchedRecords.push(match);
             originalRecords = originalRecords.filter(rec => rec !== match);
           } else {
-            reject({"message": "You don't have enough private credits"});
+            if (errorWhenMissing) {
+              reject({"message": "You don't have enough private credits"});
+            } else {
+              matchedRecords.push({plaintext: ""});
+            }
             return;
           }
         }
+        console.log(matchedRecords);
 
         // sort matched records in original order
         matchedRecords = sortedAmounts.map(sa => matchedRecords[sa.index]);
@@ -117,7 +124,7 @@ export function useCredit() {
       ? getCreditRecords(privateFee ? [amount, fee!] : [amount]).then((records) => {
           const aleoTransaction = Transaction.createTransaction(
             publicKey,
-            WalletAdapterNetwork.Testnet,
+            NETWORK,
             "credits.aleo",
             method,
             [records[0], recipient, amount + "u64"],
@@ -132,7 +139,7 @@ export function useCredit() {
       : Promise.resolve().then(() => {
           const aleoTransaction = Transaction.createTransaction(
             publicKey,
-            WalletAdapterNetwork.Testnet,
+            NETWORK,
             "credits.aleo",
             method,
             [recipient, amount + "u64"],
@@ -171,7 +178,7 @@ export function useCredit() {
       .then(([records, nameHash]) => {
         const aleoTransaction = Transaction.createTransaction(
           publicKey,
-          WalletAdapterNetwork.Testnet,
+          NETWORK,
           TRANSFER_PROGRAM,
           "transfer_credits",
           [nameHash, getFormattedNameInput(password, 2), amount + "u64", records[0]],
@@ -201,7 +208,7 @@ export function useCredit() {
 
     const aleoTransaction = Transaction.createTransaction(
       publicKey,
-      WalletAdapterNetwork.Testnet,
+      NETWORK,
       TRANSFER_PROGRAM,
       record.private ? "claim_credits_private" : "claim_credits_public",
       [record.private ? record.record : record.nameHash, getFormattedNameInput(password, 2), amount + "u64"],

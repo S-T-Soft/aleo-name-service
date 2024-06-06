@@ -17,6 +17,7 @@ import {usePrivateFee} from "@/lib/hooks/use-private-fee";
 export function useANS() {
   const NEXT_PUBLIC_PROGRAM = process.env.NEXT_PUBLIC_PROGRAM;
   const NEXT_PUBLIC_COUPON_CARD_PROGRAM = process.env.NEXT_PUBLIC_COUPON_CARD_PROGRAM;
+  const NEXT_PUBLIC_RESOLVER_PROGRAM = process.env.NEXT_PUBLIC_RESOLVER_PROGRAM;
   const NEXT_PUBLIC_FEES_REGISTER = parseInt(process.env.NEXT_PUBLIC_FEES_REGISTER!);
   const NEXT_PUBLIC_FEES_REGISTER_FREE = parseInt(process.env.NEXT_PUBLIC_FEES_REGISTER_FREE!);
   const NEXT_PUBLIC_FEES_REGISTER_COUPON = parseInt(process.env.NEXT_PUBLIC_FEES_REGISTER_COUPON!);
@@ -28,6 +29,7 @@ export function useANS() {
   const NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD = parseInt(process.env.NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD!);
   const NEXT_PUBLIC_FEES_TRANSFER_PRIVATE = parseInt(process.env.NEXT_PUBLIC_FEES_TRANSFER_PRIVATE!);
   const NEXT_PUBLIC_FEES_TRANSFER_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_TRANSFER_PUBLIC!);
+  const NETWORK = process.env.NEXT_PUBLIC_NETWORK as WalletAdapterNetwork;
 
   const {records} = useRecords();
   const {addTransaction} = useTransaction();
@@ -104,23 +106,28 @@ export function useANS() {
     let price = calcPrice(name, tld, card);
     let functionName = "register_fld";
     let fee = NEXT_PUBLIC_FEES_REGISTER;
-    let amounts = [price];
+    let amounts = [];
     if (price === 0) {
       functionName = "register_free";
       fee = NEXT_PUBLIC_FEES_REGISTER_FREE;
-      amounts = [];
     } else if (card) {
       functionName = "register_fld_with_coupon";
       fee = NEXT_PUBLIC_FEES_REGISTER_COUPON;
     }
     if (isPrivate) {
-      amounts.push(NEXT_PUBLIC_FEES_REGISTER);
+      if (functionName !== "register_free") {
+        amounts.push(price);
+      }
+      amounts.push(fee);
+    } else if (functionName !== "register_free") {
+      functionName = functionName + "_public";
+      fee += 25000;
     }
 
     getCreditRecords(amounts)
       .then((records) => {
         let inputs: any[] = [getFormattedNameInput(name, 4), tld.hash, publicKey];
-        if (functionName != "register_free") {
+        if (functionName != "register_free" && isPrivate) {
           inputs.push(records[0]);
         }
         if (card) {
@@ -128,7 +135,7 @@ export function useANS() {
         }
         const aleoTransaction = Transaction.createTransaction(
           publicKey,
-          WalletAdapterNetwork.Testnet,
+          NETWORK,
           tld.registrar,
           functionName,
           inputs,
@@ -159,7 +166,7 @@ export function useANS() {
 
     const aleoTransaction = Transaction.createTransaction(
       publicKey,
-      WalletAdapterNetwork.Testnet,
+      NETWORK,
       NEXT_PUBLIC_PROGRAM!,
       "register_" + (parentRecord.private ? "private" : "public"),
       [getFormattedNameInput(name, 4),
@@ -222,7 +229,7 @@ export function useANS() {
       }
       const aleoTransaction = Transaction.createTransaction(
         publicKey,
-        WalletAdapterNetwork.Testnet,
+        NETWORK,
         NEXT_PUBLIC_PROGRAM!,
         `transfer_${record.private ? "private" : "public"}`,
         inputs,
@@ -258,9 +265,9 @@ export function useANS() {
       }
       const aleoTransaction = Transaction.createTransaction(
         publicKey,
-        WalletAdapterNetwork.Testnet,
+        NETWORK,
         NEXT_PUBLIC_PROGRAM!,
-        "convert_private_to_public",
+        "transfer_private_to_public",
         [record.record, publicKey],
         NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC,
         privateFee
@@ -297,9 +304,9 @@ export function useANS() {
 
       const aleoTransaction = Transaction.createTransaction(
         publicKey,
-        WalletAdapterNetwork.Testnet,
+        NETWORK,
         NEXT_PUBLIC_PROGRAM!,
-        "convert_public_to_private",
+        "transfer_public_to_private",
         [record.nameHash, publicKey],
         NEXT_PUBLIC_FEES_CONVERT_TO_PRIVATE,
         privateFee
@@ -335,7 +342,7 @@ export function useANS() {
 
       const aleoTransaction = Transaction.createTransaction(
         publicKey,
-        WalletAdapterNetwork.Testnet,
+        NETWORK,
         NEXT_PUBLIC_PROGRAM!,
         "set_primary_name",
         [record.nameHash],
@@ -364,7 +371,7 @@ export function useANS() {
 
     const aleoTransaction = Transaction.createTransaction(
       publicKey,
-      WalletAdapterNetwork.Testnet,
+      NETWORK,
       NEXT_PUBLIC_PROGRAM!,
       "unset_primary_name",
       [],
@@ -397,8 +404,8 @@ export function useANS() {
 
       const aleoTransaction = Transaction.createTransaction(
         publicKey,
-        WalletAdapterNetwork.Testnet,
-        NEXT_PUBLIC_PROGRAM!,
+        NETWORK,
+        NEXT_PUBLIC_RESOLVER_PROGRAM!,
         "set_resolver_record",
         [record.nameHash, getFormattedU128Input(category), getFormattedNameInput(content, 8)],
         NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD,
@@ -436,8 +443,8 @@ export function useANS() {
 
       const aleoTransaction = Transaction.createTransaction(
         publicKey,
-        WalletAdapterNetwork.Testnet,
-        NEXT_PUBLIC_PROGRAM!,
+        NETWORK,
+        NEXT_PUBLIC_RESOLVER_PROGRAM!,
         "unset_resolver_record",
         [record.nameHash, getFormattedU128Input(category)],
         NEXT_PUBLIC_FEES_UNSET_PRIMARY,
