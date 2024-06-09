@@ -14,6 +14,7 @@ import ActiveLink from "@/components/ui/links/active-link";
 import {useANS} from "@/lib/hooks/use-ans";
 
 const ToolBoxPage: NextPageWithLayout = () => {
+  const NEXT_PUBLIC_EXPLORER_URL = process.env.NEXT_PUBLIC_EXPLORER_URL!;
   const {transferCredits, transferCreditsToANS} = useCredit();
   const tldName = tlds[0].name;
   const {publicKey} = useWallet();
@@ -137,7 +138,7 @@ const ToolBoxPage: NextPageWithLayout = () => {
           )}
           {recipientAddress && !isPrivate && (
             <ActiveLink
-              href={`https://explorer.hamp.app/address?a=${recipientAddress}`}
+              href={`${NEXT_PUBLIC_EXPLORER_URL}${recipientAddress}`}
               target={"_blank"}
               className="cursor-pointer [border:none] rounded-full flex flex-row mt-2 items-center justify-center gap-[5px] z-[2]">
               <div className="!h-[21px] !w-[21px] relative">
