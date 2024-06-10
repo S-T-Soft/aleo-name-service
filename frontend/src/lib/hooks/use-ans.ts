@@ -39,7 +39,7 @@ export function useANS() {
   const {publicKey, requestTransaction, requestRecordPlaintexts} = useWallet();
 
   const notify = React.useCallback((type: TypeOptions, message: string) => {
-    toast({ type, message });
+    toast({type, message});
   }, []);
 
   const matchTld = (name: string) => {
@@ -164,26 +164,34 @@ export function useANS() {
 
     onStatusChange && onStatusChange(true, {hasError: false, message: "Registering"});
 
-    const aleoTransaction = Transaction.createTransaction(
-      publicKey,
-      NETWORK,
-      NEXT_PUBLIC_PROGRAM!,
-      "register_" + (parentRecord.private ? "private" : "public"),
-      [getFormattedNameInput(name, 4),
-        parentRecord.private ? parentRecord.record : parentRecord.nameHash,
-        publicKey, '0u128'],
-      NEXT_PUBLIC_FEES_REGISTER_PUBLIC,
-      isPrivate // use private fee, or will leak the user address information
-    );
+    let amounts = [];
+    if (privateFee) {
+      amounts.push(NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC);
+    }
+    getCreditRecords(amounts)
+      .then((records) => {
+        const aleoTransaction = Transaction.createTransaction(
+          publicKey,
+          NETWORK,
+          NEXT_PUBLIC_PROGRAM!,
+          "register_" + (parentRecord.private ? "private" : "public"),
+          [getFormattedNameInput(name, 4),
+            parentRecord.private ? parentRecord.record : parentRecord.nameHash,
+            publicKey, '0u128'],
+          NEXT_PUBLIC_FEES_REGISTER_PUBLIC,
+          isPrivate // use private fee, or will leak the user address information
+        );
 
-    requestTransaction && requestTransaction(
-        aleoTransaction
-      ).then((txId) => {
-        addTransaction("registerSubdomain", txId, [name], onStatusChange);
-      }).catch((error) => {
-        notify("error", error.message);
-        onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
-      });
+        if (requestTransaction)
+          return requestTransaction(aleoTransaction)
+        else
+          throw new Error("requestTransaction is not defined");
+      }).then((txId) => {
+      addTransaction("registerSubdomain", txId, [name], onStatusChange);
+    }).catch((error) => {
+      notify("error", error.message);
+      onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
+    });
   }
 
   const transfer = async (name: string, recipient: string, onStatusChange?: StatusChangeCallback) => {
@@ -227,16 +235,26 @@ export function useANS() {
       } else {
         inputs.push(record.nameHash as string);
       }
-      const aleoTransaction = Transaction.createTransaction(
-        publicKey,
-        NETWORK,
-        NEXT_PUBLIC_PROGRAM!,
-        `transfer_${record.private ? "private" : "public"}`,
-        inputs,
-        fee,
-        privateFee
-      );
-      requestTransaction && requestTransaction(aleoTransaction).then((txId) => {
+      let amounts = [];
+      if (privateFee) {
+        amounts.push(NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC);
+      }
+      getCreditRecords(amounts)
+        .then((records) => {
+          const aleoTransaction = Transaction.createTransaction(
+            publicKey,
+            NETWORK,
+            NEXT_PUBLIC_PROGRAM!,
+            `transfer_${record.private ? "private" : "public"}`,
+            inputs,
+            fee,
+            privateFee
+          );
+          if (requestTransaction)
+            return requestTransaction(aleoTransaction)
+          else
+            throw new Error("requestTransaction is not defined");
+        }).then((txId) => {
         addTransaction("transfer", txId, [name], onStatusChange);
       }).catch((error) => {
         notify("error", error.message);
@@ -252,7 +270,7 @@ export function useANS() {
 
   const convertToPublic = async (name: string, onStatusChange?: StatusChangeCallback) => {
     if (!publicKey) throw new WalletNotConnectedError();
-    onStatusChange && onStatusChange(true,  {hasError: false, message: "Converting"});
+    onStatusChange && onStatusChange(true, {hasError: false, message: "Converting"});
 
     const record = records?.find((rec) => rec.name === name);
 
@@ -263,20 +281,29 @@ export function useANS() {
         onStatusChange && onStatusChange(false, {hasError: true, message});
         return;
       }
-      const aleoTransaction = Transaction.createTransaction(
-        publicKey,
-        NETWORK,
-        NEXT_PUBLIC_PROGRAM!,
-        "transfer_private_to_public",
-        [record.record, publicKey],
-        NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC,
-        privateFee
-      );
-      requestTransaction && requestTransaction(
-        aleoTransaction
-      ).then((txId) => {
-        addTransaction("convertToPublic", txId, [name], onStatusChange);
-      }).catch((error) => {
+      let amounts = [];
+      if (privateFee) {
+        amounts.push(NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC);
+      }
+      getCreditRecords(amounts)
+        .then((records) => {
+          const aleoTransaction = Transaction.createTransaction(
+            publicKey,
+            NETWORK,
+            NEXT_PUBLIC_PROGRAM!,
+            "transfer_private_to_public",
+            [record.record, publicKey],
+            NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC,
+            privateFee
+          );
+          if (requestTransaction)
+            return requestTransaction(aleoTransaction);
+          else
+            throw new Error("requestTransaction is not defined");
+        })
+        .then((txId) => {
+          addTransaction("convertToPublic", txId, [name], onStatusChange);
+        }).catch((error) => {
         notify("error", error.message);
         onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
       });
@@ -302,22 +329,31 @@ export function useANS() {
         return;
       }
 
-      const aleoTransaction = Transaction.createTransaction(
-        publicKey,
-        NETWORK,
-        NEXT_PUBLIC_PROGRAM!,
-        "transfer_public_to_private",
-        [record.nameHash, publicKey],
-        NEXT_PUBLIC_FEES_CONVERT_TO_PRIVATE,
-        privateFee
-      );
-      if (requestTransaction)
-        requestTransaction(aleoTransaction).then((txId) => {
-            addTransaction("convertToPrivate", txId, [name], onStatusChange);
-          }).catch((error) => {
-          notify("error", error.message);
-          onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
-        });
+      let amounts = [];
+      if (privateFee) {
+        amounts.push(NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC);
+      }
+      getCreditRecords(amounts)
+        .then((records) => {
+          const aleoTransaction = Transaction.createTransaction(
+            publicKey,
+            NETWORK,
+            NEXT_PUBLIC_PROGRAM!,
+            "transfer_public_to_private",
+            [record.nameHash, publicKey],
+            NEXT_PUBLIC_FEES_CONVERT_TO_PRIVATE,
+            privateFee
+          );
+          if (requestTransaction)
+            return requestTransaction(aleoTransaction)
+          else
+            throw new Error("requestTransaction is not defined");
+        }).then((txId) => {
+        addTransaction("convertToPrivate", txId, [name], onStatusChange);
+      }).catch((error) => {
+        notify("error", error.message);
+        onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
+      });
     } else {
       const message = "You don't own this name";
       notify("error", message);
@@ -340,23 +376,32 @@ export function useANS() {
         return;
       }
 
-      const aleoTransaction = Transaction.createTransaction(
-        publicKey,
-        NETWORK,
-        NEXT_PUBLIC_PROGRAM!,
-        "set_primary_name",
-        [record.nameHash],
-        NEXT_PUBLIC_FEES_SET_PRIMARY,
-        privateFee
-      );
+      let amounts = [];
+      if (privateFee) {
+        amounts.push(NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC);
+      }
+      getCreditRecords(amounts)
+        .then((records) => {
+          const aleoTransaction = Transaction.createTransaction(
+            publicKey,
+            NETWORK,
+            NEXT_PUBLIC_PROGRAM!,
+            "set_primary_name",
+            [record.nameHash],
+            NEXT_PUBLIC_FEES_SET_PRIMARY,
+            privateFee
+          );
 
-      requestTransaction && requestTransaction(aleoTransaction)
-        .then((txId) => {
-          addTransaction("setPrimaryName", txId, [name], onStatusChange);
-        }).catch((error) => {
+          if (requestTransaction)
+            return requestTransaction(aleoTransaction)
+          else
+            throw new Error("requestTransaction is not defined");
+        }).then((txId) => {
+        addTransaction("setPrimaryName", txId, [name], onStatusChange);
+      }).catch((error) => {
         notify("error", error.message);
         onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
-      });
+      })
     } else {
       const message = "You don't own this name";
       notify("error", message);
@@ -369,20 +414,29 @@ export function useANS() {
     if (!publicKey) throw new WalletNotConnectedError();
     onStatusChange && onStatusChange(true, {hasError: false, message: "Unsetting"});
 
-    const aleoTransaction = Transaction.createTransaction(
-      publicKey,
-      NETWORK,
-      NEXT_PUBLIC_PROGRAM!,
-      "unset_primary_name",
-      [],
-      NEXT_PUBLIC_FEES_UNSET_PRIMARY,
-      privateFee
-    );
+    let amounts = [];
+    if (privateFee) {
+      amounts.push(NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC);
+    }
+    getCreditRecords(amounts)
+      .then((records) => {
+        const aleoTransaction = Transaction.createTransaction(
+          publicKey,
+          NETWORK,
+          NEXT_PUBLIC_PROGRAM!,
+          "unset_primary_name",
+          [],
+          NEXT_PUBLIC_FEES_UNSET_PRIMARY,
+          privateFee
+        );
 
-    requestTransaction && requestTransaction(aleoTransaction)
-      .then((txId) => {
-        addTransaction("unsetPrimaryName", txId, [], onStatusChange);
-      }).catch((error) => {
+        if (requestTransaction)
+          return requestTransaction(aleoTransaction)
+        else
+          throw new Error("requestTransaction is not defined");
+      }).then((txId) => {
+      addTransaction("unsetPrimaryName", txId, [], onStatusChange);
+    }).catch((error) => {
       notify("error", error.message);
       onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
     });
@@ -402,20 +456,29 @@ export function useANS() {
         return;
       }
 
-      const aleoTransaction = Transaction.createTransaction(
-        publicKey,
-        NETWORK,
-        NEXT_PUBLIC_RESOLVER_PROGRAM!,
-        "set_resolver_record",
-        [record.nameHash, getFormattedU128Input(category), getFormattedNameInput(content, 8)],
-        NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD,
-        privateFee
-      );
+      let amounts = [];
+      if (privateFee) {
+        amounts.push(NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC);
+      }
+      getCreditRecords(amounts)
+        .then((records) => {
+          const aleoTransaction = Transaction.createTransaction(
+            publicKey,
+            NETWORK,
+            NEXT_PUBLIC_RESOLVER_PROGRAM!,
+            "set_resolver_record",
+            [record.nameHash, getFormattedU128Input(category), getFormattedNameInput(content, 8)],
+            NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD,
+            privateFee
+          );
 
-      requestTransaction && requestTransaction(aleoTransaction)
-        .then((txId) => {
-          addTransaction("setResolverRecord", txId, [name], onStatusChange);
-        }).catch((error) => {
+          if (requestTransaction)
+            return requestTransaction(aleoTransaction)
+          else
+            throw new Error("requestTransaction is not defined");
+        }).then((txId) => {
+        addTransaction("setResolverRecord", txId, [name], onStatusChange);
+      }).catch((error) => {
         notify("error", error.message);
         onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
       });
@@ -441,20 +504,30 @@ export function useANS() {
         return;
       }
 
-      const aleoTransaction = Transaction.createTransaction(
-        publicKey,
-        NETWORK,
-        NEXT_PUBLIC_RESOLVER_PROGRAM!,
-        "unset_resolver_record",
-        [record.nameHash, getFormattedU128Input(category)],
-        NEXT_PUBLIC_FEES_UNSET_PRIMARY,
-        privateFee
-      );
+      let amounts = [];
+      if (privateFee) {
+        amounts.push(NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC);
+      }
+      getCreditRecords(amounts)
+        .then((records) => {
 
-      requestTransaction && requestTransaction(aleoTransaction)
-        .then((txId) => {
-          addTransaction("unsetResolverRecord", txId, [name], onStatusChange);
-        }).catch((error) => {
+          const aleoTransaction = Transaction.createTransaction(
+            publicKey,
+            NETWORK,
+            NEXT_PUBLIC_RESOLVER_PROGRAM!,
+            "unset_resolver_record",
+            [record.nameHash, getFormattedU128Input(category)],
+            NEXT_PUBLIC_FEES_UNSET_PRIMARY,
+            privateFee
+          );
+
+          if (requestTransaction)
+            return requestTransaction(aleoTransaction)
+          else
+            throw new Error("requestTransaction is not defined");
+        }).then((txId) => {
+        addTransaction("unsetResolverRecord", txId, [name], onStatusChange);
+      }).catch((error) => {
         notify("error", error.message);
         onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
       });
@@ -466,6 +539,8 @@ export function useANS() {
     }
   }
 
-  return {register, transfer, convertToPrivate, convertToPublic, setPrimaryName, unsetPrimaryName,
-    setResolverRecord, unsetResolverRecord, calcPrice, registerSubName, getCouponCards, matchTld};
+  return {
+    register, transfer, convertToPrivate, convertToPublic, setPrimaryName, unsetPrimaryName,
+    setResolverRecord, unsetResolverRecord, calcPrice, registerSubName, getCouponCards, matchTld
+  };
 }

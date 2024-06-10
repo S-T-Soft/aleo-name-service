@@ -144,7 +144,7 @@ export function useCredit() {
             method,
             [recipient, amount + "u64"],
             fee!,
-            privateFee
+            false
           );
           if (requestTransaction)
             return requestTransaction(aleoTransaction);
