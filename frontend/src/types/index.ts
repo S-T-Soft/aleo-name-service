@@ -44,7 +44,8 @@ export interface Statistic {
   totalNames: number,
   totalPriNames: number,
   totalNFTOwners: number,
-  blockHeight: number
+  blockHeight: number,
+  healthy: boolean
 }
 
 export interface CouponCard {

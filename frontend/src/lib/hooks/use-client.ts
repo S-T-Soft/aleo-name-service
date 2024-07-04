@@ -15,7 +15,8 @@ export function useClient() {
             totalPriNames: data.total_pri_names,
             totalNFTOwners: data.total_nft_owners,
             totalNames24h: data.total_names_24h,
-            blockHeight: data.block_height
+            blockHeight: data.block_height,
+            healthy: data.healthy
           } as Statistic);
         })
         .catch((error) => {
