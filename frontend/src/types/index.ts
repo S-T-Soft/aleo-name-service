@@ -43,7 +43,8 @@ export interface Statistic {
   totalNames24h: number,
   totalNames: number,
   totalPriNames: number,
-  totalNFTOwners: number
+  totalNFTOwners: number,
+  blockHeight: number
 }
 
 export interface CouponCard {

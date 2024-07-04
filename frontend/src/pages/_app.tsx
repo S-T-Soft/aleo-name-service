@@ -28,6 +28,7 @@ import {
   configureConnectionForPuzzle
 } from '@/lib/wallet-adapters';
 import {PrivateFeeProvider} from "@/context/private-fee-context";
+import {BlockNumber} from "@/components/BlockNumber";
 
 
 type AppPropsWithLayout = AppProps & {
@@ -103,6 +104,7 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
                     defaultTheme="dark"
                   >
                     {getLayout(<Component {...pageProps} />)}
+                    <BlockNumber />
                     <ModalsContainer />
                     <DrawersContainer />
                   </ThemeProvider>

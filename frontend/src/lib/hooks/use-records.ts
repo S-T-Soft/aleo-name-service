@@ -15,7 +15,7 @@ export function createRecordContext() {
   const {getPrimaryName,getName,getPublicDomain,getResolver,getStatistic,getPublicBalance} = useClient();
   const {publicKey, requestRecords} = useWallet();
   const [records, setRecords] = useLocalStorage<Record[]>('records', []);
-  const [statistic, setStatistic] = useState<Statistic>({totalNFTOwners: 0, totalPriNames: 0, totalNames: 0, totalNames24h: 0} as Statistic);
+  const [statistic, setStatistic] = useState<Statistic>({totalNFTOwners: 0, totalPriNames: 0, totalNames: 0, totalNames24h: 0, blockHeight: 0} as Statistic);
   const [names, setNames] = useState<string[]>([]);
   const [namesHash, setNamesHash] = useState<string[]>([]);
   const [primaryName, setPrimaryName] = useLocalStorage('primaryName', '');
