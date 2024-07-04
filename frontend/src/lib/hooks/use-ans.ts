@@ -32,7 +32,7 @@ export function useANS() {
   const NEXT_PUBLIC_FEES_TRANSFER_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_TRANSFER_PUBLIC!);
   const NETWORK = process.env.NEXT_PUBLIC_NETWORK as WalletAdapterNetwork;
 
-  const {records} = useRecords();
+  const {records, publicBalance} = useRecords();
   const {addTransaction} = useTransaction();
   const {getCreditRecords} = useCredit();
   const {getAddress, getName, getNameHash} = useClient();
@@ -137,6 +137,13 @@ export function useANS() {
     } else if (functionName !== "register_free") {
       functionName = functionName + "_public";
       fee = Math.ceil(fee + 24000);
+
+      if (publicBalance < price + fee) {
+        const error = "You don't have enough public credits";
+        notify("error", error);
+        onStatusChange && onStatusChange(false, {hasError: true, message: error});
+        return;
+      }
     }
 
     getCreditRecords(amounts)

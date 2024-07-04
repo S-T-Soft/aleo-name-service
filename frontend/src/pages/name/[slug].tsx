@@ -311,7 +311,7 @@ const NamePage: NextPageWithLayout = () => {
                             {publicKey && needCreateRecord && <div className="mt-5">
                                 You need <span className="underline">{price} Private Credits</span> to pay for the domain register fee, but currently,
                                 you do not have enough Private Credits. <br/>
-                                Please click on <span className="rounded-full bg-teal text-black p-1">Create Record</span> to convert your Public Credits into Private Credits.<br/>
+                                Please click on <span className="rounded-full bg-teal text-black p-1">Prepare Record</span> to convert your Public Credits into Private Credits.<br/>
                                 Alternatively, you can manually perform this conversion within your wallet.<br/>
                                 After the operation, you will need to wait a few minutes for the wallet to synchronize.<br/>
                                 Once you refresh this page and see that the <span className="rounded-full bg-teal text-black p-1">Register</span> button has become clickable,
@@ -320,7 +320,7 @@ const NamePage: NextPageWithLayout = () => {
                             {publicKey && needCreateFeeRecord && <div className="mt-5">
                                 You need <span className="underline">0.11 Private Credits</span> for the gas fee,
                                 but you currently lack sufficient Private Credits.<br/>
-                                Please select <span className="rounded-full bg-teal text-black p-1">Create Fee Record</span> to convert Public
+                                Please select <span className="rounded-full bg-teal text-black p-1">Prepare Fee Record</span> to convert Public
                                 Credits into Private Credits, or manually make this conversion in your wallet. <br/>
                                 After this, please wait a few minutes for wallet synchronization. <br/>
                                 Refresh this page, and if the <span className="rounded-full bg-teal text-black p-1">Register</span> button is clickable,
