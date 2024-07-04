@@ -4,7 +4,7 @@ import {createContext, useContext, useEffect, useMemo, useState} from "react";
 import {Record, Statistic} from "@/types";
 import {useClient} from "@/lib/hooks/use-client";
 import useSWR from 'swr';
-import * as process from "process";
+import {queryName, saveName} from "@/lib/db";
 
 const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL
   ? process.env.NEXT_PUBLIC_GATEWAY_URL
@@ -66,20 +66,19 @@ export function createRecordContext() {
   }
 
   const getNameByHash = async (nameHash: string): Promise<string> => {
-    console.log("getNameByHash", nameHash);
-    // check whether nameHash is in namesHash
-    if (namesHash.includes(nameHash)) {
-      // return from names
-      const index = namesHash.indexOf(nameHash);
-      return names[index];
+    let item = await queryName(nameHash);
+    if (!item) {
+      let name = (await getName(nameHash)).name;
+      await saveName(name, nameHash);
+      item = await queryName(nameHash);
     }
-    return (await getName(nameHash)).name;
+    return item.name;
   }
 
   const loadPrivateRecords = async () => {
     return new Promise<Record[]>((resolve, reject) => {
       requestRecords!(NEXT_PUBLIC_PROGRAM!).then((privateRecords) => {
-        return Promise.all(privateRecords.filter((rec) => !rec.spent && rec.data.nft_owner === undefined).map(async (rec) => {
+        return Promise.all(privateRecords.filter((rec) => !rec.spent && rec.recordName == "NFT").map(async (rec) => {
           const name_hash = rec.data.data.replace(".private", "");
           try {
             const existRec = (records || []).filter((rec) => rec.nameHash == name_hash);

@@ -12,6 +12,7 @@ import {useCredit} from "@/lib/hooks/use-credit";
 import {useClient} from "@/lib/hooks/use-client";
 import tlds from "@/config/tlds";
 import {usePrivateFee} from "@/lib/hooks/use-private-fee";
+import {queryName, saveName} from "@/lib/db";
 
 
 export function useANS() {
@@ -34,7 +35,7 @@ export function useANS() {
   const {records} = useRecords();
   const {addTransaction} = useTransaction();
   const {getCreditRecords} = useCredit();
-  const {getAddress, getName} = useClient();
+  const {getAddress, getName, getNameHash} = useClient();
   const {privateFee} = usePrivateFee();
   const {publicKey, requestTransaction, requestRecordPlaintexts} = useWallet();
 
@@ -59,6 +60,20 @@ export function useANS() {
       return price * card.discount_percent / 100;
     }
     return price;
+  }
+
+  const formatNftData = async (record: Record) => {
+    // split record.name to two parts, with the first .
+    const parts = record.name.split('.');
+    const name = parts[0];
+    const parentName = parts.slice(1).join('.');
+    let parent = await queryName(parentName);
+    if (!parent) {
+      const parent_hash = await getNameHash(parentName);
+      await saveName(parentName, parent_hash);
+      parent = await queryName(parentName);
+    }
+    return `{ metadata: [${record.nameHash}, 0field, 0field, 0field], content: { name: ${getFormattedNameInput(name, 4)}, parent: ${parent.hash} } }`;
   }
 
   const getCouponCards = async (name: string, tld: TLD) => {
@@ -121,7 +136,7 @@ export function useANS() {
       amounts.push(fee);
     } else if (functionName !== "register_free") {
       functionName = functionName + "_public";
-      fee += 25000;
+      fee = Math.ceil(fee + 24000);
     }
 
     getCreditRecords(amounts)
@@ -227,14 +242,16 @@ export function useANS() {
     const record = records?.find((rec) => rec.name === name);
 
     if (record) {
-      const inputs = [recipient];
+      const inputs: string[] = [];
       let fee = NEXT_PUBLIC_FEES_TRANSFER_PUBLIC;
       if (record.private) {
         fee = NEXT_PUBLIC_FEES_TRANSFER_PRIVATE;
-        inputs.splice(0, 0, record.record);
+        inputs.push(record.record);
       } else {
-        inputs.push(record.nameHash as string);
+        inputs.push(await formatNftData(record));
+        inputs.push("0scalar");
       }
+      inputs.push(recipient);
       let amounts = [];
       if (privateFee) {
         amounts.push(NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC);
@@ -333,6 +350,9 @@ export function useANS() {
       if (privateFee) {
         amounts.push(NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC);
       }
+
+      const inputs = [await formatNftData(record), "0scalar", publicKey]
+
       getCreditRecords(amounts)
         .then((records) => {
           const aleoTransaction = Transaction.createTransaction(
@@ -340,7 +360,7 @@ export function useANS() {
             NETWORK,
             NEXT_PUBLIC_PROGRAM!,
             "transfer_public_to_private",
-            [record.nameHash, publicKey],
+            inputs,
             NEXT_PUBLIC_FEES_CONVERT_TO_PRIVATE,
             privateFee
           );

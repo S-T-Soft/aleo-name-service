@@ -149,7 +149,8 @@ import {
         try {
           const filter = {
             programIds: [program],
-            type: "unspent"
+            type: "unspent",
+            names: ["NFT"]
           } as RecordsFilter;
           const result = await getRecords({address: this.publicKey, filter});
           if (result.error) {
@@ -160,6 +161,7 @@ import {
               ...record,
               owner: this.publicKey,
               program_id: program,
+              recordName: record.name,
               spent: false
             };
           });
