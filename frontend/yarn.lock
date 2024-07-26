@@ -1525,12 +1525,12 @@
   resolved "https://registry.yarnpkg.com/@pkgjs/parseargs/-/parseargs-0.11.0.tgz#a77ea742fab25775145434eb1d2328cf5013ac33"
   integrity sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==
 
-"@puzzlehq/sdk-core@0.4.0":
-  version "0.4.0"
-  resolved "https://registry.yarnpkg.com/@puzzlehq/sdk-core/-/sdk-core-0.4.0.tgz#09e61b71ea388508ddaae37a40bd861979d44dad"
-  integrity sha512-lEC+NfC3XxoRg8Gqwa4w8tp0MWRO0p7QfKSrBPiQdX9Tw3T3yn06yYlJUVlvj001wCVL7POwIzBXCC6KNQxxfA==
+"@puzzlehq/sdk-core@0.4.3":
+  version "0.4.3"
+  resolved "https://registry.yarnpkg.com/@puzzlehq/sdk-core/-/sdk-core-0.4.3.tgz#8656da8ea4a9f7a2314a5b33050c1ca77dd1f077"
+  integrity sha512-VnoNsGqpBxg7r0axY+dSzLP/q9y8pkAxSPpYjRchHuWzNIL1bam///X/0jXgei/+2t0CEAmdbhDXpaqUNXxkbg==
   dependencies:
-    "@puzzlehq/types" "1.0.21"
+    "@puzzlehq/types" "1.0.23"
     "@puzzlehq/walletconnect-modal-sign-html" "^0.0.6"
     "@walletconnect/types" "^2.11.2"
     "@walletconnect/utils" "^2.11.2"
@@ -1538,14 +1538,13 @@
     events "^3.3.0"
     ws "^8.16.0"
 
-"@puzzlehq/sdk@0.4.1":
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/@puzzlehq/sdk/-/sdk-0.4.1.tgz#a20a7dbcf0ab17d50c058797d94f1fab44db347b"
-  integrity sha512-T8NKnmNaxHJR8edlROlT/ErD/BsPt0i1w1vRenUm5iOwA2+UvIFjfkhZoAb/bNcmMdpbnsa/ubbsIMQn39tbyQ==
+"@puzzlehq/sdk@0.4.3":
+  version "0.4.3"
+  resolved "https://registry.yarnpkg.com/@puzzlehq/sdk/-/sdk-0.4.3.tgz#590db7b8394517fb523901921d3d1c24ee3641d5"
+  integrity sha512-PiF+wFFP3+FqSTrkQSnaaYLfkS/8avd1bI3FPfPwNqAGSbmNxpUId9G0rcWb/3OLsBuezkc6SHV/UxCHctiO1w==
   dependencies:
-    "@puzzlehq/sdk-core" "0.4.0"
-    "@puzzlehq/types" "1.0.21"
-    "@puzzlehq/walletconnect-modal-sign-html" "^0.0.6"
+    "@puzzlehq/sdk-core" "0.4.3"
+    "@puzzlehq/types" "1.0.23"
     "@tanstack/react-query" "^4.29.5"
     "@trpc/server" "^10.31.0"
     "@walletconnect/types" "^2.11.2"
@@ -1557,10 +1556,10 @@
     ws "^8.16.0"
     zustand "^4.3.9"
 
-"@puzzlehq/types@1.0.21":
-  version "1.0.21"
-  resolved "https://registry.yarnpkg.com/@puzzlehq/types/-/types-1.0.21.tgz#542be8dd2d6a4b5a7f3383c4f90b55c9635dced1"
-  integrity sha512-wO2HtC4wbQ9yijHFu06xArco8P5o2uJw/05mDSKfn/T/dLMzWjOaDyAfh5DxzysRpwNRzGQopawpJure3EToyA==
+"@puzzlehq/types@1.0.23":
+  version "1.0.23"
+  resolved "https://registry.yarnpkg.com/@puzzlehq/types/-/types-1.0.23.tgz#9502e2ca7e97df6c58a4f31d8a766467c15c7c91"
+  integrity sha512-l/4DgVnAx1eO9B9lVL1p8nNFtrRqZHf5ULLGAF0ql3egdOzU8/Cmf6hznFH0+eRqnokuIcaFdrXEYBUftfkfrg==
   dependencies:
     zod "3.21.1"
 

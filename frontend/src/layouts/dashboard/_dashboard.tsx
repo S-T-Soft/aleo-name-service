@@ -31,7 +31,7 @@ function HeaderRightArea() {
   return (
     <div className="relative order-last flex shrink-0 items-center gap-3 sm:gap-6 lg:gap-8">
       <SearchButton/>
-      <WalletMultiButton>Connect Wallet</WalletMultiButton>
+      <WalletMultiButton/>
     </div>
   );
 }

@@ -42,9 +42,9 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
       new LeoWalletAdapter({
         appName: 'Aleo Name Service',
       }),
-      // new FoxWalletAdapter({
-      //   appName: 'Aleo Name Service',
-      // }),
+      new FoxWalletAdapter({
+        appName: 'Aleo Name Service',
+      }),
       new PuzzleWalletAdapter({
         appName: 'Aleo Name Service',
       }),

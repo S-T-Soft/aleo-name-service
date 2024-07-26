@@ -42,7 +42,7 @@ function HeaderRightArea() {
       {isMounted && ['xs', 'sm', 'md'].indexOf(breakpoint) == -1 && (
           <MenuItems />
         )}
-      <WalletMultiButton>Connect Wallet</WalletMultiButton>
+      <WalletMultiButton/>
 
       <div className="lg:hidden">
         <Hamburger
