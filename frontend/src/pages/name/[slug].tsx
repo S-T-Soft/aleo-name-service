@@ -264,7 +264,7 @@ const NamePage: NextPageWithLayout = () => {
                                         <h5 className={`text-xl font-bold tracking-tight ${
                                           card.discount_percent > 0 ? 'text-red-700' : 'text-gray-900'
                                         }`}>
-                                          {card.discount_percent > 0 ? `${card.discount_percent}% OFF` : 'Free Card'}
+                                          {card.discount_percent > 0 ? `${100 - card.discount_percent}% OFF` : 'Free Card'}
                                         </h5>
                                         {card.limit_name_length > 1 && <p className="text-3xs-5 text-gray-500">For lengths {card.limit_name_length}+</p>}
                                         {selectedCard && selectedCard.id == card.id && (
