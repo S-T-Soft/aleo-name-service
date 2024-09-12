@@ -28,6 +28,7 @@ export function useANS() {
   const NEXT_PUBLIC_FEES_SET_PRIMARY = parseInt(process.env.NEXT_PUBLIC_FEES_SET_PRIMARY!);
   const NEXT_PUBLIC_FEES_UNSET_PRIMARY = parseInt(process.env.NEXT_PUBLIC_FEES_UNSET_PRIMARY!);
   const NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD = parseInt(process.env.NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD!);
+  const NEXT_PUBLIC_FEES_UNSET_RESOLVER_RECORD = parseInt(process.env.NEXT_PUBLIC_FEES_UNSET_RESOLVER_RECORD!);
   const NEXT_PUBLIC_FEES_TRANSFER_PRIVATE = parseInt(process.env.NEXT_PUBLIC_FEES_TRANSFER_PRIVATE!);
   const NEXT_PUBLIC_FEES_TRANSFER_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_TRANSFER_PUBLIC!);
   const NETWORK = process.env.NEXT_PUBLIC_NETWORK as WalletAdapterNetwork;
@@ -485,7 +486,7 @@ export function useANS() {
 
       let amounts = [];
       if (privateFee) {
-        amounts.push(NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC);
+        amounts.push(NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD);
       }
       getCreditRecords(amounts)
         .then((records) => {
@@ -533,7 +534,7 @@ export function useANS() {
 
       let amounts = [];
       if (privateFee) {
-        amounts.push(NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC);
+        amounts.push(NEXT_PUBLIC_FEES_UNSET_RESOLVER_RECORD);
       }
       getCreditRecords(amounts)
         .then((records) => {
@@ -544,7 +545,7 @@ export function useANS() {
             NEXT_PUBLIC_RESOLVER_PROGRAM!,
             "unset_resolver_record",
             [record.nameHash, getFormattedU128Input(category)],
-            NEXT_PUBLIC_FEES_UNSET_PRIMARY,
+            NEXT_PUBLIC_FEES_UNSET_RESOLVER_RECORD,
             privateFee
           );
 

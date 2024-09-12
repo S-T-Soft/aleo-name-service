@@ -8,6 +8,7 @@ import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
 import Layout from "@/layouts/_layout";
 import {WalletMultiButton} from "@/components/WalletMultiButton";
 import tlds from "@/config/tlds";
+import tokens from "@/config/tokens";
 import {useClient} from "@/lib/hooks/use-client";
 import {DynamicAddressIcon} from "@/assets/address/DynamicAddressIcon";
 import ActiveLink from "@/components/ui/links/active-link";
@@ -28,8 +29,12 @@ const ToolBoxPage: NextPageWithLayout = () => {
   const [amount, setAmount] = useState<number>();
   const [password, setPassword] = useState<string>("");
   const [amountError, setAmountError] = useState("");
-  const [method, setMethod] = useState<string>("transfer_to_ans");
+  const [method, setMethod] = useState<string>("transfer_private");
   const isPrivate = useMemo(() => !recipientAddress.startsWith("aleo"), [recipientAddress]);
+  const [transferType, setTransferType] = useState<'aleo' | 'arc21'>('aleo');
+  const [tokenId, setTokenId] = useState('');
+  const [tokenIdError, setTokenIdError] = useState("");
+
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -46,7 +51,9 @@ const ToolBoxPage: NextPageWithLayout = () => {
             setRecipientAddress(address);
             setRecipientError("");
             if (!address.startsWith('aleo')) {
-              setMethod('transfer_to_ans');
+              // setMethod('transfer_to_ans');
+              setRecipientError("Only support public ANS now");
+              setRecipientAddress("");
             }
           })
           .catch((error) => {
@@ -97,9 +104,16 @@ const ToolBoxPage: NextPageWithLayout = () => {
       return;
     }
     setAmountError("");
+    if (transferType === 'arc21') {
+      if (tokenId.length == 0) {
+        setTokenIdError("Token ID is required");
+        return;
+      }
+      setTokenIdError("");
+    }
     method == 'transfer_to_ans' ?
-      await transferCreditsToANS(recipient, amount, password, onStatusChange) :
-      await transferCredits(method, recipientAddress, amount, onStatusChange);
+      await transferCreditsToANS(tokenId,recipient, amount, password, onStatusChange) :
+    await transferCredits(tokenId, method, recipientAddress, amount, onStatusChange);
   }
 
   return (
@@ -113,6 +127,50 @@ const ToolBoxPage: NextPageWithLayout = () => {
           ANS Toolbox <span className="text-gray-400 text-xl block xs:inline"> {">"} Transfer to ans names</span>
         </h2>
         <div className="[background:linear-gradient(180deg,_#2e2e2e,_rgba(46,_46,_46,_0))] rounded-lg pt-5 px-5">
+          <div className="flex flex-col mt-3 sm:flex-row sm:mt-6">
+            <label htmlFor="transferType"
+                   className="h-4 leading-4 w-full text-left align-middle mb-2 mx-2 sm:text-right sm:h-12 sm:leading-[3rem] sm:inline sm:w-32 sm:mb-0">Transfer</label>
+            <select
+              className="flex-1 h-12 w-full appearance-none rounded-full border-2 border-gray-200 py-1 text-lg tracking-tighter text-gray-900 outline-none transition-all placeholder:text-gray-600 px-4 dark:border-gray-600 dark:bg-light-dark dark:text-white dark:placeholder:text-gray-500 hover:border-teal focus:border-aquamarine sm:px-8"
+              id="transferType"
+              value={transferType}
+              onChange={(event) => {
+                setTransferType(event.currentTarget.value as 'aleo' | 'arc21');
+                if (event.currentTarget.value === 'aleo') {
+                  setTokenId('');
+                }
+              }}
+              autoComplete="off"
+            >
+              <option value="aleo">Aleo Credits</option>
+              <option value="arc21">ARC21 Token</option>
+            </select>
+          </div>
+          
+          {transferType === 'arc21' && (
+            <div className="flex flex-col mt-3 sm:flex-row sm:mt-6">
+              <label htmlFor="tokenId"
+                     className="h-4 leading-4 w-full text-left align-middle mb-2 mx-2 sm:text-right sm:h-12 sm:leading-[3rem] sm:inline sm:w-32 sm:mb-0">Token</label>
+              <select
+                className="flex-1 h-12 w-full appearance-none rounded-full border-2 border-gray-600 py-1 text-lg tracking-tighter text-gray-900 outline-none transition-all placeholder:text-gray-600 hover:border-teal focus:border-aquamarine px-4 dark:bg-light-dark dark:text-white dark:placeholder:text-gray-500 sm:px-8"
+                id="tokenId"
+                value={tokenId}
+                onChange={(event) => setTokenId(event.currentTarget.value)}
+                autoComplete="off"
+              >
+                {tokens.map((token) => (
+                  <option key={token.id} value={token.id}>
+                    {token.full_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          {transferType === 'arc21' && tokenIdError && (
+            <div className="text-center text-red-500 text-base mt-2">
+              {tokenIdError}
+            </div>
+          )}
           <div className="flex flex-col mt-3 sm:flex-row sm:mt-6">
             <label htmlFor="recipient"
                    className="h-4 leading-4 w-full text-left align-middle mb-2 mx-2 sm:text-right sm:h-12 sm:leading-[3rem] sm:inline sm:w-32 sm:mb-0">Recipient</label>
@@ -161,11 +219,10 @@ const ToolBoxPage: NextPageWithLayout = () => {
                   onChange={(event) => setMethod(event.currentTarget.value)}
                   autoComplete="off"
               >
-                  <option value="transfer_to_ans">Transfer to ANS name</option>
-                  <option value="transfer_private">[To Address] Private</option>
-                  <option value="transfer_public">[To Address] Public</option>
-                  <option value="transfer_private_to_public">[To Address] privateToPublic</option>
-                  <option value="transfer_public_to_private">[To Address] publicToPrivate</option>
+                  <option value="transfer_private">Transfer Private</option>
+                  <option value="transfer_public">Transfer Public</option>
+                  <option value="transfer_private_to_public">Transfer Private to Public</option>
+                  <option value="transfer_public_to_private">Transfer Public to Private</option>
               </select>
           </div>}
           <div className="flex flex-col mt-3 sm:flex-row sm:mt-6">

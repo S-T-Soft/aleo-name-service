@@ -68,6 +68,14 @@ export interface TLD {
   prices: Prices
 }
 
+export interface ARC21Token {
+  id: string;
+  name: string;
+  symbol: string;
+  decimals: number;
+  full_name: string;
+}
+
 export interface StatusChangeCallback {
   (loading: boolean, status: Status): void;
 }
