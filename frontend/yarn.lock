@@ -1525,41 +1525,45 @@
   resolved "https://registry.yarnpkg.com/@pkgjs/parseargs/-/parseargs-0.11.0.tgz#a77ea742fab25775145434eb1d2328cf5013ac33"
   integrity sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==
 
-"@puzzlehq/sdk-core@0.4.3":
-  version "0.4.3"
-  resolved "https://registry.yarnpkg.com/@puzzlehq/sdk-core/-/sdk-core-0.4.3.tgz#8656da8ea4a9f7a2314a5b33050c1ca77dd1f077"
-  integrity sha512-VnoNsGqpBxg7r0axY+dSzLP/q9y8pkAxSPpYjRchHuWzNIL1bam///X/0jXgei/+2t0CEAmdbhDXpaqUNXxkbg==
+"@puzzlehq/sdk-core@0.5.5-beta.1":
+  version "0.5.5-beta.1"
+  resolved "https://registry.yarnpkg.com/@puzzlehq/sdk-core/-/sdk-core-0.5.5-beta.1.tgz#efdcdcc94e3a4e764caa9a77f5f5dfd4cf9257c7"
+  integrity sha512-wVNXkcumxlio++Mb5kJJkPvVNHVeEsM2nXnNFjY0n8e6v7dEpzssXa+JibJhi4dui3YQqFS+RdOGDLEjO1h/xQ==
   dependencies:
-    "@puzzlehq/types" "1.0.23"
-    "@puzzlehq/walletconnect-modal-sign-html" "^0.0.6"
-    "@walletconnect/types" "^2.11.2"
-    "@walletconnect/utils" "^2.11.2"
+    "@puzzlehq/types" "1.0.25"
+    "@puzzlehq/walletconnect-modal-sign-html" "0.0.6"
+    "@walletconnect/types" "^2.14.0"
+    "@walletconnect/utils" "^2.14.0"
     debug "^4.3.4"
     events "^3.3.0"
     ws "^8.16.0"
+    zod "3.21.1"
 
-"@puzzlehq/sdk@0.4.3":
-  version "0.4.3"
-  resolved "https://registry.yarnpkg.com/@puzzlehq/sdk/-/sdk-0.4.3.tgz#590db7b8394517fb523901921d3d1c24ee3641d5"
-  integrity sha512-PiF+wFFP3+FqSTrkQSnaaYLfkS/8avd1bI3FPfPwNqAGSbmNxpUId9G0rcWb/3OLsBuezkc6SHV/UxCHctiO1w==
+"@puzzlehq/sdk@0.5.5-beta.1":
+  version "0.5.5-beta.1"
+  resolved "https://registry.yarnpkg.com/@puzzlehq/sdk/-/sdk-0.5.5-beta.1.tgz#9afafb70ba4e8ea5e8ce5de1406b897845828ea5"
+  integrity sha512-QW58UZKRi9UkdxU03sweSJktrh+/lHty259qt/23HpfzNo7huSJbE8gFzobqX7L2d4+PsufQ4R0QD9VAoVSa4A==
   dependencies:
-    "@puzzlehq/sdk-core" "0.4.3"
-    "@puzzlehq/types" "1.0.23"
+    "@puzzlehq/sdk-core" "0.5.5-beta.1"
+    "@puzzlehq/types" "1.0.25"
+    "@tanstack/query-core" "^4.29.5"
     "@tanstack/react-query" "^4.29.5"
+    "@tanstack/react-query-devtools" "^4.29.5"
     "@trpc/server" "^10.31.0"
-    "@walletconnect/types" "^2.11.2"
-    "@walletconnect/utils" "^2.11.2"
+    "@walletconnect/types" "^2.14.0"
+    "@walletconnect/utils" "^2.14.0"
     debug "^4.3.4"
     events "^3.3.0"
     immer "^9.0.19"
     use-debounce "^10.0.0"
     ws "^8.16.0"
+    zod "3.21.1"
     zustand "^4.3.9"
 
-"@puzzlehq/types@1.0.23":
-  version "1.0.23"
-  resolved "https://registry.yarnpkg.com/@puzzlehq/types/-/types-1.0.23.tgz#9502e2ca7e97df6c58a4f31d8a766467c15c7c91"
-  integrity sha512-l/4DgVnAx1eO9B9lVL1p8nNFtrRqZHf5ULLGAF0ql3egdOzU8/Cmf6hznFH0+eRqnokuIcaFdrXEYBUftfkfrg==
+"@puzzlehq/types@1.0.25":
+  version "1.0.25"
+  resolved "https://registry.yarnpkg.com/@puzzlehq/types/-/types-1.0.25.tgz#067877cf2ea2c0d9f4b8df493612622c2cd03bce"
+  integrity sha512-v/LXeuenC7WoVPP8R87TSXzX8DXFfAfV0qeYARQMJHDZIbqwnhHDMVA6/S6IkiSoRCrqMA73IVv/Y884SDJNnw==
   dependencies:
     zod "3.21.1"
 
@@ -1570,7 +1574,7 @@
   dependencies:
     valtio "1.11.2"
 
-"@puzzlehq/walletconnect-modal-sign-html@^0.0.6":
+"@puzzlehq/walletconnect-modal-sign-html@0.0.6":
   version "0.0.6"
   resolved "https://registry.yarnpkg.com/@puzzlehq/walletconnect-modal-sign-html/-/walletconnect-modal-sign-html-0.0.6.tgz#f5fc76d84d9a4bb79f558f9f7e09df5d0048f7a8"
   integrity sha512-GlUXn1nMb4byll0d44gwyTb6IirHx8NaVeJhQlq2WKnALocfPUNED109NJgrmwmqPkStLSIJgNdIatxKjaNNNw==
@@ -1913,10 +1917,26 @@
     lodash.merge "^4.6.2"
     postcss-selector-parser "6.0.10"
 
-"@tanstack/query-core@4.36.1":
+"@tanstack/match-sorter-utils@^8.7.0":
+  version "8.19.4"
+  resolved "https://registry.yarnpkg.com/@tanstack/match-sorter-utils/-/match-sorter-utils-8.19.4.tgz#dacf772b5d94f4684f10dbeb2518cf72dccab8a5"
+  integrity sha512-Wo1iKt2b9OT7d+YGhvEPD3DXvPv2etTusIMhMUoG7fbhmxcXCtIjJDEygy91Y2JFlwGyjqiBPRozme7UD8hoqg==
+  dependencies:
+    remove-accents "0.5.0"
+
+"@tanstack/query-core@4.36.1", "@tanstack/query-core@^4.29.5":
   version "4.36.1"
   resolved "https://registry.yarnpkg.com/@tanstack/query-core/-/query-core-4.36.1.tgz#79f8c1a539d47c83104210be2388813a7af2e524"
   integrity sha512-DJSilV5+ytBP1FbFcEJovv4rnnm/CokuVvrBEtW/Va9DvuJ3HksbXUJEpI0aV1KtuL4ZoO9AVE6PyNLzF7tLeA==
+
+"@tanstack/react-query-devtools@^4.29.5":
+  version "4.36.1"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-query-devtools/-/react-query-devtools-4.36.1.tgz#7e63601135902a993ca9af73507b125233b1554e"
+  integrity sha512-WYku83CKP3OevnYSG8Y/QO9g0rT75v1om5IvcWUwiUZJ4LanYGLVCZ8TdFG5jfsq4Ej/lu2wwDAULEUnRIMBSw==
+  dependencies:
+    "@tanstack/match-sorter-utils" "^8.7.0"
+    superjson "^1.10.0"
+    use-sync-external-store "^1.2.0"
 
 "@tanstack/react-query@^4.29.5":
   version "4.36.1"
@@ -2269,7 +2289,7 @@
     "@walletconnect/logger" "^2.0.1"
     events "^3.3.0"
 
-"@walletconnect/types@2.16.1", "@walletconnect/types@^2.11.2":
+"@walletconnect/types@2.16.1", "@walletconnect/types@^2.14.0":
   version "2.16.1"
   resolved "https://registry.yarnpkg.com/@walletconnect/types/-/types-2.16.1.tgz#6583d458d3f7b1919d482ba516ccb7878ec8c91f"
   integrity sha512-9P4RG4VoDEF+yBF/n2TF12gsvT/aTaeZTVDb/AOayafqiPnmrQZMKmNCJJjq1sfdsDcHXFcZWMGsuCeSJCmrXA==
@@ -2301,7 +2321,7 @@
     query-string "7.1.3"
     uint8arrays "^3.1.0"
 
-"@walletconnect/utils@^2.11.2":
+"@walletconnect/utils@^2.14.0":
   version "2.16.1"
   resolved "https://registry.yarnpkg.com/@walletconnect/utils/-/utils-2.16.1.tgz#2099cc2bd16b0edc32022f64aa2c2c323b45d1d4"
   integrity sha512-aoQirVoDoiiEtYeYDtNtQxFzwO/oCrz9zqeEEXYJaAwXlGVTS34KFe7W3/Rxd/pldTYKFOZsku2EzpISfH8Wsw==
@@ -3102,6 +3122,13 @@ cookie-es@^1.0.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/cookie-es/-/cookie-es-1.1.0.tgz#68f8d9f48aeb5a534f3896f80e792760d3d20def"
   integrity sha512-L2rLOcK0wzWSfSDA33YR+PUHDG10a8px7rUHKWbGLP4YfbsMed2KFUw5fczvDPbT98DDe3LEzviswl810apTEw==
+
+copy-anything@^3.0.2:
+  version "3.0.5"
+  resolved "https://registry.yarnpkg.com/copy-anything/-/copy-anything-3.0.5.tgz#2d92dce8c498f790fa7ad16b01a1ae5a45b020a0"
+  integrity sha512-yCEafptTtb4bk7GLEQoM8KVJpxAfdBJYaXyzQEgQQQgYrZiDp8SJmGKlYza6CYjEDNstAdNdKA3UuoULlEbS6w==
+  dependencies:
+    is-what "^4.1.8"
 
 copy-to-clipboard@^3.3.1:
   version "3.3.3"
@@ -4420,6 +4447,11 @@ is-weakref@^1.0.2:
   integrity sha512-qctsuLZmIQ0+vSSMfoVvyFe2+GSEvnmZ2ezTup1SBse9+twCCeial6EEi3Nc2KFcf6+qz2FBPnjXsk8xhKSaPQ==
   dependencies:
     call-bind "^1.0.2"
+
+is-what@^4.1.8:
+  version "4.1.16"
+  resolved "https://registry.yarnpkg.com/is-what/-/is-what-4.1.16.tgz#1ad860a19da8b4895ad5495da3182ce2acdd7a6f"
+  integrity sha512-ZhMwEosbFJkA0YhFnNDgTM4ZxDRsS6HqTo7qsZM08fehyRYIYa0yHu5R6mgo1n/8MgaPBXiPimPD77baVFYg+A==
 
 is-wsl@^3.1.0:
   version "3.1.0"
@@ -6428,6 +6460,13 @@ sucrase@^3.32.0:
     mz "^2.7.0"
     pirates "^4.0.1"
     ts-interface-checker "^0.1.9"
+
+superjson@^1.10.0:
+  version "1.13.3"
+  resolved "https://registry.yarnpkg.com/superjson/-/superjson-1.13.3.tgz#3bd64046f6c0a47062850bb3180ef352a471f930"
+  integrity sha512-mJiVjfd2vokfDxsQPOwJ/PtanO87LhpYY88ubI5dUB1Ab58Txbyje3+jpm+/83R/fevaq/107NNhtYBLuoTrFg==
+  dependencies:
+    copy-anything "^3.0.2"
 
 supports-color@^5.3.0:
   version "5.5.0"

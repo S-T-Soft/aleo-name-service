@@ -26,7 +26,7 @@ const socialLinks = [
 ];
 
 export const WalletMultiButton: FC<ButtonProps> = ({ children, ...props }) => {
-    const { publicKey, wallet, disconnect } = useWallet();
+    const { publicKey, wallet, disconnect, connecting } = useWallet();
     const { primaryName, avatar} = useRecords();
     const { setVisible } = useWalletModal();
     const {privateFee, setPrivateFee} = usePrivateFee();
@@ -82,18 +82,24 @@ export const WalletMultiButton: FC<ButtonProps> = ({ children, ...props }) => {
     }, [ref, closeDropdown]);
 
     if (!wallet) return <WalletModalButton className="!bg-aquamarine !text-black !font-normal" {...props}>{children}</WalletModalButton>;
-    if (!base58) return <WalletConnectButton className="!bg-aquamarine !text-black !font-normal" {...props}>{children}</WalletConnectButton>;
+    if (!base58 && !connecting) return <WalletConnectButton className="!bg-aquamarine !text-black !font-normal" {...props}>{children}</WalletConnectButton>;
+    if (connecting) return <Button className="!bg-aquamarine !text-black !font-normal" {...props} onClick={() => disconnect()}>
+      <div className="inline-block relative mr-2">
+        <img src={wallet.adapter.icon} className="inline w-8 h-8 rounded-full mr-2" alt={wallet.adapter.name}/>
+      </div>
+      <span className="font-bold">Connecting...</span>
+    </Button>;
 
-    return (
-        <div className="wallet-adapter-dropdown">
-            <Button
-              aria-expanded={active}
-              style={{pointerEvents: active ? 'none' : 'auto', ...props.style}}
-              onClick={openDropdown}
-              {...props}
-            >
-                {avatar && (
-                    <div className="inline-block relative mr-2">
+  return (
+    <div className="wallet-adapter-dropdown">
+      <Button
+        aria-expanded={active}
+        style={{pointerEvents: active ? 'none' : 'auto', ...props.style}}
+        onClick={openDropdown}
+        {...props}
+      >
+        {avatar && (
+          <div className="inline-block relative mr-2">
                       <img src={avatar} className="inline w-8 h-8 rounded-full mr-2" alt={primaryName}/>
                       <img src={wallet.adapter.icon} alt={`${wallet.adapter.name}`} className="inline w-4 h-4 rounded-full absolute top-0 right-0"/>
                     </div>
