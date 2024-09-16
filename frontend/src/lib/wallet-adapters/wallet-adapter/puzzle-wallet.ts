@@ -222,7 +222,18 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
     return this.requestRecords(program);
   }
 
-  async connect(decryptPermission: DecryptPermission, network: WalletAdapterNetwork): Promise<void> {
+  getChainId(network: WalletAdapterNetwork) {
+    switch (network) {
+      case WalletAdapterNetwork.MainnetBeta:
+        return 'aleo:0';
+      case WalletAdapterNetwork.TestnetBeta:
+        return 'aleo:1';
+      default:
+        return 'aleo:1';
+    }
+  }
+
+  async connect(decryptPermission: DecryptPermission, network: WalletAdapterNetwork, programs?: string[]): Promise<void> {
     try {
       if (this.connected || this.connecting) return;
       if (this._readyState !== WalletReadyState.Installed && this._readyState !== WalletReadyState.Loadable)
@@ -232,7 +243,7 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
 
       try {
         this._wallet = await connect();
-        const account = await getAccount();
+        const account = await getAccount(this.getChainId(network));
         if (account.error) {
           throw new Error(account.error);
         }

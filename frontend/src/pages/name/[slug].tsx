@@ -23,7 +23,6 @@ import AnchorLink from "@/components/ui/links/anchor-link";
 import {WalletMultiButton} from "@/components/WalletMultiButton";
 import Layout from "@/layouts/_layout";
 import {Check} from "@/components/icons/check";
-import {getFormattedNameInput} from "@/lib/util";
 import tlds from "@/config/tlds";
 
 import {usePrivateFee} from "@/lib/hooks/use-private-fee";
@@ -31,6 +30,7 @@ import {usePrivateFee} from "@/lib/hooks/use-private-fee";
 
 const NamePage: NextPageWithLayout = () => {
   const NEXT_PUBLIC_FEES_REGISTER = parseInt(process.env.NEXT_PUBLIC_FEES_REGISTER!);
+  const ONLY_WITH_COUPON_CARD = parseInt(process.env.NEXT_PUBLIC_ONLY_WITH_COUPON_CARD!);
   const router = useRouter();
   const {publicKey} = useWallet();
   const {mutate} = useSWRConfig();
@@ -48,9 +48,6 @@ const NamePage: NextPageWithLayout = () => {
   const [owner, setOwner] = useState("");
   const [status, setStatus] = useState("Registering");
   const [triggerRecheck, setTriggerRecheck] = useState(0);
-  const [nameInputs, setNameInputs] = useState("");
-  const [showAleoTool, setShowAleoTool] = useState(false);
-  const [showAleoTools, setShowAleoTools] = useState(false);
   const [name, setName] = useState("");
   const [tld, setTld] = useState<TLD>(tlds[0]);
   const [price, setPrice] = useState(2);
@@ -65,6 +62,10 @@ const NamePage: NextPageWithLayout = () => {
   const needCreateFeeRecord = useMemo(() => {
     return (record != "" || price == 0) && feeRecord == "" && privateFee;
   }, [record, feeRecord, privateFee, price]);
+
+  const canRegister = useMemo(() => {
+    return ONLY_WITH_COUPON_CARD == 0 || (ONLY_WITH_COUPON_CARD > 0 && selectedCard);
+  }, [selectedCard]);
 
   useEffect(() => {
     if (router.isReady) {
@@ -101,10 +102,6 @@ const NamePage: NextPageWithLayout = () => {
       setRecord("");
       setFeeRecord("");
     });
-  }
-
-  const toggleAleoTools = () => {
-    setShowAleoTools(!showAleoTools);
   }
 
   useEffect(() => {
@@ -147,7 +144,6 @@ const NamePage: NextPageWithLayout = () => {
           mutate('getBalance');
           setAvailable(true);
           // @ts-ignore
-          setNameInputs(getFormattedNameInput(name, 4));
           if (publicKey) {
             checkRecords();
           } else {
@@ -290,15 +286,15 @@ const NamePage: NextPageWithLayout = () => {
                               className="mt-5 text-sm tracking-tighter text-gray-600 dark:text-gray-400 sm:block place-content-center">
                               {publicKey && !registering &&
                                 <div className="flex items-center">
-                                  {needCreateRecord && <>
+                                  {(needCreateRecord && canRegister) && <>
                                       <Button className="mr-5" onClick={handleConvert}>Prepare Record</Button>
                                   </>}
-                                  {needCreateFeeRecord && <>
+                                  {(needCreateFeeRecord && canRegister) && <>
                                       <Button className="mr-5" onClick={handleConvertFee}>Prepare Fee Record</Button>
                                   </>}
-                                  {(!needCreateRecord && !needCreateFeeRecord) &&
+                                  {(!needCreateRecord && !needCreateFeeRecord && canRegister) &&
                                       <Button className="mr-5" onClick={handleRegister}>Register</Button>}
-                                  {(needCreateRecord || needCreateFeeRecord) &&
+                                  {(needCreateRecord || needCreateFeeRecord || !canRegister) &&
                                       <Button className="bg-gray-700 mr-5" disabled={true}>Register</Button>}
                                     <ToggleSwitch label="Private fee" isToggled={privateFee}
                                                   setIsToggled={setPrivateFee}/>
@@ -308,7 +304,7 @@ const NamePage: NextPageWithLayout = () => {
                                 <Button color="gray" disabled={true}><RefreshIcon className="inline text-aquamarine motion-safe:animate-spin"/> {status}</Button>
                             }
                             {!publicKey && <WalletMultiButton>Connect Wallet to Register</WalletMultiButton>}
-                            {publicKey && needCreateRecord && <div className="mt-5">
+                            {publicKey && needCreateRecord && canRegister && <div className="mt-5">
                                 You need <span className="underline">{price} Private Credits</span> to pay for the domain register fee, but currently,
                                 you do not have enough Private Credits. <br/>
                                 Please click on <span className="rounded-full bg-teal text-black p-1">Prepare Record</span> to convert your Public Credits into Private Credits.<br/>
@@ -317,7 +313,7 @@ const NamePage: NextPageWithLayout = () => {
                                 Once you refresh this page and see that the <span className="rounded-full bg-teal text-black p-1">Register</span> button has become clickable,
                                 you can proceed with the registration.
                             </div>}
-                            {publicKey && needCreateFeeRecord && <div className="mt-5">
+                            {publicKey && needCreateFeeRecord && canRegister && <div className="mt-5">
                                 You need <span className="underline">0.11 Private Credits</span> for the gas fee,
                                 but you currently lack sufficient Private Credits.<br/>
                                 Please select <span className="rounded-full bg-teal text-black p-1">Prepare Fee Record</span> to convert Public
@@ -331,46 +327,9 @@ const NamePage: NextPageWithLayout = () => {
                                 Please be aware that by disabling the "Private Fee" option,
                                   your Aleo address will be exposed in the transaction records.
                             </div>}
-                            {showAleoTool && <div className="mt-5">
-                                  <div onClick={toggleAleoTools} className="cursor-pointer block text-xs font-medium uppercase tracking-wider text-gray-900 dark:text-white sm:text-sm">OR REGISTRATION VIA <span className="text-sky-500">aleo.tools</span>{showAleoTools ? " < " : " > "}</div>
-                                  <div className={`overflow-hidden transition-max-height duration-500 ${showAleoTools ? 'max-h-120' : 'max-h-0'}`}>
-                                    <span className="leading-loose">If registration through the Leo Wallet is not possible, <ActiveLink href="https://aleo.tools/develop" target="_blank" className="text-sky-500 underline">aleo.tools</ActiveLink> is another convenient option for registration. Here are the steps to follow. After clicking the 'Register' button above, the transaction records will be displayed in the confirmation pop-up window, you can copy them to use in aleo.tools</span>
-                                    <ol className="list-decimal ml-6 leading-loose">
-                                        <li>Open <ActiveLink href="https://aleo.tools/develop" target="_blank" className="text-sky-500 underline">aleo.tools</ActiveLink> in your web browser.</li>
-                                        <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">Program ID</span> Enter <CopyToClipboardText text={tld.registrar} /> and click the search icon</li>
-                                        <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">Private Key</span> Enter your PRIVATE_KEY</li>
-                                        <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">Execute On-Chain</span> Turn on</li>
-                                        <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">Fee</span> Enter <CopyToClipboardText text="0.37"/></li>
-                                        {privateFee && publicKey &&
-                                            <>
-                                                <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">Private Fee</span> Turn on</li>
-                                                <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">Fee Record</span> Enter {feeRecord != ""?<CopyToClipboardText text={feeRecord}/> : ("a record containing at least 0.37 credits")}</li>
-                                           </>
-                                        }
-                                        <li>Expand the <span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300"> {">"} register_fld</span> function and fill in the following fields</li>
-                                        <ol className="list-disc">
-                                            <li><span
-                                                className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">r0</span> Enter <CopyToClipboardText
-                                                text={nameInputs}/></li>
-                                            <li><span
-                                                className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">r1</span> Enter <CopyToClipboardText
-                                                text={tld.hash}/></li>
-                                            <li><span
-                                                className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">r2</span> Enter {publicKey ?
-                                              <CopyToClipboardText
-                                                text={publicKey}/> : "the address which will own the name"}</li>
-                                            <li><span
-                                                className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">r3</span> Enter {record != "" ?
-                                              <CopyToClipboardText
-                                                text={record}/> : ("a record containing at least " + price + " credits")}
-                                            </li>
-                                            <li>Click the <span
-                                                className="bg-green-700 p-1 pl-2 pr-2 rounded-lg text-white">Run</span> button
-                                            </li>
-                                        </ol>
-                                    </ol>
-                                  </div>
-                              </div>}
+                            {publicKey && !canRegister && (ONLY_WITH_COUPON_CARD == 1) && <div className="mt-5 text-red-400">
+                                Note: Only open for registration with a coupon card.
+                            </div>}
                           </div>
                       </>
                   }
