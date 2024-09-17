@@ -59,6 +59,11 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
   );
   const [queryClient] = useState(() => new QueryClient());
   const getLayout = Component.getLayout ?? ((page) => page);
+  const [isTestnet, setIsTestnet] = useState(false);
+
+  useEffect(() => {
+    setIsTestnet(process.env.NEXT_PUBLIC_NETWORK === 'testnetbeta');
+  }, []);
 
   useEffect(() => {
     configureConnectionForPuzzle({
@@ -79,6 +84,17 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
           content="width=device-width, initial-scale=1 maximum-scale=1"
         />
       </Head>
+      {isTestnet && (
+        <div style={{
+          backgroundColor: 'rgb(255, 245, 204)',
+          color: 'rgb(38, 38, 38)',
+          textAlign: 'center',
+          padding: '5px',
+          fontWeight: 'bold'
+        }}>
+          You are viewing the ANS app on testnet.
+        </div>
+      )}
       <QueryClientProvider client={queryClient}>
         <Hydrate state={pageProps.dehydratedState}>
           <WalletProvider

@@ -24,6 +24,7 @@ export interface Record {
   isPrimaryName: boolean;
   record?: any;
   nameHash?: string;
+  nameField?: string;
   balance: number;
 }
 

@@ -68,6 +68,23 @@ export function useClient() {
     });
   }
 
+  const getNameByField = async (field: string) => {
+    return new Promise<NameHashBalance>((resolve, reject) => {
+      fetch(`${API_URL}/field_to_name/${field}`)
+        .then((response) => response.json())
+        .then((data) => {
+          resolve({
+            name: data.name,
+            nameHash: data.name_hash,
+            balance: data.balance
+          } as NameHashBalance);
+        })
+        .catch((error) => {
+          reject(error);
+        });
+    });
+  }
+
   const getPrimaryName = async (publicKey: string) => {
     return new Promise<string>((resolve, reject) => {
       if (publicKey) {
@@ -179,5 +196,5 @@ export function useClient() {
   }
 
   return {getAddress, getNameHash, getPrimaryName, getName, getSubNames, getPublicDomain, getResolvers, getResolver,
-    getStatistic, getPublicBalance};
+    getStatistic, getPublicBalance, getNameByField};
 }
