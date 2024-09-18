@@ -103,11 +103,7 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
             network={process.env.NEXT_PUBLIC_NETWORK as WalletAdapterNetwork}
             programs={["credits.aleo",
               "token_registry.aleo",
-              "ans_coupon_card.aleo",
-              "ans_coupon_card_v1.aleo",
-              "ans_coupon_card_v2.aleo",
-              "aleo_name_service_registry.aleo",
-              "aleo_name_service_registry_v1.aleo",
+              process.env.NEXT_PUBLIC_COUPON_CARD_PROGRAM!,
               process.env.NEXT_PUBLIC_PROGRAM!]}
             autoConnect
           >
