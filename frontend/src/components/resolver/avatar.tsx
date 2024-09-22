@@ -61,7 +61,7 @@ export default function Avatar({record, onlyView = false, ...props}: { record: R
         return res.text();
       }).then(ipfsHash => {
         inputFile.current.value = "";
-        return setResolverRecord(record.name, "avatar", `ipfs://${ipfsHash}`, (running: boolean, status: any) => {
+        return setResolverRecord(record, "avatar", `ipfs://${ipfsHash}`, (running: boolean, status: any) => {
           setSetting(running);
           setStatus(status.message);
           if (status.message === 'Finalized') {

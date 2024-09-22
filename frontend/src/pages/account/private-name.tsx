@@ -4,6 +4,7 @@ import Button from "@/components/ui/button";
 import {RefreshIcon} from "@/components/icons/refresh";
 import Transfer from "@/pages/account/transfer";
 import ClaimCredits from "@/pages/account/claim-credits";
+import Avatar from "@/components/resolver/avatar";
 
 export default function PrivateName({record, setTriggerRecheck, convertToPublic, transfer}:
                               React.PropsWithChildren<{
@@ -27,6 +28,10 @@ export default function PrivateName({record, setTriggerRecheck, convertToPublic,
   }
 
   return <>
+    <div className="leading-10 mb-5 flex items-center">
+      <span className="mr-4">Avatar: </span>
+      <Avatar record={record} onlyView={false}/>
+    </div>
     <div className="leading-10">
       Visibility: <span className="rounded-lg bg-gray-700 px-2 py-1">Private</span>
     </div>

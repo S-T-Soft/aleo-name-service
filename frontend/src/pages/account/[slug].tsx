@@ -112,7 +112,7 @@ const ManageNamePage: NextPageWithLayout = () => {
                       Subnames
                   </button>
                 </li>
-              {!loading && !isPrivate && <li className="-mb-px mr-2 last:mr-0 flex-auto text-center">
+              {!loading && <li className="-mb-px mr-2 last:mr-0 flex-auto text-center">
                   <button
                       className={`font-bold uppercase px-5 py-3 block leading-normal ${activeTab === 'resolver' ? 'text-aquamarine' : ''}`}
                       onClick={() => router.push(name + '?tab=resolver')}
@@ -145,7 +145,7 @@ const ManageNamePage: NextPageWithLayout = () => {
                 transfer={transfer}
               />}
           {!loading && activeTab == "subnames" && <SubNameView record={record!}/>}
-          {!loading && activeTab == "resolver" && record && !isPrivate && <ResolverView record={record} onlyView={false}/>}
+          {!loading && activeTab == "resolver" && record && <ResolverView record={record} onlyView={false}/>}
           </div>
         </div>
       </div>

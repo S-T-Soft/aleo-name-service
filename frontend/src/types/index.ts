@@ -55,7 +55,8 @@ export interface CouponCard {
   tld: string,
   enable: boolean,
   id: string
-  record: any
+  record: any,
+  count: number
 }
 
 interface Prices {

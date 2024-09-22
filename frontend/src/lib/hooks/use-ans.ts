@@ -28,7 +28,9 @@ export function useANS() {
   const NEXT_PUBLIC_FEES_SET_PRIMARY = parseInt(process.env.NEXT_PUBLIC_FEES_SET_PRIMARY!);
   const NEXT_PUBLIC_FEES_UNSET_PRIMARY = parseInt(process.env.NEXT_PUBLIC_FEES_UNSET_PRIMARY!);
   const NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD = parseInt(process.env.NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD!);
+  const NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD_PUBLIC!);
   const NEXT_PUBLIC_FEES_UNSET_RESOLVER_RECORD = parseInt(process.env.NEXT_PUBLIC_FEES_UNSET_RESOLVER_RECORD!);
+  const NEXT_PUBLIC_FEES_UNSET_RESOLVER_RECORD_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_UNSET_RESOLVER_RECORD_PUBLIC!);
   const NEXT_PUBLIC_FEES_TRANSFER_PRIVATE = parseInt(process.env.NEXT_PUBLIC_FEES_TRANSFER_PRIVATE!);
   const NEXT_PUBLIC_FEES_TRANSFER_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_TRANSFER_PUBLIC!);
   const NETWORK = process.env.NEXT_PUBLIC_NETWORK as WalletAdapterNetwork;
@@ -80,7 +82,7 @@ export function useANS() {
   const getCouponCards = async (name: string, tld: TLD) => {
     return new Promise<CouponCard[]>((resolve, reject) => {
       requestRecordPlaintexts!(NEXT_PUBLIC_COUPON_CARD_PROGRAM!).then((records) => {
-        return Promise.all(records.filter((rec) => !rec.spent).map(async (rec) => {
+        return Promise.all(records.filter((rec) => !rec.spent && rec.data.count != '0u64.private').map(async (rec) => {
           const limit_name_length = parseInt(rec.data.limit_name_length.replace("u8.private", ""));
           let tld = rec.data.tld.replace(".private", "");
           if (tld == '0field') {
@@ -94,7 +96,8 @@ export function useANS() {
             limit_name_length,
             tld: tld,
             enable: limit_name_length <= name.length,
-            record: rec
+            record: rec,
+            count: parseInt(rec.data.count.replace("u64.private", "")),
           } as CouponCard;
         }));
       }).then((records) => {
@@ -189,7 +192,7 @@ export function useANS() {
 
     let amounts = [];
     if (privateFee) {
-      amounts.push(NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC);
+      amounts.push(NEXT_PUBLIC_FEES_REGISTER_PUBLIC);
     }
     getCreditRecords(amounts)
       .then((records) => {
@@ -200,7 +203,7 @@ export function useANS() {
           "register_" + (parentRecord.private ? "private" : "public"),
           [getFormattedNameInput(name, 4),
             parentRecord.private ? parentRecord.record : parentRecord.nameHash,
-            publicKey, '0u128'],
+            publicKey, '0field'],
           NEXT_PUBLIC_FEES_REGISTER_PUBLIC,
           isPrivate // use private fee, or will leak the user address information
         );
@@ -275,6 +278,7 @@ export function useANS() {
             fee,
             privateFee
           );
+          console.log(aleoTransaction);
           if (requestTransaction)
             return requestTransaction(aleoTransaction)
           else
@@ -470,23 +474,15 @@ export function useANS() {
     });
   }
 
-  const setResolverRecord = async (name: string, category: string, content: string, onStatusChange?: StatusChangeCallback) => {
+  const setResolverRecord = async (record: Record, category: string, content: string, onStatusChange?: StatusChangeCallback) => {
     if (!publicKey) throw new WalletNotConnectedError();
     onStatusChange && onStatusChange(true, {hasError: false, message: "Setting"});
 
-    const record = records?.find((rec) => rec.name === name);
-
     if (record) {
-      if (record.private) {
-        const message = "Only public names can set resolvers";
-        notify("error", message);
-        onStatusChange && onStatusChange(false, {hasError: true, message});
-        return;
-      }
-
       let amounts = [];
+      let fee = record.private ? NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD : NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD_PUBLIC;
       if (privateFee) {
-        amounts.push(NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD);
+        amounts.push(fee);
       }
       getCreditRecords(amounts)
         .then((records) => {
@@ -494,9 +490,13 @@ export function useANS() {
             publicKey,
             NETWORK,
             NEXT_PUBLIC_RESOLVER_PROGRAM!,
-            "set_resolver_record",
-            [record.nameHash, getFormattedU128Input(category), getFormattedNameInput(content, 8)],
-            NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD,
+            `set_resolver_record${record.private ? "" : "_public"}`,
+            [
+              record.private ? record.record : record.nameHash,
+              getFormattedU128Input(category),
+              getFormattedNameInput(content, 8)
+            ],
+            fee,
             privateFee
           );
 
@@ -518,23 +518,15 @@ export function useANS() {
     }
   }
 
-  const unsetResolverRecord = async (name: string, category: string, onStatusChange?: StatusChangeCallback) => {
+  const unsetResolverRecord = async (record: Record, category: string, onStatusChange?: StatusChangeCallback) => {
     if (!publicKey) throw new WalletNotConnectedError();
     onStatusChange && onStatusChange(true, {hasError: false, message: "Unsetting"});
 
-    const record = records?.find((rec) => rec.nameHash === name);
-
     if (record) {
-      if (record.private) {
-        const message = "Only public names can unset resolvers";
-        notify("error", message);
-        onStatusChange && onStatusChange(false, {hasError: true, message});
-        return;
-      }
-
       let amounts = [];
+      let fee = record.private ? NEXT_PUBLIC_FEES_UNSET_RESOLVER_RECORD : NEXT_PUBLIC_FEES_UNSET_RESOLVER_RECORD_PUBLIC;
       if (privateFee) {
-        amounts.push(NEXT_PUBLIC_FEES_UNSET_RESOLVER_RECORD);
+        amounts.push(fee);
       }
       getCreditRecords(amounts)
         .then((records) => {
@@ -543,9 +535,9 @@ export function useANS() {
             publicKey,
             NETWORK,
             NEXT_PUBLIC_RESOLVER_PROGRAM!,
-            "unset_resolver_record",
-            [record.nameHash, getFormattedU128Input(category)],
-            NEXT_PUBLIC_FEES_UNSET_RESOLVER_RECORD,
+            `unset_resolver_record${record.private ? "" : "_public"}`,
+            [record.private ? record.record : record.nameHash, getFormattedU128Input(category)],
+            fee,
             privateFee
           );
 

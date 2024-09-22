@@ -38,7 +38,7 @@ export default function Transfer({name, transfer, setTriggerRecheck}: React.Prop
     <div className="relative flex w-full rounded-full mt-5">
       <label className="flex w-full items-center ">
         <input
-          className="h-16 w-full appearance-none rounded-full border-2 border-gray-200 py-1 text-lg tracking-tighter text-gray-900 outline-none transition-all placeholder:text-gray-600 hover:border-teal focus:border-aquamarine ltr:pr-24 ltr:pl-8 rtl:pl-24 rtl:pr-8 dark:border-gray-600 dark:bg-light-dark dark:text-white dark:placeholder:text-gray-500 sm:ltr:pr-24 sm:rtl:pl-24 xl:ltr:pr-24 xl:rtl:pl-24"
+          className={`h-16 w-full appearance-none rounded-full border-2 py-1 text-lg tracking-tighter text-gray-900 outline-none transition-all placeholder:text-gray-600 hover:border-teal focus:border-aquamarine ltr:pr-24 ltr:pl-8 rtl:pl-24 rtl:pr-8 dark:bg-light-dark dark:text-white dark:placeholder:text-gray-500 sm:ltr:pr-24 sm:rtl:pl-24 xl:ltr:pr-24 xl:rtl:pl-24 ${error ? 'border-red-500' : 'border-gray-200 dark:border-gray-600'}`}
           value={recipient}
           placeholder={`Address(aleo***) or Public ANS(***.${tldName})`}
           onChange={onChange}
@@ -52,9 +52,6 @@ export default function Transfer({name, transfer, setTriggerRecheck}: React.Prop
             className="inline text-aquamarine motion-safe:animate-spin"/> {transferStatus}</Button>}
       </span>
     </div>
-    {error && (
-      <div className="h-10 text-center text-red-500 text-base">
-        {error}
-      </div>
-    )}</>
+    <div className="h-10 text-center text-base text-gray-500">The transfer operation will clear the avatar and all resolver settings.</div>
+  </>
 }

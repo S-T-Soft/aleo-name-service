@@ -83,10 +83,13 @@ interface LayoutProps {}
 export default function Layout({
   children,
 }: React.PropsWithChildren<LayoutProps>) {
+  const isMounted = useIsMounted();
+  let windowScroll = useWindowScroll();
+
   return (
     <div className="[background:linear-gradient(180deg,_#1d1a18,_#100e0d_7%,_#100e0d_20.5%,_#080707_50%,_#201b18_79.15%)] flex min-h-screen flex-col">
       <Header />
-      <main className="mt-6 mb-12 flex flex-grow flex-col pt-16 w-[1000px] max-w-full mx-auto px-8">
+      <main className={`mt-6 mb-12 flex flex-grow flex-col w-[1000px] max-w-full mx-auto px-8 ${isMounted && windowScroll.y > 10 ? 'pt-16' : ''}`}>
         {children}
       </main>
     </div>

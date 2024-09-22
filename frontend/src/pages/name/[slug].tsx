@@ -6,8 +6,6 @@ import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
 import React, {useEffect, useMemo, useState} from "react";
 import Button from "@/components/ui/button";
 import * as process from "process";
-import ActiveLink from "@/components/ui/links/active-link";
-import CopyToClipboardText from "@/components/copy_to_clipboard";
 import {RefreshIcon} from "@/components/icons/refresh";
 import {useANS} from "@/lib/hooks/use-ans";
 import {Status} from "@/types";
@@ -237,32 +235,35 @@ const NamePage: NextPageWithLayout = () => {
                       <>
                           <div className="mt-3 text-xl tracking-tighter text-gray-600 dark:text-gray-400 sm:block">
                               <span className="mr-2">Register Price:</span>
-                              {price > 0 && <span className="bg-gray-700 p-1 pl-2 pr-2 rounded-lg text-gray-300 font-bold">
+                            {price > 0 &&
+                                <span className="bg-gray-700 p-1 pl-2 pr-2 rounded-lg text-gray-300 font-bold">
                                 {price} {privateFee ? "Private" : "Public"} Credits
                               </span>}
-                              {price == 0 && <span className="bg-gray-700 p-1 pl-2 pr-2 rounded-lg text-gray-300 font-bold">
+                            {price == 0 &&
+                                <span className="bg-gray-700 p-1 pl-2 pr-2 rounded-lg text-gray-300 font-bold">
                                 FREE
                               </span>}
                           </div>
-                          {couponCards.length > 0 &&
-                          <div className="flex justify-left items-center overflow-hidden mt-5">
-                            <div className="flex overflow-x-auto pb-2">
-                                <div className="flex flex-nowrap">
-                                  {couponCards.map((card) => {
-                                    const cardContent = (
-                                      <div
-                                        className={`relative w-32 h-16 max-w-xs overflow-hidden rounded-lg border-2 shadow-md ${
-                                          card.enable ? (card.discount_percent > 0 ? 'bg-red-100' : 'bg-white') : 'bg-gray-400'
-                                        } py-3 px-5 ${card.enable && "cursor-pointer"}
-                                        ${(selectedCard && selectedCard.id == card.id) ? "border-green-500":"border-gray-200"}`}
-                                        onClick={() => selectCard(card)}
-                                      >
-                                        <h5 className={`text-xl font-bold tracking-tight ${
-                                          card.discount_percent > 0 ? 'text-red-700' : 'text-gray-900'
+                        {couponCards.length > 0 &&
+                            <div className="flex justify-left items-center overflow-hidden mt-5">
+                                <div className="flex overflow-x-auto pb-2">
+                                    <div className="flex flex-nowrap">
+                                      {couponCards.map((card) => {
+                                        const cardContent = (
+                                          <div
+                                            className={`relative w-32 h-20 max-w-xs overflow-hidden rounded-lg border-2 shadow-md ${
+                                              card.enable ? (card.discount_percent > 0 ? 'bg-red-100' : 'bg-white') : 'bg-gray-400'
+                                            } py-3 px-5 ${card.enable && "cursor-pointer"}
+                                        ${(selectedCard && selectedCard.id == card.id) ? "border-green-500" : "border-gray-200"}`}
+                                            onClick={() => selectCard(card)}
+                                          >
+                                          <h5 className={`text-xl font-bold tracking-tight ${
+                                              card.discount_percent > 0 ? 'text-red-700' : 'text-gray-900'
                                         }`}>
                                           {card.discount_percent > 0 ? `${100 - card.discount_percent}% OFF` : 'Free Card'}
                                         </h5>
-                                        {card.limit_name_length > 1 && <p className="text-3xs-5 text-gray-500">For lengths {card.limit_name_length}+</p>}
+                                            <p className="text-3xs-5 text-gray-500">For lengths <span className="font-bold">{card.limit_name_length}+</span></p>
+                                            <p className="text-3xs-5 text-gray-500">Can use <span className="text-red-400 font-bold">{card.count}</span> times</p>
                                         {selectedCard && selectedCard.id == card.id && (
                                           <div
                                             className="absolute top-0 right-0 w-6 h-6 bg-green-500 flex justify-center items-center"
@@ -284,7 +285,7 @@ const NamePage: NextPageWithLayout = () => {
                           }
                           <div
                               className="mt-5 text-sm tracking-tighter text-gray-600 dark:text-gray-400 sm:block place-content-center">
-                              {publicKey && !registering &&
+                            {publicKey && !registering &&
                                 <div className="flex items-center">
                                   {(needCreateRecord && canRegister) && <>
                                       <Button className="mr-5" onClick={handleConvert}>Prepare Record</Button>

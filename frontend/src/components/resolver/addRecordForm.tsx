@@ -1,14 +1,14 @@
 import {useANS} from "@/lib/hooks/use-ans";
 import {useState} from "react";
-import {Status} from "@/types";
+import {Status, Record} from "@/types";
 import coinsWithIcons from "@/constants/coinsWithIcons.json";
 import coinsWithoutIcons from "@/constants/coinsWithoutIcons.json";
 import {DynamicAddressIcon} from "@/assets/address/DynamicAddressIcon";
 import Button from "@/components/ui/button";
 import {RefreshIcon} from "@/components/icons/refresh";
 
-export const AddRecordForm = ({name, onSuccess}: React.PropsWithChildren<{
-  name: string,
+export const AddRecordForm = ({record, onSuccess}: React.PropsWithChildren<{
+  record: Record,
   onSuccess: CallableFunction
 }>) => {
   const {setResolverRecord} = useANS();
@@ -21,7 +21,7 @@ export const AddRecordForm = ({name, onSuccess}: React.PropsWithChildren<{
     if (!content || content.length == 0) {
       return;
     }
-    await setResolverRecord(name, chooseCoin, content, (running: boolean, status: Status) => {
+    await setResolverRecord(record, chooseCoin, content, (running: boolean, status: Status) => {
       setSetting(running);
       setStatus(status.message);
       if (status.message === 'Finalized') {

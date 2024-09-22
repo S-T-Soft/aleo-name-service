@@ -98,13 +98,21 @@ export function createRecordContext() {
           try {
             const existRec = (records || []).filter((rec) => rec.nameField == nameField);
             if (existRec.length > 0) {
-              return existRec[0];
+              let er = existRec[0];
+              if (JSON.stringify(er.record) !== JSON.stringify(rec)) {
+                er.record = rec;
+              }
+              return er;
             }
             const item = await getNameHashByField(nameField);
             const existRec2 = (records || []).filter((rec) => rec.nameHash == item.nameHash);
             if (existRec2.length > 0) {
-              existRec2[0].nameField = nameField;
-              return existRec2[0];
+              let er = existRec2[0];
+              if (JSON.stringify(er.record) !== JSON.stringify(rec)) {
+                er.record = rec;
+              }
+              er.nameField = nameField;
+              return er;
             }
             return {
               name: item.name,
