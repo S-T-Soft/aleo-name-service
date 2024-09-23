@@ -65,6 +65,13 @@ const NamePage: NextPageWithLayout = () => {
     return ONLY_WITH_COUPON_CARD == 0 || (ONLY_WITH_COUPON_CARD > 0 && selectedCard);
   }, [selectedCard]);
 
+  const ansRecord = useMemo(() => {
+    return {
+      name: `${name}.${tld.name}` as string,
+      private: owner.length > 60
+    } as Record
+  }, [name]);
+
   useEffect(() => {
     if (router.isReady) {
       const {slug} = router.query;
@@ -105,39 +112,45 @@ const NamePage: NextPageWithLayout = () => {
   useEffect(() => {
     setOwner("");
     setLoading(true);
-    const is_valid = /^[a-z0-9-_]{1,64}$/.test(name);
-    setIsValid(is_valid);
+    if (name == "") {
+      setIsValid(false);
+      return;
+    }
     if (names?.includes(`${name}.${tld.name}`)) {
       router.push(`/account/${name}.${tld.name}`);
       return;
     }
-    if (is_valid) {
-      const ans_price = calcPrice(name, tld, selectedCard);
-      setPrice(ans_price / 1000000);
-      if (couponCards.length > 0) {
-        couponCards.forEach((card) => {
-          card.enable = card.limit_name_length <= name.length;
-          if (!card.enable && selectedCard && selectedCard.id == card.id) {
-            setSelectedCard(null);
+    const is_valid = /^([a-z0-9-_]{1,64}\.)*[a-z0-9-_]{1,64}$/.test(name);
+    is_valid && getAddress(`${name}.${tld.name}`)
+      .then((address) => {
+        setIsValid(true);
+        setAvailable(false);
+        setOwner(address);
+      }).catch((error) => {
+        const is_valid = /^[a-z0-9-_]{1,64}$/.test(name);
+        setIsValid(is_valid);
+        if (is_valid) {
+          const ans_price = calcPrice(name, tld, selectedCard);
+          setPrice(ans_price / 1000000);
+          if (couponCards.length > 0) {
+            couponCards.forEach((card) => {
+              card.enable = card.limit_name_length <= name.length;
+              if (!card.enable && selectedCard && selectedCard.id == card.id) {
+                setSelectedCard(null);
+              }
+            });
           }
-        });
-      }
-      if (publicKey) {
-        getCouponCards(name, tld).then((cards) => {
-          setCouponCards(cards);
-          if (cards.length === 0) {
-            setSelectedCard(null);
-          } else if (selectedCard && !cards.some(card => card.enable && card.id === selectedCard.id)) {
-            setSelectedCard(null);
+          if (publicKey) {
+            getCouponCards(name, tld).then((cards) => {
+              setCouponCards(cards);
+              if (cards.length === 0) {
+                setSelectedCard(null);
+              } else if (selectedCard && !cards.some(card => card.enable && card.id === selectedCard.id)) {
+                setSelectedCard(null);
+              }
+              console.log(cards)
+            });
           }
-          console.log(cards)
-        });
-      }
-      getAddress(`${name}.${tld.name}`)
-        .then((address) => {
-          setAvailable(false);
-          setOwner(address);
-        }).catch((error) => {
           // refresh balance
           mutate('getBalance');
           setAvailable(true);
@@ -148,10 +161,10 @@ const NamePage: NextPageWithLayout = () => {
             setRecord("");
             setFeeRecord("");
           }
-      }).finally(() => {
-        setLoading(false);
-      });
-    }
+        }
+    }).finally(() => {
+      setLoading(false);
+    });
   }, [name, names, publicKey, triggerRecheck, tld]);
 
   useEffect(() => {
@@ -356,8 +369,8 @@ const NamePage: NextPageWithLayout = () => {
             </div>
           </div>
         </div>
-        {owner.length > 60 && <div className="rounded-lg bg-white p-5 shadow-card z-50 mx-auto w-full max-w-full xs:w-[480px] sm:w-[600px] lg:w-[900px] [background:linear-gradient(180deg,_#2e2e2e,_rgba(46,_46,_46,_0))]">
-            <ResolverView record={{ name: `${name}.${tld.name}` } as Record} onlyView={true}/>
+        {isValid && !available && <div className="rounded-lg bg-white p-5 shadow-card z-50 mx-auto w-full max-w-full xs:w-[480px] sm:w-[600px] lg:w-[900px] [background:linear-gradient(180deg,_#2e2e2e,_rgba(46,_46,_46,_0))]">
+            <ResolverView record={ansRecord} onlyView={true}/>
         </div>}
       </div>
     </>

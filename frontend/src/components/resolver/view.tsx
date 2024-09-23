@@ -75,7 +75,8 @@ export default function ResolverView({ record, onlyView = false, ...props }: {re
   const [addresses, setAddresses] = useState<Resolver[]>([]);
 
   useEffect(() => {
-    if (record) {
+    if (record && record.name) {
+      if (record.name.split(".").slice(0, -1).join(".") == "") return;
       setLoading(true);
       getResolvers(record.name).then((resolvers) => {
         const addressList: Resolver[] = [];
@@ -91,7 +92,7 @@ export default function ResolverView({ record, onlyView = false, ...props }: {re
         setLoading(false);
       })
     }
-  }, [refresh]);
+  }, [refresh, record]);
 
   const doRefresh = () => {
     setRefresh(refresh + 1);

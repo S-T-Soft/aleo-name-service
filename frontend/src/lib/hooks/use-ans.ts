@@ -38,7 +38,7 @@ export function useANS() {
   const {records, publicBalance} = useRecords();
   const {addTransaction} = useTransaction();
   const {getCreditRecords} = useCredit();
-  const {getAddress, getName, getNameHash} = useClient();
+  const {getAddress, getName} = useClient();
   const {privateFee} = usePrivateFee();
   const {publicKey, requestTransaction, requestRecordPlaintexts} = useWallet();
 
@@ -66,17 +66,7 @@ export function useANS() {
   }
 
   const formatNftData = async (record: Record) => {
-    // split record.name to two parts, with the first .
-    const parts = record.name.split('.');
-    const name = parts[0];
-    const parentName = parts.slice(1).join('.');
-    let parent = await queryName(parentName);
-    if (!parent) {
-      const parent_hash = await getNameHash(parentName);
-      await saveName(parentName, parent_hash);
-      parent = await queryName(parentName);
-    }
-    return `{ metadata: [${record.nameHash}, 0field, 0field, 0field], content: { name: ${getFormattedNameInput(name, 4)}, parent: ${parent.hash} } }`;
+    return `{ metadata: [${record.nameField}, 0field, 0field, 0field] }`;
   }
 
   const getCouponCards = async (name: string, tld: TLD) => {

@@ -15,6 +15,7 @@ export interface Attachment {
 export interface NameHashBalance {
   name: string;
   nameHash: string;
+  nameField: string;
   balance: number;
 }
 
