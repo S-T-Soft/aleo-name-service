@@ -51,6 +51,7 @@ const NamePage: NextPageWithLayout = () => {
   const [price, setPrice] = useState(2);
   const [record, setRecord] = useState("");
   const [feeRecord, setFeeRecord] = useState("");
+  const [resolverRecordCount, setResolverRecordCount] = useState(0);
   const {privateFee, setPrivateFee} = usePrivateFee();
 
   const needCreateRecord = useMemo(() => {
@@ -369,8 +370,8 @@ const NamePage: NextPageWithLayout = () => {
             </div>
           </div>
         </div>
-        {isValid && !available && <div className="rounded-lg bg-white p-5 shadow-card z-50 mx-auto w-full max-w-full xs:w-[480px] sm:w-[600px] lg:w-[900px] [background:linear-gradient(180deg,_#2e2e2e,_rgba(46,_46,_46,_0))]">
-            <ResolverView record={ansRecord} onlyView={true}/>
+        {isValid && !available && <div className={`${resolverRecordCount < 1 && 'hidden'} rounded-lg bg-white p-5 shadow-card z-50 mx-auto w-full max-w-full xs:w-[480px] sm:w-[600px] lg:w-[900px] [background:linear-gradient(180deg,_#2e2e2e,_rgba(46,_46,_46,_0))]`}>
+            <ResolverView record={ansRecord} onlyView={true} setResolverRecordCount={setResolverRecordCount}/>
         </div>}
       </div>
     </>

@@ -66,7 +66,7 @@ const AddressRecordItem = ({ record, resolver }: { record: Record, resolver: Res
 }
 
 
-export default function ResolverView({ record, onlyView = false, ...props }: {record: Record, onlyView: boolean}) {
+export default function ResolverView({ record, onlyView = false, setResolverRecordCount = (count) => {}, ...props }: {record: Record, onlyView: boolean, setResolverRecordCount: (count: number) => void}) {
   const {getResolvers} = useClient();
   const [canAddResolver, setCanAddResolver] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -88,6 +88,7 @@ export default function ResolverView({ record, onlyView = false, ...props }: {re
           }
         });
         setAddresses(addressList);
+        setResolverRecordCount(addressList.length);
       }).finally(() => {
         setLoading(false);
       })
