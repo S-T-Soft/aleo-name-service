@@ -200,6 +200,19 @@ export function useClient() {
     });
   }, {cache: new ExpiryMap(5000)})
 
+  const getLatestHeight = pMemoize(async () => {
+    return new Promise<number>((resolve, reject) => {
+      fetch(`${ALEO_URL}latest/height`)
+        .then((response) => response.text())
+        .then((height) => {
+          resolve(parseInt(height));
+        })
+        .catch((error) => {
+          reject({message: `Error load latest height`});
+        });
+    });
+  }, {cache: new ExpiryMap(3000)})
+
   return {getAddress, getNameHash, getPrimaryName, getName, getSubNames, getPublicDomain, getResolvers, getResolver,
-    getStatistic, getPublicBalance, getNameByField};
+    getStatistic, getPublicBalance, getNameByField, getLatestHeight};
 }

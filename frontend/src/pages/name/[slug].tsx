@@ -12,7 +12,7 @@ import {Status} from "@/types";
 import {useClient} from "@/lib/hooks/use-client";
 import ToggleSwitch from "@/components/ui/toggle-switch";
 import {useRecords} from "@/lib/hooks/use-records";
-import {useSWRConfig} from "swr";
+import useSWR, {useSWRConfig} from "swr";
 import {useCredit} from "@/lib/hooks/use-credit";
 import Head from "next/head";
 import ResolverView from "@/components/resolver/view";
@@ -28,15 +28,17 @@ import {usePrivateFee} from "@/lib/hooks/use-private-fee";
 
 const NamePage: NextPageWithLayout = () => {
   const NEXT_PUBLIC_FEES_REGISTER = parseInt(process.env.NEXT_PUBLIC_FEES_REGISTER!);
-  const ONLY_WITH_COUPON_CARD = parseInt(process.env.NEXT_PUBLIC_ONLY_WITH_COUPON_CARD!);
+  const COUPON_CARD_START_HEIGHT = parseInt(process.env.NEXT_PUBLIC_COUPON_CARD_START_HEIGHT!);
+  const MINT_START_HEIGHT = parseInt(process.env.NEXT_PUBLIC_MINT_START_HEIGHT!);
   const router = useRouter();
   const {publicKey} = useWallet();
   const {mutate} = useSWRConfig();
   const {transferCredits} = useCredit();
   const {register, calcPrice, getCouponCards, matchTld} = useANS();
+  const {getLatestHeight} = useClient();
   const {getAddress} = useClient();
   const {getCreditRecords} = useCredit();
-  const {names, publicBalance} = useRecords();
+  const {names} = useRecords();
   const [couponCards, setCouponCards] = useState<CouponCard[]>([]);
   const [selectedCard, setSelectedCard] = useState<CouponCard | null>(null);
   const [available, setAvailable] = useState(false);
@@ -48,11 +50,14 @@ const NamePage: NextPageWithLayout = () => {
   const [triggerRecheck, setTriggerRecheck] = useState(0);
   const [name, setName] = useState("");
   const [tld, setTld] = useState<TLD>(tlds[0]);
-  const [price, setPrice] = useState(2);
+  const [price, setPrice] = useState<number>(2);
   const [record, setRecord] = useState("");
   const [feeRecord, setFeeRecord] = useState("");
   const [resolverRecordCount, setResolverRecordCount] = useState(0);
   const {privateFee, setPrivateFee} = usePrivateFee();
+  const {data: latestHeight} = useSWR('getLatestHeight', () => getLatestHeight(), {refreshInterval: (l) => {
+    return l > MINT_START_HEIGHT ? 100000000000 : 3000;
+    }});
 
   const needCreateRecord = useMemo(() => {
     return record == "" && privateFee && price > 0;
@@ -62,9 +67,21 @@ const NamePage: NextPageWithLayout = () => {
     return (record != "" || price == 0) && feeRecord == "" && privateFee;
   }, [record, feeRecord, privateFee, price]);
 
+  const canPublicMint = useMemo(() => {
+    return (latestHeight || 0) >= MINT_START_HEIGHT;
+  }, [latestHeight]);
+
+  const canCouponMint = useMemo(() => {
+    return (latestHeight || 0) >= COUPON_CARD_START_HEIGHT;
+  }, [latestHeight]);
+
   const canRegister = useMemo(() => {
-    return ONLY_WITH_COUPON_CARD == 0 || (ONLY_WITH_COUPON_CARD > 0 && selectedCard);
-  }, [selectedCard]);
+    if (canPublicMint) {
+      // stop swr getLatestHeight
+      mutate("getLatestHeight");
+    }
+    return canPublicMint || (canCouponMint && selectedCard);
+  }, [selectedCard, canPublicMint, canCouponMint]);
 
   const ansRecord = useMemo(() => {
     return {
@@ -189,7 +206,7 @@ const NamePage: NextPageWithLayout = () => {
   const handleConvert = async (event: any) => {
     event.preventDefault();
     if (publicKey) {
-      await transferCredits("transfer_public_to_private", publicKey, price, (running: boolean, status: Status) => {
+      await transferCredits("", "transfer_public_to_private", publicKey, price, (running: boolean, status: Status) => {
         setRegistering(running);
         setStatus(status.message);
         if (!running && !status.hasError) {
@@ -206,7 +223,7 @@ const NamePage: NextPageWithLayout = () => {
   const handleConvertFee = async (event: any) => {
     event.preventDefault();
     if (publicKey) {
-      await transferCredits("transfer_public_to_private", publicKey, NEXT_PUBLIC_FEES_REGISTER, (running: boolean, status: Status) => {
+      await transferCredits("", "transfer_public_to_private", publicKey, NEXT_PUBLIC_FEES_REGISTER, (running: boolean, status: Status) => {
         setRegistering(running);
         setStatus(status.message);
         if (!running && !status.hasError) {
@@ -310,7 +327,9 @@ const NamePage: NextPageWithLayout = () => {
                                   {(!needCreateRecord && !needCreateFeeRecord && canRegister) &&
                                       <Button className="mr-5" onClick={handleRegister}>Register</Button>}
                                   {(needCreateRecord || needCreateFeeRecord || !canRegister) &&
-                                      <Button className="bg-gray-700 mr-5" disabled={true}>Register</Button>}
+                                      <Button className="bg-gray-700 mr-5" disabled={true}>
+                                        { canPublicMint ? 'Register' : (!canCouponMint && selectedCard) ? `Coupon Register in ${COUPON_CARD_START_HEIGHT - (latestHeight || 0)} blocks` : `Public register in ${MINT_START_HEIGHT - (latestHeight || 0)} blocks`}
+                                      </Button>}
                                     <ToggleSwitch label="Private fee" isToggled={privateFee}
                                                   setIsToggled={setPrivateFee}/>
                                 </div>
@@ -342,7 +361,7 @@ const NamePage: NextPageWithLayout = () => {
                                 Please be aware that by disabling the "Private Fee" option,
                                   your Aleo address will be exposed in the transaction records.
                             </div>}
-                            {publicKey && !canRegister && (ONLY_WITH_COUPON_CARD == 1) && <div className="mt-5 text-red-400">
+                            {publicKey && !canPublicMint && canCouponMint && <div className="mt-5 text-red-400">
                                 Note: Only open for registration with a coupon card.
                             </div>}
                           </div>
