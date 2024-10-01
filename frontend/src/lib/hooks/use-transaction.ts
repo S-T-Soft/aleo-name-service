@@ -25,37 +25,42 @@ export function useTransaction() {
   const getTransactionStatus = async (tx: AnsTransaction) => {
     let status = "Pending";
     if (transactionStatus) {
-      status = await transactionStatus(tx.id);
-    }
-    tx.onStatusChange && tx.onStatusChange(true, {hasError: false, message: status});
-    console.log(tx.id, status);
-    // if tx.id no tin transactions, return
-    if (!transactions.find((t) => t.id === tx.id)) return;
-    if (status === "Failed" || status === "Reject") {
-      setTransactions(transactions.filter((t) => t.id !== tx.id));
-      tx.onStatusChange && tx.onStatusChange(false, {hasError: true, message: status});
-    } else if (status === "Finalized") {
-      setTransactions(transactions.filter((t) => t.id !== tx.id));
+      transactionStatus(tx.id).then(status => {
+        tx.onStatusChange && tx.onStatusChange(true, {hasError: false, message: status});
+        console.log(tx.id, status);
+        // if tx.id no tin transactions, return
+        if (!transactions.find((t) => t.id === tx.id)) return;
+        if (status === "Failed" || status === "Reject") {
+          setTransactions(transactions.filter((t) => t.id !== tx.id));
+          tx.onStatusChange && tx.onStatusChange(false, {hasError: true, message: status});
+        } else if (status === "Finalized") {
+          setTransactions(transactions.filter((t) => t.id !== tx.id));
 
-      switch (tx.method) {
-        case "transfer":
-        case "convertToPublic":
-        case "register":
-        case "registerSubdomain":
-        case "convertToPrivate":
-          refreshRecords("manual");
-          break;
-        case "setPrimaryName":
-        case "unsetPrimaryName":
-          syncPrimaryName();
-          break;
-        case "setResolverRecord":
-        case "unsetResolverRecord":
-          break;
-      }
+          switch (tx.method) {
+            case "transfer":
+            case "convertToPublic":
+            case "register":
+            case "registerSubdomain":
+            case "convertToPrivate":
+              refreshRecords("manual");
+              break;
+            case "setPrimaryName":
+            case "unsetPrimaryName":
+              syncPrimaryName();
+              break;
+            case "setResolverRecord":
+            case "unsetResolverRecord":
+              break;
+          }
 
-      tx.onStatusChange && tx.onStatusChange(false, {hasError: false, message: status});
-      notify("success", `Transaction ${tx.method} Success`);
+          tx.onStatusChange && tx.onStatusChange(false, {hasError: false, message: status});
+          notify("success", `Transaction ${tx.method} Success`);
+        }
+      }).catch(error => {
+        console.error(error);
+      })
+    } else {
+      tx.onStatusChange && tx.onStatusChange(true, {hasError: false, message: status});
     }
   };
 

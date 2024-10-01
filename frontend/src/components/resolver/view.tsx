@@ -14,7 +14,7 @@ import coinsWithIcons from "@/constants/coinsWithIcons.json";
 import coinsWithoutIcons from "@/constants/coinsWithoutIcons.json";
 
 
-const AddressRecordItem = ({ resolver }: { resolver: Resolver }) => {
+const AddressRecordItem = ({ record, resolver }: { record: Record, resolver: Resolver }) => {
   const {unsetResolverRecord} = useANS();
   const [copied, setCopied] = useState(false);
   const [setting, setSetting] = useState(false);
@@ -40,7 +40,7 @@ const AddressRecordItem = ({ resolver }: { resolver: Resolver }) => {
 
   const removeRecord = async (event: any) => {
     event.preventDefault();
-    await unsetResolverRecord(resolver.nameHash, resolver.key, (running: boolean, status: Status) => {
+    await unsetResolverRecord(record, resolver.key, (running: boolean, status: Status) => {
       setSetting(running);
       setStatus(status.message);
       if (status.message === 'Finalized') {
@@ -66,7 +66,7 @@ const AddressRecordItem = ({ resolver }: { resolver: Resolver }) => {
 }
 
 
-export default function ResolverView({ record, onlyView = false, ...props }: {record: Record, onlyView: boolean}) {
+export default function ResolverView({ record, onlyView = false, setResolverRecordCount = (count) => {}, ...props }: {record: Record, onlyView: boolean, setResolverRecordCount: (count: number) => void}) {
   const {getResolvers} = useClient();
   const [canAddResolver, setCanAddResolver] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -75,7 +75,8 @@ export default function ResolverView({ record, onlyView = false, ...props }: {re
   const [addresses, setAddresses] = useState<Resolver[]>([]);
 
   useEffect(() => {
-    if (record) {
+    if (record && record.name) {
+      if (record.name.split(".").slice(0, -1).join(".") == "") return;
       setLoading(true);
       getResolvers(record.name).then((resolvers) => {
         const addressList: Resolver[] = [];
@@ -87,11 +88,12 @@ export default function ResolverView({ record, onlyView = false, ...props }: {re
           }
         });
         setAddresses(addressList);
+        setResolverRecordCount(addressList.length);
       }).finally(() => {
         setLoading(false);
       })
     }
-  }, [refresh]);
+  }, [refresh, record]);
 
   const doRefresh = () => {
     setRefresh(refresh + 1);
@@ -105,11 +107,11 @@ export default function ResolverView({ record, onlyView = false, ...props }: {re
       {loading && <span className="text-gray-500"> Loading...</span>}
       {!loading && <span className="text-gray-500"> {addresses.length} Records</span>}
       {addresses.map((address) => (
-        <AddressRecordItem key={'address-'+address.key} resolver={address}/>
+        <AddressRecordItem key={'address-'+address.key} record={record} resolver={address}/>
       ))}
       {!onlyView && canAddResolver && <div className="mt-5 border-t-[1px] border-t-gray-500 flex justify-end">
         {!showForm && <Button className="mt-5" onClick={() => setShowForm(true)}>Add Address Record</Button>}
-        {showForm && <AddRecordForm name={record.name} onSuccess={doRefresh}/>}
+        {showForm && <AddRecordForm record={record} onSuccess={doRefresh}/>}
       </div>}
     </div>
   );

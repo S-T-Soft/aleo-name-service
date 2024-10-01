@@ -4,15 +4,36 @@ import Stats from "@/components/stats";
 import {DynamicSocialIcon} from "@/assets/social/DynamicSocialIcon";
 import AnchorLink from "@/components/ui/links/anchor-link";
 import Button from "@/components/ui/button";
-import {useForm, ValidationError} from "@formspree/react";
 import React from "react";
 import {DynamicAddressIcon} from "@/assets/address/DynamicAddressIcon";
 import {SearchIcon} from "@/components/icons/search";
 import Logo from "@/components/ui/logo";
 import {BuildWithAleoDarkSVG} from "@/assets/icons";
+import toast from "@/components/ui/toast";
 
 const ANSDesktop: NextPage = () => {
-  const [formState, submit] = useForm(process.env.NEXT_PUBLIC_FORM)
+  const [submitting, setSubmitting] = React.useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    const address = (e.target as any).email.value;
+    // post to /api/subscribe
+    fetch('/api/subscribe', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({address}),
+    }).then(() => {
+      toast({ type: "success", message: "Subscribed successfully" });
+    }).catch(() => {
+      toast({ type: "error", message: "Failed to subscribe" });
+    }).finally(() => {
+      // reset form
+      setSubmitting(false);
+    });
+  }
 
   return (
     <div
@@ -298,14 +319,9 @@ const ANSDesktop: NextPage = () => {
                     id="email"
                     name="email"
                   />
-                  <ValidationError
-                    prefix="Email"
-                    field="email"
-                    errors={formState.errors}
-                  />
                 </div>
                 <button
-                  disabled={formState.submitting}
+                  disabled={submitting}
                   type={"submit"}
                   className="cursor-pointer [border:none] p-3 bg-darkslategray-200 w-[127px] rounded-full flex flex-row items-center justify-center box-border z-[1] hover:bg-teal">
                   <div

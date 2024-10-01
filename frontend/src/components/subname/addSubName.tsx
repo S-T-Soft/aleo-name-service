@@ -7,6 +7,8 @@ import { Record } from "@/types";
 import {useClient} from "@/lib/hooks/use-client";
 import ToggleSwitch from "@/components/ui/toggle-switch";
 
+import {usePrivateFee} from "@/lib/hooks/use-private-fee";
+
 const AddSubName = ({record, onSuccess}: React.PropsWithChildren<{
   record: Record,
   onSuccess: CallableFunction
@@ -20,7 +22,7 @@ const AddSubName = ({record, onSuccess}: React.PropsWithChildren<{
   const [prevValue, setPrevValue] = useState('');
   const [registering, setRegistering] = useState(false);
   const [status, setStatus] = useState("");
-  const [isPrivate, setIsPrivate] = useState(true);
+  const {privateFee, setPrivateFee} = usePrivateFee();
 
   useEffect(() => {
     if (inputValue !== "") {
@@ -54,7 +56,7 @@ const AddSubName = ({record, onSuccess}: React.PropsWithChildren<{
     if (!inputValue || inputValue.length == 0) {
       return;
     }
-    await registerSubName(inputValue, record, isPrivate, (running: boolean, status: Status) => {
+    await registerSubName(inputValue, record, privateFee, (running: boolean, status: Status) => {
       setRegistering(running);
       setStatus(status.message);
       if (status.message === 'Finalized') {
@@ -81,7 +83,7 @@ const AddSubName = ({record, onSuccess}: React.PropsWithChildren<{
             <h2 className="mb-4 text-white text-center font-bold">Create Subname</h2>
             <div className="flex mb-4 border-2 border-gray-600 md:focus-within:border-aquamarine rounded-full">
               <input
-                className="h-16 flex-grow appearance-none rounded-full md:rounded-l-full md:rounded-r-none border-r-0 py-1 text-lg tracking-tighter text-gray-900 outline-none transition-all placeholder:text-gray-600 hover:border-teal focus:border-aquamarine ltr:pl-8 rtl:pr-8 dark:border-gray-600 dark:bg-light-dark dark:text-white dark:placeholder:text-gray-500"
+                className="h-16 flex-grow appearance-none rounded-full md:rounded-l-full md:rounded-r-none border-r-0 py-1 text-lg tracking-tighter text-gray-900 outline-none transition-all placeholder:text-gray-600 dark:hover:border-teal dark:focus:border-aquamarine ltr:pl-8 rtl:pr-8 dark:border-gray-600 dark:bg-light-dark dark:text-white dark:placeholder:text-gray-500"
                 type="text"
                 autoComplete={"off"}
                 value={inputValue}
@@ -92,7 +94,7 @@ const AddSubName = ({record, onSuccess}: React.PropsWithChildren<{
                 className="hidden md:flex h-16 bg-gray-700 border-l-0 border-gray-600 items-center justify-center py-1 px-3 text-lg text-gray-400 rounded-r-full">.{record.name}</span>
             </div>
             <div className="flex mb-4 text-white justify-end">
-              <ToggleSwitch label="Private fee" isToggled={isPrivate} setIsToggled={setIsPrivate} />
+              <ToggleSwitch label="Private fee" isToggled={privateFee} setIsToggled={setPrivateFee} />
             </div>
             <div className="flex flex-col md:flex-row justify-between">
               {!registering && <Button className="w-full mb-2 md:mb-0 md:w-2/5 bg-gray-700 text-white"

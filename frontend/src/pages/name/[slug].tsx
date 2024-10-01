@@ -3,18 +3,16 @@ import {NextSeo} from 'next-seo';
 import SearchView from "@/components/search/view";
 import {useRouter} from 'next/router'
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import Button from "@/components/ui/button";
 import * as process from "process";
-import ActiveLink from "@/components/ui/links/active-link";
-import CopyToClipboardText from "@/components/copy_to_clipboard";
 import {RefreshIcon} from "@/components/icons/refresh";
 import {useANS} from "@/lib/hooks/use-ans";
 import {Status} from "@/types";
 import {useClient} from "@/lib/hooks/use-client";
 import ToggleSwitch from "@/components/ui/toggle-switch";
 import {useRecords} from "@/lib/hooks/use-records";
-import {useSWRConfig} from "swr";
+import useSWR, {useSWRConfig} from "swr";
 import {useCredit} from "@/lib/hooks/use-credit";
 import Head from "next/head";
 import ResolverView from "@/components/resolver/view";
@@ -25,17 +23,22 @@ import Layout from "@/layouts/_layout";
 import {Check} from "@/components/icons/check";
 import tlds from "@/config/tlds";
 
+import {usePrivateFee} from "@/lib/hooks/use-private-fee";
+
 
 const NamePage: NextPageWithLayout = () => {
   const NEXT_PUBLIC_FEES_REGISTER = parseInt(process.env.NEXT_PUBLIC_FEES_REGISTER!);
+  const COUPON_CARD_START_HEIGHT = parseInt(process.env.NEXT_PUBLIC_COUPON_CARD_START_HEIGHT!);
+  const MINT_START_HEIGHT = parseInt(process.env.NEXT_PUBLIC_MINT_START_HEIGHT!);
   const router = useRouter();
   const {publicKey} = useWallet();
   const {mutate} = useSWRConfig();
   const {transferCredits} = useCredit();
-  const {register, calcPrice, getFormattedNameInput, getCouponCards} = useANS();
+  const {register, calcPrice, getCouponCards, matchTld} = useANS();
+  const {getLatestHeight} = useClient();
   const {getAddress} = useClient();
   const {getCreditRecords} = useCredit();
-  const {names, publicBalance} = useRecords();
+  const {names} = useRecords();
   const [couponCards, setCouponCards] = useState<CouponCard[]>([]);
   const [selectedCard, setSelectedCard] = useState<CouponCard | null>(null);
   const [available, setAvailable] = useState(false);
@@ -45,21 +48,53 @@ const NamePage: NextPageWithLayout = () => {
   const [owner, setOwner] = useState("");
   const [status, setStatus] = useState("Registering");
   const [triggerRecheck, setTriggerRecheck] = useState(0);
-  const [nameInputs, setNameInputs] = useState("");
-  const [showAleoTools, setShowAleoTools] = useState(false);
   const [name, setName] = useState("");
   const [tld, setTld] = useState<TLD>(tlds[0]);
-  const [price, setPrice] = useState(2);
+  const [price, setPrice] = useState<number>(2);
   const [record, setRecord] = useState("");
   const [feeRecord, setFeeRecord] = useState("");
-  const [isPrivate, setIsPrivate] = useState<boolean>(true);
+  const [resolverRecordCount, setResolverRecordCount] = useState(0);
+  const {privateFee, setPrivateFee} = usePrivateFee();
+  const {data: latestHeight} = useSWR('getLatestHeight', () => getLatestHeight(), {refreshInterval: (l) => {
+    return l > MINT_START_HEIGHT ? 100000000000 : 3000;
+    }});
+
+  const needCreateRecord = useMemo(() => {
+    return record == "" && privateFee && price > 0;
+  }, [record, privateFee, price]);
+
+  const needCreateFeeRecord = useMemo(() => {
+    return (record != "" || price == 0) && feeRecord == "" && privateFee;
+  }, [record, feeRecord, privateFee, price]);
+
+  const canPublicMint = useMemo(() => {
+    return (latestHeight || 0) >= MINT_START_HEIGHT;
+  }, [latestHeight]);
+
+  const canCouponMint = useMemo(() => {
+    return (latestHeight || 0) >= COUPON_CARD_START_HEIGHT;
+  }, [latestHeight]);
+
+  const canRegister = useMemo(() => {
+    if (canPublicMint) {
+      // stop swr getLatestHeight
+      mutate("getLatestHeight");
+    }
+    return canPublicMint || (canCouponMint && selectedCard);
+  }, [selectedCard, canPublicMint, canCouponMint]);
+
+  const ansRecord = useMemo(() => {
+    return {
+      name: `${name}.${tld.name}` as string,
+      private: owner.length > 60
+    } as Record
+  }, [name]);
 
   useEffect(() => {
     if (router.isReady) {
       const {slug} = router.query;
       if (typeof slug === 'string') {
-        const matchedTld = tlds.find(tld => slug.endsWith(`.${tld.name}`));
-
+        const matchedTld = matchTld(slug);
         if (matchedTld) {
           setName(slug.split('.').slice(0, -1).join('.'));
           setTld(matchedTld);
@@ -83,86 +118,83 @@ const NamePage: NextPageWithLayout = () => {
   const checkRecords = () => {
     const ans_price = calcPrice(name, tld, selectedCard);
     setPrice(ans_price / 1000000);
-    getCreditRecords(isPrivate ? [ans_price, NEXT_PUBLIC_FEES_REGISTER] : [ans_price]).then((records) => {
-      if (records) {
-        setRecord(records[0].plaintext);
-        isPrivate && setFeeRecord(records.length > 1 ? records[1].plaintext : "");
-      } else {
-        setRecord("");
-        setFeeRecord("");
-      }
+    getCreditRecords(privateFee ? [ans_price, NEXT_PUBLIC_FEES_REGISTER] : [ans_price], false).then((records) => {
+      setRecord(records[0].plaintext);
+      privateFee && setFeeRecord(records[1].plaintext);
     }).catch((error) => {
       setRecord("");
       setFeeRecord("");
     });
   }
 
-  const toggleAleoTools = () => {
-    setShowAleoTools(!showAleoTools);
-  }
-
   useEffect(() => {
     setOwner("");
     setLoading(true);
-    const is_valid = /^[a-z0-9-_]{1,64}$/.test(name);
-    setIsValid(is_valid);
+    if (name == "") {
+      setIsValid(false);
+      return;
+    }
     if (names?.includes(`${name}.${tld.name}`)) {
       router.push(`/account/${name}.${tld.name}`);
       return;
     }
-    if (is_valid) {
-      const ans_price = calcPrice(name, tld, selectedCard);
-      setPrice(ans_price / 1000000);
-      if (couponCards.length > 0) {
-        couponCards.forEach((card) => {
-          card.enable = card.limit_name_length <= name.length;
-          if (!card.enable && selectedCard && selectedCard.id == card.id) {
-            setSelectedCard(null);
+    const is_valid = /^([a-z0-9-_]{1,64}\.)*[a-z0-9-_]{1,64}$/.test(name);
+    is_valid && getAddress(`${name}.${tld.name}`)
+      .then((address) => {
+        setIsValid(true);
+        setAvailable(false);
+        setOwner(address);
+      }).catch((error) => {
+        const is_valid = /^[a-z0-9-_]{1,64}$/.test(name);
+        setIsValid(is_valid);
+        if (is_valid) {
+          const ans_price = calcPrice(name, tld, selectedCard);
+          setPrice(ans_price / 1000000);
+          if (couponCards.length > 0) {
+            couponCards.forEach((card) => {
+              card.enable = card.limit_name_length <= name.length;
+              if (!card.enable && selectedCard && selectedCard.id == card.id) {
+                setSelectedCard(null);
+              }
+            });
           }
-        });
-      }
-      if (publicKey) {
-        getCouponCards(name, tld).then((cards) => {
-          setCouponCards(cards);
-          cards.forEach((card) => {
-            if (!card.enable && selectedCard && selectedCard.id == card.id) {
-              setSelectedCard(null);
-            }
-          })
-          console.log(cards)
-        });
-      }
-      getAddress(`${name}.${tld.name}`)
-        .then((address) => {
-          setAvailable(false);
-          setOwner(address);
-        }).catch((error) => {
+          if (publicKey) {
+            getCouponCards(name, tld).then((cards) => {
+              setCouponCards(cards);
+              if (cards.length === 0) {
+                setSelectedCard(null);
+              } else if (selectedCard && !cards.some(card => card.enable && card.id === selectedCard.id)) {
+                setSelectedCard(null);
+              }
+              console.log(cards)
+            });
+          }
           // refresh balance
           mutate('getBalance');
           setAvailable(true);
           // @ts-ignore
-          setNameInputs(getFormattedNameInput(name, 4));
           if (publicKey) {
             checkRecords();
           } else {
             setRecord("");
             setFeeRecord("");
           }
-      }).finally(() => {
-        setLoading(false);
-      });
-    }
+        }
+    }).finally(() => {
+      setLoading(false);
+    });
   }, [name, names, publicKey, triggerRecheck, tld]);
 
   useEffect(() => {
     if (publicKey) {
       checkRecords();
     }
-  }, [isPrivate, publicKey, selectedCard]);
+    // setShowAleoTool(!selectedCard);
+  }, [privateFee, publicKey, selectedCard]);
 
   const handleRegister = async (event: any) => {
     event.preventDefault();
-    await register(name, tld, selectedCard, isPrivate, (running: boolean, status: Status) => {
+    await register(name, tld, selectedCard, privateFee, (running: boolean, status: Status) => {
       setRegistering(running);
       setStatus(status.message);
       if (!running) {
@@ -174,7 +206,7 @@ const NamePage: NextPageWithLayout = () => {
   const handleConvert = async (event: any) => {
     event.preventDefault();
     if (publicKey) {
-      await transferCredits("transfer_public_to_private", publicKey, price, (running: boolean, status: Status) => {
+      await transferCredits("", "transfer_public_to_private", publicKey, price, (running: boolean, status: Status) => {
         setRegistering(running);
         setStatus(status.message);
         if (!running && !status.hasError) {
@@ -191,7 +223,7 @@ const NamePage: NextPageWithLayout = () => {
   const handleConvertFee = async (event: any) => {
     event.preventDefault();
     if (publicKey) {
-      await transferCredits("transfer_public_to_private", publicKey, NEXT_PUBLIC_FEES_REGISTER, (running: boolean, status: Status) => {
+      await transferCredits("", "transfer_public_to_private", publicKey, NEXT_PUBLIC_FEES_REGISTER, (running: boolean, status: Status) => {
         setRegistering(running);
         setStatus(status.message);
         if (!running && !status.hasError) {
@@ -234,32 +266,35 @@ const NamePage: NextPageWithLayout = () => {
                       <>
                           <div className="mt-3 text-xl tracking-tighter text-gray-600 dark:text-gray-400 sm:block">
                               <span className="mr-2">Register Price:</span>
-                              {price > 0 && <span className="bg-gray-700 p-1 pl-2 pr-2 rounded-lg text-gray-300 font-bold">
-                                {price} ALEO
+                            {price > 0 &&
+                                <span className="bg-gray-700 p-1 pl-2 pr-2 rounded-lg text-gray-300 font-bold">
+                                {price} {privateFee ? "Private" : "Public"} Credits
                               </span>}
-                              {price == 0 && <span className="bg-gray-700 p-1 pl-2 pr-2 rounded-lg text-gray-300 font-bold">
+                            {price == 0 &&
+                                <span className="bg-gray-700 p-1 pl-2 pr-2 rounded-lg text-gray-300 font-bold">
                                 FREE
                               </span>}
                           </div>
-                          {couponCards.length > 0 &&
-                          <div className="flex justify-left items-center overflow-hidden mt-5">
-                            <div className="flex overflow-x-auto pb-2">
-                                <div className="flex flex-nowrap">
-                                  {couponCards.map((card) => {
-                                    const cardContent = (
-                                      <div
-                                        className={`relative w-32 h-16 max-w-xs overflow-hidden rounded-lg border-2 shadow-md ${
-                                          card.enable ? (card.discount_percent > 0 ? 'bg-red-100' : 'bg-white') : 'bg-gray-400'
-                                        } py-3 px-5 ${card.enable && "cursor-pointer"}
-                                        ${(selectedCard && selectedCard.id == card.id) ? "border-green-500":"border-gray-200"}`}
-                                        onClick={() => selectCard(card)}
-                                      >
-                                        <h5 className={`text-xl font-bold tracking-tight ${
-                                          card.discount_percent > 0 ? 'text-red-700' : 'text-gray-900'
+                        {couponCards.length > 0 &&
+                            <div className="flex justify-left items-center overflow-hidden mt-5">
+                                <div className="flex overflow-x-auto pb-2">
+                                    <div className="flex flex-nowrap">
+                                      {couponCards.map((card) => {
+                                        const cardContent = (
+                                          <div
+                                            className={`relative w-32 h-20 max-w-xs overflow-hidden rounded-lg border-2 shadow-md ${
+                                              card.enable ? (card.discount_percent > 0 ? 'bg-red-100' : 'bg-white') : 'bg-gray-400'
+                                            } py-3 px-5 ${card.enable && "cursor-pointer"}
+                                        ${(selectedCard && selectedCard.id == card.id) ? "border-green-500" : "border-gray-200"}`}
+                                            onClick={() => selectCard(card)}
+                                          >
+                                          <h5 className={`text-xl font-bold tracking-tight ${
+                                              card.discount_percent > 0 ? 'text-red-700' : 'text-gray-900'
                                         }`}>
-                                          {card.discount_percent > 0 ? `${card.discount_percent}% OFF` : 'Free Card'}
+                                          {card.discount_percent > 0 ? `${100 - card.discount_percent}% OFF` : 'Free Card'}
                                         </h5>
-                                        {card.limit_name_length > 1 && <p className="text-3xs-5 text-gray-500">For lengths {card.limit_name_length}+</p>}
+                                            <p className="text-3xs-5 text-gray-500">For lengths <span className="font-bold">{card.limit_name_length}+</span></p>
+                                            <p className="text-3xs-5 text-gray-500">Can use <span className="text-red-400 font-bold">{card.count}</span> times</p>
                                         {selectedCard && selectedCard.id == card.id && (
                                           <div
                                             className="absolute top-0 right-0 w-6 h-6 bg-green-500 flex justify-center items-center"
@@ -281,66 +316,54 @@ const NamePage: NextPageWithLayout = () => {
                           }
                           <div
                               className="mt-5 text-sm tracking-tighter text-gray-600 dark:text-gray-400 sm:block place-content-center">
-                              {publicKey && !registering &&
+                            {publicKey && !registering &&
                                 <div className="flex items-center">
-                                  {(record == "" && publicBalance > price * 1000000) && <>
-                                      <Button className="mr-5" onClick={handleConvert}>Create Record</Button>
-                                      <Button className="bg-gray-700 mr-5" disabled={true}>Register</Button>
+                                  {(needCreateRecord && canRegister) && <>
+                                      <Button className="mr-5" onClick={handleConvert}>Prepare Record</Button>
                                   </>}
-                                  {(record != "" && feeRecord == "" && isPrivate && publicBalance - NEXT_PUBLIC_FEES_REGISTER > price * 1000000) && <>
-                                      <Button className="mr-5" onClick={handleConvertFee}>Create Fee Record</Button>
-                                      <Button className="bg-gray-700 mr-5" disabled={true}>Register</Button>
+                                  {(needCreateFeeRecord && canRegister) && <>
+                                      <Button className="mr-5" onClick={handleConvertFee}>Prepare Fee Record</Button>
                                   </>}
-                                  {((record != "" && (!isPrivate || feeRecord != "")) || publicBalance <= price * 1000000) &&
+                                  {(!needCreateRecord && !needCreateFeeRecord && canRegister) &&
                                       <Button className="mr-5" onClick={handleRegister}>Register</Button>}
-                                    <ToggleSwitch label="Private fee" isToggled={isPrivate}
-                                                  setIsToggled={setIsPrivate}/>
+                                  {(needCreateRecord || needCreateFeeRecord || !canRegister) &&
+                                      <Button className="bg-gray-700 mr-5" disabled={true}>
+                                        { canPublicMint ? 'Register' : (!canCouponMint && selectedCard) ? `Coupon Register in ${COUPON_CARD_START_HEIGHT - (latestHeight || 0)} blocks` : `Public register in ${MINT_START_HEIGHT - (latestHeight || 0)} blocks`}
+                                      </Button>}
+                                    <ToggleSwitch label="Private fee" isToggled={privateFee}
+                                                  setIsToggled={setPrivateFee}/>
                                 </div>
                             }
                             {publicKey && registering &&
                                 <Button color="gray" disabled={true}><RefreshIcon className="inline text-aquamarine motion-safe:animate-spin"/> {status}</Button>
                             }
                             {!publicKey && <WalletMultiButton>Connect Wallet to Register</WalletMultiButton>}
-                              <div className="mt-5">
-                                  <div onClick={toggleAleoTools} className="cursor-pointer block text-xs font-medium uppercase tracking-wider text-gray-900 dark:text-white sm:text-sm">OR REGISTRATION VIA <span className="text-sky-500">aleo.tools</span>{showAleoTools ? " < " : " > "}</div>
-                                  <div className={`overflow-hidden transition-max-height duration-500 ${showAleoTools ? 'max-h-120' : 'max-h-0'}`}>
-                                    <span className="leading-loose">If registration through the Leo Wallet is not possible, <ActiveLink href="https://aleo.tools/develop" target="_blank" className="text-sky-500 underline">aleo.tools</ActiveLink> is another convenient option for registration. Here are the steps to follow. After clicking the 'Register' button above, the transaction records will be displayed in the confirmation pop-up window, you can copy them to use in aleo.tools</span>
-                                    <ol className="list-decimal ml-6 leading-loose">
-                                        <li>Open <ActiveLink href="https://aleo.tools/develop" target="_blank" className="text-sky-500 underline">aleo.tools</ActiveLink> in your web browser.</li>
-                                        <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">Program ID</span> Enter <CopyToClipboardText text={tld.registrar} /> and click the search icon</li>
-                                        <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">Private Key</span> Enter your PRIVATE_KEY</li>
-                                        <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">Execute On-Chain</span> Turn on</li>
-                                        <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">Fee</span> Enter <CopyToClipboardText text="0.37"/></li>
-                                        {isPrivate && publicKey &&
-                                            <>
-                                                <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">Private Fee</span> Turn on</li>
-                                                <li><span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">Fee Record</span> Enter {feeRecord != ""?<CopyToClipboardText text={feeRecord}/> : ("a record containing at least 0.37 credits")}</li>
-                                           </>
-                                        }
-                                        <li>Expand the <span className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300"> {">"} register_fld</span> function and fill in the following fields</li>
-                                        <ol className="list-disc">
-                                            <li><span
-                                                className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">r0</span> Enter <CopyToClipboardText
-                                                text={nameInputs}/></li>
-                                            <li><span
-                                                className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">r1</span> Enter <CopyToClipboardText
-                                                text={tld.hash}/></li>
-                                            <li><span
-                                                className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">r2</span> Enter {publicKey ?
-                                              <CopyToClipboardText
-                                                text={publicKey}/> : "the address which will own the name"}</li>
-                                            <li><span
-                                                className="bg-gray-700 p-0.5 pl-2 pr-2 rounded-lg text-gray-300">r3</span> Enter {record != "" ?
-                                              <CopyToClipboardText
-                                                text={record}/> : ("a record containing at least " + price + " credits")}
-                                            </li>
-                                            <li>Click the <span
-                                                className="bg-green-700 p-1 pl-2 pr-2 rounded-lg text-white">Run</span> button
-                                            </li>
-                                        </ol>
-                                    </ol>
-                                  </div>
-                              </div>
+                            {publicKey && needCreateRecord && canRegister && <div className="mt-5">
+                                You need <span className="underline">{price} Private Credits</span> to pay for the domain register fee, but currently,
+                                you do not have enough Private Credits. <br/>
+                                Please click on <span className="rounded-full bg-teal text-black p-1">Prepare Record</span> to convert your Public Credits into Private Credits.<br/>
+                                Alternatively, you can manually perform this conversion within your wallet.<br/>
+                                After the operation, you will need to wait a few minutes for the wallet to synchronize.<br/>
+                                Once you refresh this page and see that the <span className="rounded-full bg-teal text-black p-1">Register</span> button has become clickable,
+                                you can proceed with the registration.
+                            </div>}
+                            {publicKey && needCreateFeeRecord && canRegister && <div className="mt-5">
+                                You need <span className="underline">0.11 Private Credits</span> for the gas fee,
+                                but you currently lack sufficient Private Credits.<br/>
+                                Please select <span className="rounded-full bg-teal text-black p-1">Prepare Fee Record</span> to convert Public
+                                Credits into Private Credits, or manually make this conversion in your wallet. <br/>
+                                After this, please wait a few minutes for wallet synchronization. <br/>
+                                Refresh this page, and if the <span className="rounded-full bg-teal text-black p-1">Register</span> button is clickable,
+                                you're ready to register.<br/>
+                                Alternatively, you may opt to disable the <span className="rounded-full bg-teal text-black p-1">Private Fee</span> option for a simpler process.
+                            </div>}
+                            {publicKey && !privateFee && <div className="mt-5">
+                                Please be aware that by disabling the "Private Fee" option,
+                                  your Aleo address will be exposed in the transaction records.
+                            </div>}
+                            {publicKey && !canPublicMint && canCouponMint && <div className="mt-5 text-red-400">
+                                Note: Only open for registration with a coupon card.
+                            </div>}
                           </div>
                       </>
                   }
@@ -366,8 +389,8 @@ const NamePage: NextPageWithLayout = () => {
             </div>
           </div>
         </div>
-        {owner.length > 60 && <div className="rounded-lg bg-white p-5 shadow-card z-50 mx-auto w-full max-w-full xs:w-[480px] sm:w-[600px] lg:w-[900px] [background:linear-gradient(180deg,_#2e2e2e,_rgba(46,_46,_46,_0))]">
-            <ResolverView record={{ name: `${name}.${tld.name}` } as Record} onlyView={true}/>
+        {isValid && !available && <div className={`${resolverRecordCount < 1 && 'hidden'} rounded-lg bg-white p-5 shadow-card z-50 mx-auto w-full max-w-full xs:w-[480px] sm:w-[600px] lg:w-[900px] [background:linear-gradient(180deg,_#2e2e2e,_rgba(46,_46,_46,_0))]`}>
+            <ResolverView record={ansRecord} onlyView={true} setResolverRecordCount={setResolverRecordCount}/>
         </div>}
       </div>
     </>

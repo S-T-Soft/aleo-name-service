@@ -128,7 +128,7 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
             }
             return text.plaintexts![0];
           } catch (error: any) {
-            throw new WalletDecryptionError(error?.message, error);
+            throw new WalletDecryptionError(error?.message || "Permission Not Granted", error);
           }
         }
         default:
@@ -148,7 +148,8 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
       try {
         const filter = {
           programIds: [program],
-          type: "unspent"
+          status: "Unspent",
+          names: ["NFT"]
         } as RecordsFilter;
         const result = await getRecords({address: this.publicKey, filter});
         if (result.error) {
@@ -159,11 +160,12 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
             ...record,
             owner: this.publicKey,
             program_id: program,
+            recordName: record.name,
             spent: false
           };
         });
       } catch (error: any) {
-        throw new WalletRecordsError(error?.message, error);
+        throw new WalletRecordsError(error?.message || "Permission Not Granted", error);
       }
     } catch (error: any) {
       this.emit('error', error);
@@ -189,7 +191,7 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
         }
         return result.eventId ? result.eventId : "";
       } catch (error: any) {
-        throw new WalletTransactionError(error?.message, error);
+        throw new WalletTransactionError(error?.message || "Permission Not Granted", error);
       }
     } catch (error: any) {
       this.emit('error', error);
@@ -220,7 +222,18 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
     return this.requestRecords(program);
   }
 
-  async connect(decryptPermission: DecryptPermission, network: WalletAdapterNetwork): Promise<void> {
+  getChainId(network: WalletAdapterNetwork) {
+    switch (network) {
+      case WalletAdapterNetwork.MainnetBeta:
+        return 'aleo:0';
+      case WalletAdapterNetwork.TestnetBeta:
+        return 'aleo:1';
+      default:
+        return 'aleo:1';
+    }
+  }
+
+  async connect(decryptPermission: DecryptPermission, network: WalletAdapterNetwork, programs?: string[]): Promise<void> {
     try {
       if (this.connected || this.connecting) return;
       if (this._readyState !== WalletReadyState.Installed && this._readyState !== WalletReadyState.Loadable)
@@ -230,7 +243,7 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
 
       try {
         this._wallet = await connect();
-        const account = await getAccount();
+        const account = await getAccount(this.getChainId(network));
         if (account.error) {
           throw new Error(account.error);
         }
@@ -285,7 +298,7 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
         // convert signature to Uint8Array
         return new TextEncoder().encode(signature.signature!);
       } catch (error: any) {
-        throw new WalletSignTransactionError(error?.message, error);
+        throw new WalletSignTransactionError(error?.message || "Permission Not Granted", error);
       }
     } catch (error: any) {
       this.emit('error', error);

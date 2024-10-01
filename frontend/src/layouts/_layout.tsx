@@ -42,7 +42,7 @@ function HeaderRightArea() {
       {isMounted && ['xs', 'sm', 'md'].indexOf(breakpoint) == -1 && (
           <MenuItems />
         )}
-      <WalletMultiButton>Connect Wallet</WalletMultiButton>
+      <WalletMultiButton/>
 
       <div className="lg:hidden">
         <Hamburger
@@ -63,9 +63,9 @@ export function Header() {
 
   return (
     <nav
-      className={`fixed top-0 z-30 flex w-full items-center justify-between px-4 transition-all duration-300 ltr:right-0 rtl:left-0 sm:px-6 lg:px-8 xl:px-10 3xl:px-12 ${
+      className={`top-0 z-30 flex w-full items-center justify-between px-4 transition-all duration-300 ltr:right-0 rtl:left-0 sm:px-6 lg:px-8 xl:px-10 3xl:px-12 ${
         isMounted && windowScroll.y > 10
-          ? 'h-20 from-white to-white/80 shadow-card backdrop-blur dark:from-dark dark:to-dark/80'
+          ? 'fixed h-20 from-white to-white/80 shadow-card backdrop-blur dark:from-dark dark:to-dark/80'
           : 'h-24'
       }`}
     >
@@ -83,10 +83,13 @@ interface LayoutProps {}
 export default function Layout({
   children,
 }: React.PropsWithChildren<LayoutProps>) {
+  const isMounted = useIsMounted();
+  let windowScroll = useWindowScroll();
+
   return (
     <div className="[background:linear-gradient(180deg,_#1d1a18,_#100e0d_7%,_#100e0d_20.5%,_#080707_50%,_#201b18_79.15%)] flex min-h-screen flex-col">
       <Header />
-      <main className="mt-6 mb-12 flex flex-grow flex-col pt-16 w-[1000px] max-w-full mx-auto px-8">
+      <main className={`mt-6 mb-12 flex flex-grow flex-col w-[1000px] max-w-full mx-auto px-8 ${isMounted && windowScroll.y > 10 ? 'pt-16' : ''}`}>
         {children}
       </main>
     </div>

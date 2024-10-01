@@ -12,12 +12,21 @@ export interface Attachment {
   thumbnail: string;
 }
 
+export interface NameHashBalance {
+  name: string;
+  nameHash: string;
+  nameField: string;
+  balance: number;
+}
+
 export interface Record {
   name: string;
   private: boolean;
   isPrimaryName: boolean;
   record?: any;
   nameHash?: string;
+  nameField?: string;
+  balance: number;
 }
 
 export interface Resolver {
@@ -36,7 +45,9 @@ export interface Statistic {
   totalNames24h: number,
   totalNames: number,
   totalPriNames: number,
-  totalNFTOwners: number
+  totalNFTOwners: number,
+  blockHeight: number,
+  healthy: boolean
 }
 
 export interface CouponCard {
@@ -45,7 +56,8 @@ export interface CouponCard {
   tld: string,
   enable: boolean,
   id: string
-  record: any
+  record: any,
+  count: number
 }
 
 interface Prices {
@@ -57,6 +69,14 @@ export interface TLD {
   hash: string,
   registrar: string,
   prices: Prices
+}
+
+export interface ARC21Token {
+  id: string;
+  name: string;
+  symbol: string;
+  decimals: number;
+  full_name: string;
 }
 
 export interface StatusChangeCallback {

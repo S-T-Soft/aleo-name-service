@@ -17,7 +17,7 @@ import { ToastContainer } from 'react-toastify';
 import {DecryptPermission, WalletAdapterNetwork} from '@demox-labs/aleo-wallet-adapter-base';
 import { WalletProvider } from '@demox-labs/aleo-wallet-adapter-react';
 import { WalletModalProvider } from '@demox-labs/aleo-wallet-adapter-reactui';
-import {RecordProvider} from "@/components/record-provider";
+import {RecordProvider} from "@/context/record-context";
 import { AxiomWebVitals } from 'next-axiom';
 import {
   FoxWalletAdapter,
@@ -27,6 +27,8 @@ import {
   AvailWalletAdapter,
   configureConnectionForPuzzle
 } from '@/lib/wallet-adapters';
+import {PrivateFeeProvider} from "@/context/private-fee-context";
+import {BlockNumber} from "@/components/BlockNumber";
 
 
 type AppPropsWithLayout = AppProps & {
@@ -57,6 +59,11 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
   );
   const [queryClient] = useState(() => new QueryClient());
   const getLayout = Component.getLayout ?? ((page) => page);
+  const [isTestnet, setIsTestnet] = useState(false);
+
+  useEffect(() => {
+    setIsTestnet(process.env.NEXT_PUBLIC_NETWORK === 'testnetbeta');
+  }, []);
 
   useEffect(() => {
     configureConnectionForPuzzle({
@@ -77,34 +84,44 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
           content="width=device-width, initial-scale=1 maximum-scale=1"
         />
       </Head>
+      {isTestnet && (
+        <div style={{
+          backgroundColor: 'rgb(255, 245, 204)',
+          color: 'rgb(38, 38, 38)',
+          textAlign: 'center',
+          padding: '5px',
+          fontWeight: 'bold'
+        }}>
+          You are viewing the ANS app on testnet.
+        </div>
+      )}
       <QueryClientProvider client={queryClient}>
         <Hydrate state={pageProps.dehydratedState}>
           <WalletProvider
             wallets={wallets}
             decryptPermission={DecryptPermission.OnChainHistory}
-            network={WalletAdapterNetwork.Testnet}
+            network={process.env.NEXT_PUBLIC_NETWORK as WalletAdapterNetwork}
             programs={["credits.aleo",
-              "ans_coupon_card_v1.aleo",
-              "ans_coupon_card_v2.aleo",
-              "ans_coupon_card_v3.aleo",
-              "aleo_name_service_registry_v4.aleo",
-              "aleo_name_service_registry_v5.aleo",
-              "aleo_name_service_registry_v6.aleo",
+              "token_registry.aleo",
+              process.env.NEXT_PUBLIC_COUPON_CARD_PROGRAM!,
               process.env.NEXT_PUBLIC_PROGRAM!]}
             autoConnect
           >
             <WalletModalProvider>
-              <RecordProvider>
-                <ThemeProvider
-                  attribute="class"
-                  enableSystem={false}
-                  defaultTheme="dark"
-                >
-                  {getLayout(<Component {...pageProps} />)}
-                  <ModalsContainer />
-                  <DrawersContainer />
-                </ThemeProvider>
-              </RecordProvider>
+              <PrivateFeeProvider>
+                <RecordProvider>
+                  <ThemeProvider
+                    attribute="class"
+                    enableSystem={false}
+                    defaultTheme="dark"
+                  >
+                    {getLayout(<Component {...pageProps} />)}
+                    <BlockNumber />
+                    <ModalsContainer />
+                    <DrawersContainer />
+                  </ThemeProvider>
+                </RecordProvider>
+              </PrivateFeeProvider>
             </WalletModalProvider>
           </WalletProvider>
         </Hydrate>

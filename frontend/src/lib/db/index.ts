@@ -1,87 +1,37 @@
 import Dexie from 'dexie';
 
-var db = new Dexie('AleoParameters');
-var PARAMETERS_TABLE = 'parameters';
+const db = new Dexie('ANSDB');
+const tableName = "names_v2"
+
 db.version(1).stores({
-  [PARAMETERS_TABLE]: 'name',
+  [tableName]: '++id, name, hash, field'
 });
 
-const FILES = [
-  {
-    name: 'TransferProver',
-    url: 'https://aleo-public.s3.us-west-2.amazonaws.com/testnet3/transfer.prover.837ad21',
-  },
-  {
-    name: 'TransferVerifier',
-    url: 'https://aleo-public.s3.us-west-2.amazonaws.com/testnet3/transfer.verifier.db46e4c',
-  },
-];
-
-export async function getAllSavedFiles() {
-  return await db.table(PARAMETERS_TABLE).toArray();
+export async function queryName(query: string) {
+  try {
+    const itemByName = await db.table(tableName).where('name').equals(query).first();
+    const itemByHash = await db.table(tableName).where('hash').equals(query).first();
+    return itemByName || itemByHash || null;
+  } catch (error) {
+    return null;
+  }
 }
 
-export async function getSavedFile(name: string) {
-  let files = await db
-    .table(PARAMETERS_TABLE)
-    .filter((file: any) => file.name == name)
-    .toArray();
-  if (files.length == 0) {
-    throw new Error(`${name} file not found in IndexedDB`);
-  }
-  return files[0];
+export async function queryByField(field: string) {
+  return db.table(tableName).where('field').equals(field).first();
 }
 
-async function downloadFile(url: string) {
-  let response = await fetch(url);
-  const reader = response!.body!.getReader();
-  const contentLength = +response!.headers!.get('Content-Length')!;
+export async function saveName(name: string, hash: string, field?: string) {
+  const existingByName = await db.table(tableName).where('name').equals(name).first();
+  const existingByHash = await db.table(tableName).where('hash').equals(hash).first();
+  const item = existingByHash || existingByName;
 
-  let receivedLength = 0; // received that many bytes at the moment
-  let chunks = []; // array of received binary chunks (comprises the body)
-  while (true) {
-    const { done, value } = await reader.read();
-
-    if (done) {
-      break;
+  if (item) {
+    if (field && item.field !== field) {
+      await db.table(tableName).update(item.id, {field});
     }
-
-    chunks.push(value);
-    receivedLength += value.length;
-
-    if (chunks.length % 50 == 0) {
-      console.log(`Received ${receivedLength} of ${contentLength}`);
-    }
+    return;
   }
 
-  // Step 4: concatenate chunks into single Uint8Array
-  let chunksAll = new Uint8Array(receivedLength); // (4.1)
-  let position = 0;
-  for (let chunk of chunks) {
-    chunksAll.set(chunk, position);
-    position += chunk.length;
-  }
-  return chunksAll;
-}
-
-export async function downloadAndStoreFiles() {
-  const existingFiles = await getAllSavedFiles();
-  const fileNames = existingFiles.map((file: any) => file.name);
-  const existingFileNames = new Set(fileNames);
-
-  for (let i = 0; i < FILES.length; i++) {
-    const { name, url } = FILES[i];
-    console.log(`Fetching ${name} parameter file`);
-
-    if (existingFileNames.has(name)) {
-      console.log(`${name} already saved...`);
-      continue;
-    }
-
-    const bytes = await downloadFile(url);
-    await db.parameters.put({
-      name: name,
-      bytes: bytes,
-    });
-  }
+  await db.table(tableName).add({name, hash});
 }
