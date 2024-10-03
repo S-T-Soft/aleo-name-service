@@ -78,7 +78,7 @@ export function useANS() {
           if (tld == '0field') {
             tld = "";
           } else {
-            tld = (await getName(tld)).name;
+            tld = tlds.find(t => t.hash == tld)?.name || "N/A";
           }
           return {
             id: rec.ciphertext,
