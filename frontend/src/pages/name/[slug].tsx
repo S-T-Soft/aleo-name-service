@@ -166,7 +166,6 @@ const NamePage: NextPageWithLayout = () => {
               } else if (selectedCard && !cards.some(card => card.enable && card.id === selectedCard.id)) {
                 setSelectedCard(null);
               }
-              console.log(cards)
             });
           }
           // refresh balance

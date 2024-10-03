@@ -75,7 +75,6 @@ export function useCredit() {
             return;
           }
         }
-        console.log(matchedRecords);
 
         // sort matched records in original order
         matchedRecords = sortedAmounts.map(sa => matchedRecords[sa.index]);
@@ -95,7 +94,6 @@ export function useCredit() {
       }
       requestRecordPlaintexts!(MTSP_PROGRAM)
       .then((originalRecords) => {
-        console.log(originalRecords);
         originalRecords = originalRecords.filter((rec) => !rec.spent && rec.data.amount !== "0u128.private" && rec.data.token_id === token.id);
         let sortedAmounts = amounts
           .map((value, index) => ({ value, index }))
@@ -125,7 +123,6 @@ export function useCredit() {
             return;
           }
         }
-        console.log(matchedRecords);
 
         // sort matched records in original order
         matchedRecords = sortedAmounts.map(sa => matchedRecords[sa.index]);
