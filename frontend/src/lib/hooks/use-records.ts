@@ -92,7 +92,6 @@ export function createRecordContext() {
   const loadPrivateRecords = async () => {
     return new Promise<Record[]>((resolve, reject) => {
       requestRecords!(NEXT_PUBLIC_PROGRAM!).then((privateRecords) => {
-        console.log(privateRecords);
         return Promise.all(privateRecords.filter((rec) => !rec.spent && rec.recordName != 'NFTView' && !rec.data.is_view).map(async (rec) => {
           const nameField = rec.data.data.metadata[0].replace(".private", "");
           try {

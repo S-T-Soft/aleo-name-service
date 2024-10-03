@@ -81,7 +81,7 @@ export function useANS() {
             tld = tlds.find(t => t.hash == tld)?.name || "N/A";
           }
           return {
-            id: rec.ciphertext,
+            id: rec.id || rec.ciphertext,
             discount_percent: parseInt(rec.data.discount_percent.replace("u8.private", "")),
             limit_name_length,
             tld: tld,
