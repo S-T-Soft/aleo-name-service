@@ -51,9 +51,6 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
       new SoterWalletAdapter({
         appName: 'Aleo Name Service',
       }),
-      new AvailWalletAdapter({
-        appName: 'Aleo Name Service',
-      }),
     ],
     []
   );
