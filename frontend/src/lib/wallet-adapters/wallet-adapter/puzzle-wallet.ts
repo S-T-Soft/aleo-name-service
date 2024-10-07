@@ -148,8 +148,7 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
       try {
         const filter = {
           programIds: [program],
-          status: "Unspent",
-          names: ["NFT"]
+          status: "Unspent"
         } as RecordsFilter;
         const result = await getRecords({address: this.publicKey, filter});
         if (result.error) {
