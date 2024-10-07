@@ -118,9 +118,25 @@ const NamePage: NextPageWithLayout = () => {
   const checkRecords = () => {
     const ans_price = calcPrice(name, tld, selectedCard);
     setPrice(ans_price / 1000000);
-    getCreditRecords(privateFee ? [ans_price, NEXT_PUBLIC_FEES_REGISTER] : [ans_price], false).then((records) => {
-      setRecord(records[0].plaintext);
-      privateFee && setFeeRecord(records[1].plaintext);
+    let amount = [];
+    if (ans_price > 0) {
+      amount.push(ans_price)
+    }
+    if (privateFee) {
+      amount.push(NEXT_PUBLIC_FEES_REGISTER)
+    }
+    if (amount.length == 0) {
+      setRecord("");
+      setFeeRecord("");
+      return;
+    }
+    getCreditRecords(amount, false).then((records) => {
+      if (ans_price > 0) {
+        setRecord(records[0].plaintext);
+        privateFee && setFeeRecord(records[1].plaintext);
+      } else {
+        setFeeRecord(records[0].plaintext);
+      }
     }).catch((error) => {
       setRecord("");
       setFeeRecord("");
