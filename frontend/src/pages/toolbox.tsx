@@ -233,7 +233,7 @@ const ToolBoxPage: NextPageWithLayout = () => {
               id="amount"
               required={true}
               value={amount}
-              placeholder={"amount in credit"}
+              placeholder={"amount in ALEO"}
               onChange={handleAmount}
               autoComplete="off"
             />
