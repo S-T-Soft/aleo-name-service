@@ -238,7 +238,8 @@ const NamePage: NextPageWithLayout = () => {
   const handleConvertFee = async (event: any) => {
     event.preventDefault();
     if (publicKey) {
-      await transferCredits("", "transfer_public_to_private", publicKey, NEXT_PUBLIC_FEES_REGISTER, (running: boolean, status: Status) => {
+      const fee = NEXT_PUBLIC_FEES_REGISTER /  1000000;
+      await transferCredits("", "transfer_public_to_private", publicKey, fee, (running: boolean, status: Status) => {
         setRegistering(running);
         setStatus(status.message);
         if (!running && !status.hasError) {
