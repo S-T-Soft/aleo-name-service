@@ -283,7 +283,7 @@ const NamePage: NextPageWithLayout = () => {
                               <span className="mr-2">Register Price:</span>
                             {price > 0 &&
                                 <span className="bg-gray-700 p-1 pl-2 pr-2 rounded-lg text-gray-300 font-bold">
-                                {price} {privateFee ? "Private" : "Public"} Credits
+                                {price} {privateFee ? "Private" : "Public"} ALEO
                               </span>}
                             {price == 0 &&
                                 <span className="bg-gray-700 p-1 pl-2 pr-2 rounded-lg text-gray-300 font-bold">
@@ -354,19 +354,19 @@ const NamePage: NextPageWithLayout = () => {
                             }
                             {!publicKey && <WalletMultiButton>Connect Wallet to Register</WalletMultiButton>}
                             {publicKey && needCreateRecord && canRegister && <div className="mt-5">
-                                You need <span className="underline">{price} Private Credits</span> to pay for the domain register fee, but currently,
-                                you do not have enough Private Credits. <br/>
-                                Please click on <span className="rounded-full bg-teal text-black p-1">Prepare Record</span> to convert your Public Credits into Private Credits.<br/>
+                                You need <span className="underline">{price} Private ALEO</span> to pay for the domain register fee, but currently,
+                                you do not have enough Private ALEO. <br/>
+                                Please click on <span className="rounded-full bg-teal text-black p-1">Prepare Record</span> to convert your Public ALEO into Private ALEO.<br/>
                                 Alternatively, you can manually perform this conversion within your wallet.<br/>
                                 After the operation, you will need to wait a few minutes for the wallet to synchronize.<br/>
                                 Once you refresh this page and see that the <span className="rounded-full bg-teal text-black p-1">Register</span> button has become clickable,
                                 you can proceed with the registration.
                             </div>}
                             {publicKey && needCreateFeeRecord && canRegister && <div className="mt-5">
-                                You need <span className="underline">0.11 Private Credits</span> for the gas fee,
-                                but you currently lack sufficient Private Credits.<br/>
+                                You need <span className="underline">0.11 Private ALEO</span> for the gas fee,
+                                but you currently lack sufficient Private ALEO.<br/>
                                 Please select <span className="rounded-full bg-teal text-black p-1">Prepare Fee Record</span> to convert Public
-                                Credits into Private Credits, or manually make this conversion in your wallet. <br/>
+                                ALEO into Private ALEO, or manually make this conversion in your wallet. <br/>
                                 After this, please wait a few minutes for wallet synchronization. <br/>
                                 Refresh this page, and if the <span className="rounded-full bg-teal text-black p-1">Register</span> button is clickable,
                                 you're ready to register.<br/>
