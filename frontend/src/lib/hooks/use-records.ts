@@ -25,7 +25,7 @@ export function createRecordContext() {
   const [loading, setLoading] = useState(false);
   const primaryNameMemo = useMemo(() => primaryName, [primaryName]);
   const {data: publicBalance} = useSWR('getBalance', () => getBalance(), {refreshInterval: 1000 * 60});
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const [isMobile, setIsMobile] = useState(false);
   useSWR('refreshRecords', () => refreshRecords("auto"), {refreshInterval: 1000 * 10});
 
   useEffect(() => {
@@ -45,6 +45,12 @@ export function createRecordContext() {
       }
     }
   }, [records]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
+    }
+  }, []);
 
   const getBalance = async () => {
     if (publicKey) {
