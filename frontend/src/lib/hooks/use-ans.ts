@@ -91,6 +91,7 @@ export function useANS() {
           } as CouponCard;
         }));
       }).then((records) => {
+        console.log("coupon card: ", records);
         resolve(records.filter(rec => rec.tld == "" || rec.tld == tld.name)
           .sort((a, b) => {
             if (a.enable === b.enable) {

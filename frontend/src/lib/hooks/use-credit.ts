@@ -10,6 +10,7 @@ import * as process from "process";
 import {getFormattedNameInput} from "@/lib/util";
 import {usePrivateFee} from "@/lib/hooks/use-private-fee";
 import tokens from "@/config/tokens";
+import {useRecords} from "@/lib/hooks/use-records";
 
 export function useCredit() {
   const CREDIT_PROGRAM = "credits.aleo";
@@ -28,6 +29,7 @@ export function useCredit() {
   const NETWORK = process.env.NEXT_PUBLIC_NETWORK as WalletAdapterNetwork;
 
   const {addTransaction} = useTransaction();
+  const {publicBalance} = useRecords();
   const {getAddress, getNameHash} = useClient();
   const TRANSFER_PROGRAM = process.env.NEXT_PUBLIC_TRANSFER_PROGRAM!;
   const {privateFee} = usePrivateFee();
@@ -72,7 +74,6 @@ export function useCredit() {
             } else {
               matchedRecords.push({plaintext: ""});
             }
-            return;
           }
         }
 
@@ -194,10 +195,21 @@ export function useCredit() {
       switch (method) {
         case "transfer_private":
         case "transfer_private_to_public":
-          const getRecords = program === MTSP_PROGRAM ? getMTSPRecords(token, privateFee ? [amount, fee!] : [amount])
-            : getCreditRecords(privateFee ? [amount, fee!] : [amount]);
+          const getRecords =
+            program === MTSP_PROGRAM
+              ? getMTSPRecords(token, privateFee ? [amount, fee!] : [amount])
+              : getCreditRecords(privateFee ? [amount, fee!] : [amount]);
+
           return getRecords.then((records) => {
-            let inputs = program === MTSP_PROGRAM ? [recipient, amount + "u128", records[0]] : [records[0], recipient, amount + "u64"];
+            if (!records || records.length === 0) {
+              throw new Error("No records found");
+            }
+
+            let inputs =
+              program === MTSP_PROGRAM
+                ? [recipient, amount + "u128", records[0]]
+                : [records[0], recipient, amount + "u64"];
+
             const aleoTransaction = Transaction.createTransaction(
               publicKey,
               NETWORK,
@@ -207,14 +219,27 @@ export function useCredit() {
               fee!,
               privateFee
             );
-            if (requestTransaction)
+
+            if (requestTransaction) {
               return requestTransaction(aleoTransaction);
-            else
+            } else {
               throw new Error("requestTransaction is not defined");
+            }
           });
+
         case "transfer_public":
         case "transfer_public_to_private":
-          let inputs = program === MTSP_PROGRAM ? [tokenId, recipient, amount + "u128"] : [recipient, amount + "u64"];
+          // check public balance
+          if (tokenId === "" && publicBalance < amount + fee) {
+            const message = `You don't have enough public credits, need at least ${((amount + fee)/1000000).toFixed(2)} ALEO`;
+            return Promise.reject(new Error(message)); // 使用 Promise.reject
+          }
+
+          let inputs =
+            program === MTSP_PROGRAM
+              ? [tokenId, recipient, amount + "u128"]
+              : [recipient, amount + "u64"];
+
           return Promise.resolve().then(() => {
             const aleoTransaction = Transaction.createTransaction(
               publicKey,
@@ -225,23 +250,29 @@ export function useCredit() {
               fee!,
               false
             );
-            if (requestTransaction)
+
+            if (requestTransaction) {
               return requestTransaction(aleoTransaction);
-            else
+            } else {
               throw new Error("requestTransaction is not defined");
+            }
           });
+
         default:
-          throw new Error("Invalid method");
+          return Promise.reject(new Error("Invalid method")); // 使用 Promise.reject
       }
     })();
 
-    createTransactionPromise.then((txId) => {
-      addTransaction("transferCredits", txId, [], onStatusChange);
-    })
-    .catch((error) => {
-      notify("error", error.message);
-      onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
-    });
+    createTransactionPromise
+      .then((txId) => {
+        addTransaction("transferCredits", txId, [], onStatusChange);
+      })
+      .catch((error) => {
+        notify("error", error.message);
+        if (onStatusChange) {
+          onStatusChange(false, { hasError: true, message: error.message });
+        }
+      });
   }
 
   const transferCreditsToANS = async (tokenId: string, recipient: string, amount: number, password: string, onStatusChange?: StatusChangeCallback) => {
