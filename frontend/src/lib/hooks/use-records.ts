@@ -25,6 +25,7 @@ export function createRecordContext() {
   const [loading, setLoading] = useState(false);
   const primaryNameMemo = useMemo(() => primaryName, [primaryName]);
   const {data: publicBalance} = useSWR('getBalance', () => getBalance(), {refreshInterval: 1000 * 60});
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   useSWR('refreshRecords', () => refreshRecords("auto"), {refreshInterval: 1000 * 10});
 
   useEffect(() => {
@@ -92,6 +93,7 @@ export function createRecordContext() {
   const loadPrivateRecords = async () => {
     return new Promise<Record[]>((resolve, reject) => {
       requestRecords!(NEXT_PUBLIC_PROGRAM!).then((privateRecords) => {
+        isMobile && console.log("All private records", privateRecords);
         return Promise.all(privateRecords.filter((rec) => !rec.spent && rec.recordName != 'NFTView' && !rec.data.is_view).map(async (rec) => {
           const nameField = rec.data.data.metadata[0].replace(".private", "");
           try {
@@ -159,6 +161,7 @@ export function createRecordContext() {
       }
       Promise.all([loadPrivateRecords(), getPublicDomain(publicKey)])
         .then(([privateRecords, publicRecords]) => {
+          isMobile && console.log("Valid private records", privateRecords);
           setStoredAddress(publicKey);
           setLastUpdateTime(Date.now());
           const newRecords = sortRecords([...privateRecords, ...publicRecords]);

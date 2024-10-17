@@ -130,6 +130,7 @@ const NamePage: NextPageWithLayout = () => {
       setFeeRecord("");
       return;
     }
+    console.log("Check records", amount);
     getCreditRecords(amount, false).then((records) => {
       if (ans_price > 0) {
         setRecord(records[0].plaintext);
