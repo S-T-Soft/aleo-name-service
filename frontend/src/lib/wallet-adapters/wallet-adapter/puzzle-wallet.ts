@@ -157,10 +157,14 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
       let page = 0;
 
       while (true) {
-        console.log(`Requesting records for ${filter}`);
+        console.log(`Requesting records for:`);
+        console.log(filter)
         const result = await getRecords({ address: this.publicKey, filter, page });
 
         if (result.error) {
+          if (allRecords.length > 0) {
+            break;
+          }
           throw new Error(result.error);
         }
 
