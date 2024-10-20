@@ -178,7 +178,7 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
         })));
 
         // If the number of records is less than 20, it means that there are no more records
-        if (records.length < 20) {
+        if (true) {
           break;
         }
 
