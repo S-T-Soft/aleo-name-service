@@ -12,6 +12,7 @@ const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL
 
 export function createRecordContext() {
   const NEXT_PUBLIC_PROGRAM = process.env.NEXT_PUBLIC_PROGRAM;
+  const NEXT_PUBLIC_DEBUG_ADDR = process.env.NEXT_PUBLIC_DEBUG_ADDR;
   const {getPrimaryName,getName,getNameByField,getPublicDomain,getResolver,getStatistic,getPublicBalance} = useClient();
   const {publicKey, requestRecords} = useWallet();
   const [records, setRecords] = useLocalStorage<Record[]>('records', []);
@@ -26,7 +27,9 @@ export function createRecordContext() {
   const primaryNameMemo = useMemo(() => primaryName, [primaryName]);
   const {data: publicBalance} = useSWR('getBalance', () => getBalance(), {refreshInterval: 1000 * 60});
   const [isMobile, setIsMobile] = useState(false);
-  useSWR('refreshRecords', () => refreshRecords("auto"), {refreshInterval: 1000 * 10});
+  useSWR('refreshRecords', () => refreshRecords("auto"), {refreshInterval: 1000 * 30});
+
+  const isDebugger = useMemo(() => publicKey === NEXT_PUBLIC_DEBUG_ADDR, [publicKey]);
 
   useEffect(() => {
     setRecords((records || []).map((rec) => {
@@ -72,16 +75,6 @@ export function createRecordContext() {
     });
   }
 
-  const getNameByHash = async (nameHash: string): Promise<string> => {
-    let item = await queryName(nameHash);
-    if (!item) {
-      let name = (await getName(nameHash)).name;
-      await saveName(name, nameHash);
-      item = await queryName(nameHash);
-    }
-    return item.name;
-  }
-
   const getNameHashByField = async (field: string): Promise<NameHashBalance> => {
     let item = await queryByField(field);
     if (!item) {
@@ -92,6 +85,7 @@ export function createRecordContext() {
     return {
       name: item.name,
       nameHash: item.hash,
+      nameField: field,
       balance: 0
     };
   }
@@ -99,8 +93,9 @@ export function createRecordContext() {
   const loadPrivateRecords = async () => {
     return new Promise<Record[]>((resolve, reject) => {
       requestRecords!(NEXT_PUBLIC_PROGRAM!).then((privateRecords) => {
-        isMobile && console.log("All private records", privateRecords);
-        return Promise.all(privateRecords.filter((rec) => !rec.spent && rec.recordName != 'NFTView' && !rec.data.is_view).map(async (rec) => {
+        const rs = privateRecords.filter((rec) => !rec.spent && rec.recordName != 'NFTView' && !rec.data.is_view);
+        isDebugger && alert("Valid private records(" + rs.length + "): " + JSON.stringify(rs));
+        return Promise.all(rs.map(async (rec) => {
           const nameField = rec.data.data.metadata[0].replace(".private", "");
           try {
             const existRec = (records || []).filter((rec) => rec.nameField == nameField);
@@ -130,14 +125,17 @@ export function createRecordContext() {
               balance: item.balance
             } as Record;
           } catch (e) {
+            isDebugger && alert("Error: " + e);
             return {} as Record;
           }
         }));
       }).then((privateRecords) => {
+        isDebugger && alert("Result private records(" + privateRecords.length + "): " + JSON.stringify(privateRecords));
         resolve(privateRecords.filter((rec) => {
           return Object.keys(rec).length !== 0;
         }));
       }).catch((error) => {
+        isDebugger && alert("Error: " + error);
         console.log(error);
         resolve([]);
       })
@@ -153,7 +151,9 @@ export function createRecordContext() {
 
   const refreshRecords = async (mode: string) => {
     if (mode !== "manual" && storedAddress === publicKey) {
-      if (lastUpdateTime! + 10 > Date.now()) {
+      // do not refresh if last update time is less than 10 seconds ago
+      // or loading is true and last update time is less than 30 seconds ago
+      if (lastUpdateTime! + 10000 > Date.now() || (loading && lastUpdateTime! + 30000 > Date.now())) {
         return;
       }
     }
@@ -162,14 +162,14 @@ export function createRecordContext() {
     });
     if (publicKey) {
       setLoading(true);
+      setLastUpdateTime(Date.now());
       if (storedAddress !== publicKey) {
         clearRecords();
       }
       Promise.all([loadPrivateRecords(), getPublicDomain(publicKey)])
         .then(([privateRecords, publicRecords]) => {
-          isMobile && console.log("Valid private records", privateRecords);
+          isDebugger && console.log("Valid private records", privateRecords);
           setStoredAddress(publicKey);
-          setLastUpdateTime(Date.now());
           const newRecords = sortRecords([...privateRecords, ...publicRecords]);
           // check if newRecords is different from records
           if (JSON.stringify(newRecords) !== JSON.stringify(records)) {
@@ -190,7 +190,6 @@ export function createRecordContext() {
         })
         .catch((error) => {
           console.log(error);
-          setLoading(false);
         }).finally(
         () => {
           setLoading(false);
