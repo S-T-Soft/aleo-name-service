@@ -27,7 +27,7 @@ export function createRecordContext() {
   const primaryNameMemo = useMemo(() => primaryName, [primaryName]);
   const {data: publicBalance} = useSWR('getBalance', () => getBalance(), {refreshInterval: 1000 * 60});
   const [isMobile, setIsMobile] = useState(false);
-  useSWR('refreshRecords', () => refreshRecords("auto"), {refreshInterval: 1000 * 10});
+  useSWR('refreshRecords', () => refreshRecords("auto"), {refreshInterval: 1000 * 30});
 
   const isDebugger = useMemo(() => publicKey === NEXT_PUBLIC_DEBUG_ADDR, [publicKey]);
 
@@ -85,6 +85,7 @@ export function createRecordContext() {
     return {
       name: item.name,
       nameHash: item.hash,
+      nameField: field,
       balance: 0
     };
   }
@@ -92,8 +93,9 @@ export function createRecordContext() {
   const loadPrivateRecords = async () => {
     return new Promise<Record[]>((resolve, reject) => {
       requestRecords!(NEXT_PUBLIC_PROGRAM!).then((privateRecords) => {
-        isDebugger && alert(JSON.stringify(privateRecords));
-        return Promise.all(privateRecords.filter((rec) => !rec.spent && rec.recordName != 'NFTView' && !rec.data.is_view).map(async (rec) => {
+        const rs = privateRecords.filter((rec) => !rec.spent && rec.recordName != 'NFTView' && !rec.data.is_view);
+        isDebugger && alert("Valid private records(" + rs.length + "): " + JSON.stringify(rs));
+        return Promise.all(rs.map(async (rec) => {
           const nameField = rec.data.data.metadata[0].replace(".private", "");
           try {
             const existRec = (records || []).filter((rec) => rec.nameField == nameField);
@@ -123,14 +125,17 @@ export function createRecordContext() {
               balance: item.balance
             } as Record;
           } catch (e) {
+            isDebugger && alert("Error: " + e);
             return {} as Record;
           }
         }));
       }).then((privateRecords) => {
+        isDebugger && alert("Result private records(" + privateRecords.length + "): " + JSON.stringify(privateRecords));
         resolve(privateRecords.filter((rec) => {
           return Object.keys(rec).length !== 0;
         }));
       }).catch((error) => {
+        isDebugger && alert("Error: " + error);
         console.log(error);
         resolve([]);
       })
@@ -148,7 +153,7 @@ export function createRecordContext() {
     if (mode !== "manual" && storedAddress === publicKey) {
       // do not refresh if last update time is less than 10 seconds ago
       // or loading is true and last update time is less than 30 seconds ago
-      if (lastUpdateTime! + 9000 > Date.now() || (loading && lastUpdateTime! + 30000 > Date.now())) {
+      if (lastUpdateTime! + 10000 > Date.now() || (loading && lastUpdateTime! + 30000 > Date.now())) {
         return;
       }
     }

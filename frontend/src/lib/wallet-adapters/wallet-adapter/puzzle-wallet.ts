@@ -169,16 +169,21 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
         }
 
         const records = result.records || [];
-        allRecords = allRecords.concat(records.map((record: any) => ({
-          ...record,
-          owner: this.publicKey,
-          program_id: program,
-          recordName: record.name,
-          spent: false,
-        })));
+        allRecords = allRecords.concat(records.map((record: any) => {
+          if (typeof record.data.data === 'string') {
+            record.data.data = JSON.parse(record.data.data);
+          }
+          return {
+            ...record,
+            owner: this.publicKey,
+            program_id: program,
+            recordName: record.name,
+            spent: false,
+          }
+        }));
 
         // If the number of records is less than 20, it means that there are no more records
-        if (true) {
+        if (records.length != 20) {
           break;
         }
 
