@@ -153,6 +153,8 @@ export function createRecordContext() {
 
   const refreshRecords = async (mode: string) => {
     if (mode !== "manual" && storedAddress === publicKey) {
+      // do not refresh if last update time is less than 10 seconds ago
+      // or loading is true and last update time is less than 30 seconds ago
       if (lastUpdateTime! + 10000 > Date.now() || (loading && lastUpdateTime! + 30000 > Date.now())) {
         return;
       }

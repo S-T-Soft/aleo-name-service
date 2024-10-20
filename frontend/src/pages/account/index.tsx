@@ -32,33 +32,54 @@ const AccountPage: NextPageWithLayout = () => {
           }
         </h2>
         <div className="mb-5">
-          {publicKey && <table className="table-fixed w-full rounded-lg [background:linear-gradient(180deg,_#2e2e2e,_rgba(46,_46,_46,_0))]">
-              <thead>
-                <tr className="uppercase h-16">
-                  <th>Aleo Name</th>
-                  <th className="w-32">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(records || []).map((record, index) => (
-                  <tr key={index} className="h-16 hover:bg-gray-700">
-                    <td className="pl-5">
-                      <span className="font-bold">{record.name}</span>
-                      {record.private && <span className="bg-gray-600 mx-3 px-2 py-1 rounded-lg">Private</span>}
-                      {record.isPrimaryName && <span className="bg-green-700 mx-3 px-2 py-1 rounded-lg">PrimaryName</span>}
-                      {!record.private && !record.isPrimaryName && <span className="bg-gray-600 mx-3 px-2 py-1 rounded-lg">Public</span>}
-                    </td>
-                    <td>
-                      <AnchorLink href={`/account/${record.name}`}>
-                        <Button className="px-4 py-1 h-8 sm:h-8 sm:px-4 mr-5">
-                          Manage
-                        </Button>
-                      </AnchorLink>
-                    </td>
+          {publicKey && <div className="hidden md:block ">
+              <table className="table-fixed w-full rounded-lg [background:linear-gradient(180deg,_#2e2e2e,_rgba(46,_46,_46,_0))] hidden-sm">
+                <thead>
+                  <tr className="uppercase h-16">
+                    <th>Aleo Name</th>
+                    <th className="w-32">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-          </table>}
+                </thead>
+                <tbody>
+                  {(records || []).map((record, index) => (
+                    <tr key={index} className="h-16 hover:bg-gray-700">
+                      <td className="pl-5">
+                        <span className="font-bold">{record.name}</span>
+                        {record.private && <span className="bg-gray-600 mx-3 px-2 py-1 rounded-lg">Private</span>}
+                        {record.isPrimaryName && <span className="bg-green-700 mx-3 px-2 py-1 rounded-lg">PrimaryName</span>}
+                        {!record.private && !record.isPrimaryName && <span className="bg-gray-600 mx-3 px-2 py-1 rounded-lg">Public</span>}
+                      </td>
+                      <td>
+                        <AnchorLink href={`/account/${record.name}`}>
+                          <Button className="px-4 py-1 h-8 mr-5">
+                            Manage
+                          </Button>
+                        </AnchorLink>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+          </div>}
+          {publicKey && <>
+              {(records || []).map((record, index) => (
+                <div key={index} className="block md:hidden w-full rounded-lg p-5 mb-5 [background:linear-gradient(180deg,_#2e2e2e,_rgba(46,_46,_46,_0))]">
+                  <div className="flex">
+                    <span className="font-bold flex-1">{record.name}</span>
+                    {record.private && <span className="bg-gray-600 px-2 py-1 rounded-lg text-right">Private</span>}
+                    {record.isPrimaryName && <span className="bg-green-700 px-2 py-1 rounded-lg text-right">PrimaryName</span>}
+                    {!record.private && !record.isPrimaryName && <span className="bg-gray-600 px-2 py-1 rounded-lg text-right">Public</span>}
+                  </div>
+                  <div className="text-center">
+                    <AnchorLink href={`/account/${record.name}`}>
+                      <Button className="px-4 py-1 h-8">
+                        Manage
+                      </Button>
+                    </AnchorLink>
+                  </div>
+                </div>
+              ))}
+          </>}
           {!publicKey && <div className="text-center">
               Please connect your wallet to view your domain names
           </div>}
