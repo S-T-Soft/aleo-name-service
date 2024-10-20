@@ -153,7 +153,7 @@ export function createRecordContext() {
 
   const refreshRecords = async (mode: string) => {
     if (mode !== "manual" && storedAddress === publicKey) {
-      if (lastUpdateTime! + 10 > Date.now()) {
+      if (lastUpdateTime! + 10000 > Date.now() || (loading && lastUpdateTime! + 30000 > Date.now())) {
         return;
       }
     }
