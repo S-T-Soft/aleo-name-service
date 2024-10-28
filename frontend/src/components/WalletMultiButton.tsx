@@ -7,6 +7,7 @@ import {useRecords} from "@/lib/hooks/use-records";
 import AnchorLink from "@/components/ui/links/anchor-link";
 import {DynamicSocialIcon} from "@/assets/social/DynamicSocialIcon";
 import ToggleSwitch from "@/components/ui/toggle-switch";
+import { cn } from "@/lib/util"
 
 import {usePrivateFee} from "@/lib/hooks/use-private-fee";
 
@@ -25,7 +26,7 @@ const socialLinks = [
   }
 ];
 
-export const WalletMultiButton: FC<ButtonProps> = ({ children, ...props }) => {
+export const WalletMultiButton: FC<ButtonProps> = ({ children, className, ...props }) => {
     const { publicKey, wallet, disconnect, connecting } = useWallet();
     const { primaryName, avatar} = useRecords();
     const { setVisible } = useWalletModal();
@@ -81,9 +82,9 @@ export const WalletMultiButton: FC<ButtonProps> = ({ children, ...props }) => {
         };
     }, [ref, closeDropdown]);
 
-    if (!wallet) return <WalletModalButton className="!bg-aquamarine !text-black !font-normal" {...props}>{children}</WalletModalButton>;
-    if (!base58 && !connecting) return <WalletConnectButton className="!bg-aquamarine !text-black !font-normal" {...props}>{children}</WalletConnectButton>;
-    if (connecting) return <Button className="!bg-aquamarine !text-black !font-normal" {...props} onClick={() => disconnect()}>
+    if (!wallet) return <WalletModalButton className={cn("!bg-aquamarine !text-black !font-normal", className)} {...props}>{children}</WalletModalButton>;
+    if (!base58 && !connecting) return <WalletConnectButton className={cn("!bg-aquamarine !text-black !font-normal", className)} {...props}>{children}</WalletConnectButton>;
+    if (connecting) return <Button className={cn("!bg-aquamarine !text-black !font-normal", className)} {...props} onClick={() => disconnect()}>
       <div className="inline-block relative mr-2">
         <img src={wallet.adapter.icon} className="inline w-8 h-8 rounded-full mr-2" alt={wallet.adapter.name}/>
       </div>

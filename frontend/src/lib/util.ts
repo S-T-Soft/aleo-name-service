@@ -1,3 +1,10 @@
+import { type ClassValue, clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+
 export function safeParseInt(value: string): number {
   const parsedValue = parseInt(value, 10);
   return isNaN(parsedValue) ? 0 : parsedValue;

@@ -8,6 +8,7 @@ import {useClient} from "@/lib/hooks/use-client";
 import ToggleSwitch from "@/components/ui/toggle-switch";
 
 import {usePrivateFee} from "@/lib/hooks/use-private-fee";
+import {Input} from "@/components/ui/input";
 
 const AddSubName = ({record, onSuccess}: React.PropsWithChildren<{
   record: Record,
@@ -81,18 +82,14 @@ const AddSubName = ({record, onSuccess}: React.PropsWithChildren<{
           className="fixed z-50 top-0 left-0 w-full h-full bg-gray-900 bg-opacity-50 flex items-center justify-center">
           <div className="bg-gray-800 p-4 rounded-lg w-full md:w-3/4 max-w-3xl">
             <h2 className="mb-4 text-white text-center font-bold">Create Subname</h2>
-            <div className="flex mb-4 border-2 border-gray-600 md:focus-within:border-aquamarine rounded-full">
-              <input
-                className="h-16 flex-grow appearance-none rounded-full md:rounded-l-full md:rounded-r-none border-r-0 py-1 text-lg tracking-tighter text-gray-900 outline-none transition-all placeholder:text-gray-600 dark:hover:border-teal dark:focus:border-aquamarine ltr:pl-8 rtl:pr-8 dark:border-gray-600 dark:bg-light-dark dark:text-white dark:placeholder:text-gray-500"
-                type="text"
-                autoComplete={"off"}
-                value={inputValue}
-                disabled={registering}
-                onChange={handleInput}
-              />
-              <span
-                className="hidden md:flex h-16 bg-gray-700 border-l-0 border-gray-600 items-center justify-center py-1 px-3 text-lg text-gray-400 rounded-r-full">.{record.name}</span>
-            </div>
+            <Input
+              suffix={'.' + record.name}
+              type={"text"}
+              autoComplete={"off"}
+              value={inputValue}
+              disabled={registering}
+              onChange={handleInput}
+            />
             <div className="flex mb-4 text-white justify-end">
               <ToggleSwitch label="Private fee" isToggled={privateFee} setIsToggled={setPrivateFee} />
             </div>
