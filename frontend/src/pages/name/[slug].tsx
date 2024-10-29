@@ -51,6 +51,7 @@ const NamePage: NextPageWithLayout = () => {
   const [name, setName] = useState("");
   const [tld, setTld] = useState<TLD>(tlds[0]);
   const [price, setPrice] = useState<number>(2);
+  const [oriPrice, setOriPrice] = useState<number>(2);
   const [record, setRecord] = useState("");
   const [feeRecord, setFeeRecord] = useState("");
   const [resolverRecordCount, setResolverRecordCount] = useState(0);
@@ -118,6 +119,8 @@ const NamePage: NextPageWithLayout = () => {
   const checkRecords = () => {
     const ans_price = calcPrice(name, tld, selectedCard);
     setPrice(ans_price / 1000000);
+    const ori_ans_price = calcPrice(name, tld, null);
+    setOriPrice(ori_ans_price / 1000000);
     let amount = [];
     if (ans_price > 0) {
       amount.push(ans_price)
@@ -283,6 +286,8 @@ const NamePage: NextPageWithLayout = () => {
                       <>
                           <div className="mt-3 text-xl tracking-tighter text-gray-600 dark:text-gray-400 sm:block">
                               <span className="mr-2">Register Price:</span>
+                            {(selectedCard != null) && <span className="bg-gray-700 p-1 pl-2 pr-2 mr-2 rounded-lg text-gray-300 font-bold line-through">
+                              {oriPrice} ALEO </span>}
                             {price > 0 &&
                                 <span className="bg-gray-700 p-1 pl-2 pr-2 rounded-lg text-gray-300 font-bold">
                                 {price} {privateFee ? "Private" : "Public"} ALEO

@@ -33,6 +33,7 @@ import {
   SessionTypes
 } from "@puzzlehq/sdk";
 import {LeoWallet} from "@demox-labs/aleo-wallet-adapter-leo";
+import {RecordStatus} from "@puzzlehq/types";
 
 
 export interface PuzzleWindow extends Window {
@@ -143,31 +144,56 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
   async requestRecords(program: string): Promise<any[]> {
     try {
       const wallet = this._wallet;
-      if (!wallet || !this.publicKey) throw new WalletNotConnectedError();
+      if (!wallet || !this.publicKey) {
+        throw new WalletNotConnectedError();
+      }
 
-      try {
-        const filter = {
-          programIds: [program],
-          status: "Unspent"
-        } as RecordsFilter;
-        const result = await getRecords({address: this.publicKey, filter});
+      const filter: RecordsFilter = {
+        programIds: [program],
+        status: RecordStatus.Unspent,
+      };
+
+      let allRecords: any[] = [];
+      let page = 0;
+
+      while (true) {
+        console.log(`Requesting records for:`);
+        console.log(filter)
+        const result = await getRecords({ address: this.publicKey, filter, page });
+
         if (result.error) {
+          if (allRecords.length > 0) {
+            break;
+          }
           throw new Error(result.error);
         }
-        return result.records!.map((record: any) => {
+
+        const records = result.records || [];
+        allRecords = allRecords.concat(records.map((record: any) => {
+          if (typeof record.data.data === 'string') {
+            record.data.data = JSON.parse(record.data.data);
+          }
           return {
             ...record,
             owner: this.publicKey,
             program_id: program,
             recordName: record.name,
-            spent: false
-          };
-        });
-      } catch (error: any) {
-        throw new WalletRecordsError(error?.message || "Permission Not Granted", error);
+            spent: false,
+          }
+        }));
+
+        // If the number of records is less than 20, it means that there are no more records
+        if (records.length != 20) {
+          break;
+        }
+
+        page++;
       }
+
+      return allRecords;
+
     } catch (error: any) {
-      this.emit('error', error);
+      this.emit('error', new WalletRecordsError(error?.message || "Permission Not Granted", error));
       throw error;
     }
   }
