@@ -29,6 +29,7 @@ import {
 } from '@/lib/wallet-adapters';
 import {PrivateFeeProvider} from "@/context/private-fee-context";
 import {BlockNumber} from "@/components/BlockNumber";
+import {isMobile} from "@/lib/util";
 
 
 type AppPropsWithLayout = AppProps & {
@@ -39,21 +40,21 @@ type AppPropsWithLayout = AppProps & {
 function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
   const wallets = useMemo(
     () => [
-      new LeoWalletAdapter({
-        appName: 'Aleo Name Service',
-      }),
-      new FoxWalletAdapter({
-        appName: 'Aleo Name Service',
-      }),
-      new PuzzleWalletAdapter({
-        appName: 'Aleo Name Service',
-      }),
-      new SoterWalletAdapter({
-        appName: 'Aleo Name Service',
-      }),
-    ],
-    []
-  );
+        new LeoWalletAdapter({
+          appName: 'Aleo Name Service',
+          isMobile: isMobile(),
+          mobileWebviewUrl: isMobile() ? location.href : ''
+        }),
+        new FoxWalletAdapter({
+          appName: 'Aleo Name Service',
+        }),
+        new PuzzleWalletAdapter({
+          appName: 'Aleo Name Service',
+        }),
+        new SoterWalletAdapter({
+          appName: 'Aleo Name Service',
+        }),
+      ], []);
   const [queryClient] = useState(() => new QueryClient());
   const getLayout = Component.getLayout ?? ((page) => page);
   const [isTestnet, setIsTestnet] = useState(false);

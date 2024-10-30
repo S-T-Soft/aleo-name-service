@@ -5,6 +5,20 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+export function isIOS(){
+  if (typeof window === 'undefined') return false;
+  return /iPhone/gi.test(window.navigator.platform) || /Mac/gi.test(window.navigator.platform) && window.navigator.maxTouchPoints>0
+}
+
+export function isAndroid(){
+  if (typeof window === 'undefined') return false;
+  return /Android/gi.test(window.navigator.userAgent)
+}
+
+export function isMobile(){
+  return isIOS() || isAndroid()
+}
+
 export function safeParseInt(value: string): number {
   const parsedValue = parseInt(value, 10);
   return isNaN(parsedValue) ? 0 : parsedValue;
