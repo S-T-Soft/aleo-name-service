@@ -14,7 +14,11 @@ import '@/assets/css/globals.css';
 import '@/assets/css/range-slider.css';
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
-import {DecryptPermission, WalletAdapterNetwork} from '@demox-labs/aleo-wallet-adapter-base';
+import {
+  BaseMessageSignerWalletAdapter,
+  DecryptPermission,
+  WalletAdapterNetwork
+} from '@demox-labs/aleo-wallet-adapter-base';
 import { WalletProvider } from '@demox-labs/aleo-wallet-adapter-react';
 import { WalletModalProvider } from '@demox-labs/aleo-wallet-adapter-reactui';
 import {RecordProvider} from "@/context/record-context";
@@ -39,22 +43,27 @@ type AppPropsWithLayout = AppProps & {
 
 function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
   const wallets = useMemo(
-    () => [
+    () => {
+      const wallets: BaseMessageSignerWalletAdapter[] = [
         new LeoWalletAdapter({
           appName: 'Aleo Name Service',
           isMobile: isMobile(),
           mobileWebviewUrl: isMobile() ? location.href : ''
         }),
-        new FoxWalletAdapter({
-          appName: 'Aleo Name Service',
-        }),
         new PuzzleWalletAdapter({
           appName: 'Aleo Name Service',
         }),
-        new SoterWalletAdapter({
+        new FoxWalletAdapter({
           appName: 'Aleo Name Service',
-        }),
-      ], []);
+        })
+      ]
+      if (!isMobile()) {
+        wallets.push(new SoterWalletAdapter({
+          appName: 'Aleo Name Service',
+        }))
+      }
+      return wallets
+    }, []);
   const [queryClient] = useState(() => new QueryClient());
   const getLayout = Component.getLayout ?? ((page) => page);
   const [isTestnet, setIsTestnet] = useState(false);
