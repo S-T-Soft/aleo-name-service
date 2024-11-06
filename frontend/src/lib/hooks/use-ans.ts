@@ -1,5 +1,5 @@
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
-import {getFormattedU128Input, getFormattedNameInput} from "@/lib/util";
+import {getFormattedU128Input, getFormattedNameInput, getFormattedFieldsInput} from "@/lib/util";
 import React from "react";
 import * as process from "process";
 import {Transaction, WalletAdapterNetwork, WalletNotConnectedError} from "@demox-labs/aleo-wallet-adapter-base";
@@ -12,11 +12,12 @@ import {useCredit} from "@/lib/hooks/use-credit";
 import {useClient} from "@/lib/hooks/use-client";
 import tlds from "@/config/tlds";
 import {usePrivateFee} from "@/lib/hooks/use-private-fee";
-import {queryName, saveName} from "@/lib/db";
+import {useTrace} from "@/lib/hooks/use-trace";
 
 
 export function useANS() {
   const NEXT_PUBLIC_PROGRAM = process.env.NEXT_PUBLIC_PROGRAM;
+  const NEXT_PUBLIC_REGISTER_QUEST_PROGRAM = process.env.NEXT_PUBLIC_REGISTER_QUEST_PROGRAM;
   const NEXT_PUBLIC_COUPON_CARD_PROGRAM = process.env.NEXT_PUBLIC_COUPON_CARD_PROGRAM;
   const NEXT_PUBLIC_RESOLVER_PROGRAM = process.env.NEXT_PUBLIC_RESOLVER_PROGRAM;
   const NEXT_PUBLIC_FEES_REGISTER = parseInt(process.env.NEXT_PUBLIC_FEES_REGISTER!);
@@ -41,6 +42,7 @@ export function useANS() {
   const {getAddress, getName} = useClient();
   const {privateFee} = usePrivateFee();
   const {publicKey, requestTransaction, requestRecordPlaintexts} = useWallet();
+  const {cbUUID} = useTrace();
 
   const notify = React.useCallback((type: TypeOptions, message: string) => {
     toast({type, message});
@@ -150,10 +152,17 @@ export function useANS() {
         if (card) {
           inputs.push(card.record);
         }
+        let program = tld.registrar;
+        if (cbUUID != '' && tld.name == 'ans') {
+          const memo = {msg: cbUUID, type: 'coinbase_quest'}
+          inputs.push(getFormattedFieldsInput(JSON.stringify(memo), 8));
+          fee += 12000;
+          program = NEXT_PUBLIC_REGISTER_QUEST_PROGRAM!;
+        }
         const aleoTransaction = Transaction.createTransaction(
           publicKey,
           NETWORK,
-          tld.registrar,
+          program,
           functionName,
           inputs,
           fee,

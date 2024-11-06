@@ -47,14 +47,14 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
       const wallets: BaseMessageSignerWalletAdapter[] = [
         new LeoWalletAdapter({
           appName: 'Aleo Name Service',
-          isMobile: isMobile(),
-          mobileWebviewUrl: isMobile() ? location.href : ''
+          isMobile: isMobile()
         }),
         new PuzzleWalletAdapter({
           appName: 'Aleo Name Service',
         }),
         new FoxWalletAdapter({
           appName: 'Aleo Name Service',
+          isMobile: isMobile()
         })
       ]
       if (!isMobile()) {
