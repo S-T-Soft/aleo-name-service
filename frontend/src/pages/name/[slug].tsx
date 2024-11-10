@@ -90,12 +90,13 @@ const NamePage: NextPageWithLayout = () => {
     if (router.isReady) {
       const {slug} = router.query;
       if (typeof slug === 'string') {
-        const matchedTld = matchTld(slug);
+        const lowerCaseSlug = slug.toLowerCase();
+        const matchedTld = matchTld(lowerCaseSlug);
         if (matchedTld) {
-          setName(slug.split('.').slice(0, -1).join('.'));
+          setName(lowerCaseSlug.split('.').slice(0, -1).join('.'));
           setTld(matchedTld);
         } else {
-          setName(slug);
+          setName(lowerCaseSlug);
         }
       }
     }

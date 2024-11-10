@@ -34,7 +34,7 @@ export function SearchFrom({ placeholder = 'Search for a name...' }: SearchFromP
   }
 
   const onSearch = async (event: any) => {
-    setSearch(event.currentTarget.value);
+    setSearch(event.currentTarget.value.toLowerCase());
   };
 
   return (
