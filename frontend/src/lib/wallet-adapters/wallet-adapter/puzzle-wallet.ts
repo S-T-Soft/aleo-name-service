@@ -204,6 +204,7 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
       if (!wallet || !this.publicKey) throw new WalletNotConnectedError();
       try {
         const requestData = {
+          address: transaction.address,
           type: EventType.Execute,
           programId: transaction.transitions[0].program,
           functionId: transaction.transitions[0].functionName,
