@@ -4,7 +4,7 @@ import React from "react";
 import * as process from "process";
 import {Transaction, WalletAdapterNetwork, WalletNotConnectedError} from "@demox-labs/aleo-wallet-adapter-base";
 import {useRecords} from "@/lib/hooks/use-records";
-import {CouponCard, Record, StatusChangeCallback, TLD} from "@/types";
+import {CouponCard, Record, Status, StatusChangeCallback, TLD} from "@/types";
 import toast from "@/components/ui/toast";
 import {TypeOptions} from "react-toastify";
 import {useTransaction} from "@/lib/hooks/use-transaction";
@@ -42,7 +42,7 @@ export function useANS() {
   const {getAddress, getName} = useClient();
   const {privateFee} = usePrivateFee();
   const {publicKey, requestTransaction, requestRecordPlaintexts} = useWallet();
-  const {cbUUID} = useTrace();
+  const {cbUUID, clearCbUUID} = useTrace();
 
   const notify = React.useCallback((type: TypeOptions, message: string) => {
     toast({type, message});
@@ -143,6 +143,8 @@ export function useANS() {
       }
     }
 
+    const isCbQuest = cbUUID != '' && tld.name == 'ans';
+
     getCreditRecords(amounts)
       .then((records) => {
         let inputs: any[] = [getFormattedNameInput(name, 4), tld.hash, publicKey];
@@ -153,7 +155,7 @@ export function useANS() {
           inputs.push(card.record);
         }
         let program = tld.registrar;
-        if (cbUUID != '' && tld.name == 'ans') {
+        if (isCbQuest) {
           const memo = {msg: cbUUID, type: 'coinbase_quest'}
           inputs.push(getFormattedFieldsInput(JSON.stringify(memo), 8));
           fee += 12000;
@@ -177,7 +179,13 @@ export function useANS() {
           throw new Error("requestTransaction is not defined");
       })
       .then((txId) => {
-        addTransaction("register", txId, [name], onStatusChange);
+        const onCbStatusChange = (running: boolean, status: Status) => {
+          if (!running && !status.hasError) {
+            clearCbUUID();
+          }
+          onStatusChange && onStatusChange(running, status);
+        }
+        addTransaction("register", txId, [name], isCbQuest ? onCbStatusChange : onStatusChange);
       })
       .catch((error) => {
         notify("error", error.message);

@@ -28,12 +28,13 @@ import {
   SoterWalletAdapter,
   LeoWalletAdapter,
   PuzzleWalletAdapter,
-  AvailWalletAdapter,
   configureConnectionForPuzzle
 } from '@/lib/wallet-adapters';
 import {PrivateFeeProvider} from "@/context/private-fee-context";
 import {BlockNumber} from "@/components/BlockNumber";
 import {isMobile} from "@/lib/util";
+import {useTrace} from "@/lib/hooks/use-trace";
+import {useRouter} from "next/router";
 
 
 type AppPropsWithLayout = AppProps & {
@@ -67,6 +68,8 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
   const [queryClient] = useState(() => new QueryClient());
   const getLayout = Component.getLayout ?? ((page) => page);
   const [isTestnet, setIsTestnet] = useState(false);
+  const {cbUUID} = useTrace();
+  const router = useRouter();
 
   useEffect(() => {
     setIsTestnet(process.env.NEXT_PUBLIC_NETWORK === 'testnetbeta');
@@ -100,6 +103,17 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
           fontWeight: 'bold'
         }}>
           You are viewing the ANS app on testnet.
+        </div>
+      )}
+      {(router.pathname === '/' || router.pathname.startsWith('/name/')) && cbUUID && (
+        <div style={{
+          backgroundColor: 'rgb(0, 82, 255)',
+          color: '#ffffff',
+          textAlign: 'center',
+          padding: '5px',
+          fontWeight: 'bold'
+        }}>
+          From Coinbase Quest
         </div>
       )}
       <QueryClientProvider client={queryClient}>
