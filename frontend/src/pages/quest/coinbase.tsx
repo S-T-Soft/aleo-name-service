@@ -7,10 +7,14 @@ const CoinbaseQuest = () => {
   const { setCbUUID } = useTrace();
 
   useEffect(() => {
-    const { uuid } = router.query;
+    const { uuid, next } = router.query;
     if (uuid) {
       setCbUUID(uuid as string);
-      router.push(router.query.next as string || '/');
+      if (next && ((next as string).startsWith('/') || (next as string).startsWith(location.origin))) {
+        router.push(next as string);
+      } else {
+        router.push('/');
+      }
     }
   }, [router.query, setCbUUID]);
 
