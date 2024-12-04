@@ -81,7 +81,7 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
           // Check if user is on a mobile device
           const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
           if (isMobile) {
-            this._readyState = WalletReadyState.Loadable;
+            this._readyState = WalletReadyState.Installed;
             this.emit('readyStateChange', this._readyState);
             return true;
           }
@@ -204,6 +204,7 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
       if (!wallet || !this.publicKey) throw new WalletNotConnectedError();
       try {
         const requestData = {
+          address: transaction.address,
           type: EventType.Execute,
           programId: transaction.transitions[0].program,
           functionId: transaction.transitions[0].functionName,

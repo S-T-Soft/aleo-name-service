@@ -47,7 +47,7 @@ const ManageNamePage: NextPageWithLayout = () => {
         setActiveTab(tab as string);
       }
       if (typeof slug === 'string') {
-        setName(slug)
+        setName(slug?.toLowerCase())
       }
     }
   }, [router.isReady && router.query]);

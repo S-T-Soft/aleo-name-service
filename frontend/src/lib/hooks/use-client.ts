@@ -5,7 +5,7 @@ import {NameHashBalance, Record, Resolver, Statistic} from "@/types";
 
 export function useClient() {
   const API_URL = process.env.NEXT_PUBLIC_API_URL!;
-  const ALEO_URL = process.env.NEXT_PUBLIC_ALEO_URL!;
+  const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL!;
 
   const getStatistic = pMemoize(async () => {
     return new Promise<Statistic>((resolve, reject) => {
@@ -189,10 +189,25 @@ export function useClient() {
 
   const getPublicBalance = pMemoize(async (address: string): Promise<number> => {
     return new Promise<number>((resolve, reject) => {
-      fetch(`${ALEO_URL}program/credits.aleo/mapping/account/${address}`)
-        .then((response) => response.text())
-        .then((balance) => {
-          resolve(parseInt(balance.replaceAll('"', '')) || 0);
+      fetch(RPC_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'getMappingValue',
+          params: {
+            "program_id": "credits.aleo",
+            "mapping_name": "account",
+            "key": address
+          }
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          resolve(parseInt(data.result) || 0);
         })
         .catch((error) => {
           resolve(0);
@@ -202,10 +217,20 @@ export function useClient() {
 
   const getLatestHeight = pMemoize(async () => {
     return new Promise<number>((resolve, reject) => {
-      fetch(`${ALEO_URL}latest/height`)
-        .then((response) => response.text())
-        .then((height) => {
-          resolve(parseInt(height));
+      fetch(RPC_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'latest/block',
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          resolve(parseInt(data.result.height));
         })
         .catch((error) => {
           reject({message: `Error load latest height`});

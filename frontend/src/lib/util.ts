@@ -1,6 +1,8 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 
+const FIELD_MODULUS = 8444461749428370424248824938781546531375899335154063827935233455917409239040n;
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
@@ -24,9 +26,10 @@ export function safeParseInt(value: string): number {
   return isNaN(parsedValue) ? 0 : parsedValue;
 }
 
-export function stringToBigInt(input: string): bigint {
+export function stringToBigInt(input: string, reverse: boolean = false): bigint {
   const encoder = new TextEncoder();
   const encodedBytes = encoder.encode(input);
+  reverse && encodedBytes.reverse();
 
   let bigIntValue = BigInt(0);
   for (let i = 0; i < encodedBytes.length; i++) {
@@ -38,8 +41,8 @@ export function stringToBigInt(input: string): bigint {
   return bigIntValue;
 }
 
-export function bigIntToString(bigIntValue: bigint): string {
-  const bytes: number[] = [];
+function bigIntToString(bigIntValue: bigint, reverse: boolean = false) {
+  const bytes = [];
   let tempBigInt = bigIntValue;
 
   while (tempBigInt > BigInt(0)) {
@@ -47,6 +50,8 @@ export function bigIntToString(bigIntValue: bigint): string {
     bytes.push(byteValue);
     tempBigInt = tempBigInt >> BigInt(8);
   }
+
+  reverse && bytes.reverse();
 
   const decoder = new TextDecoder();
   const asciiString = decoder.decode(Uint8Array.from(bytes));
@@ -74,6 +79,31 @@ export function splitStringToBigInts(input: string): bigint[] {
   }
 
   return bigInts;
+}
+
+export function stringToFields(input: string, numFieldElements = 4) {
+  const bigIntValue = stringToBigInt(input, true);
+  const fieldElements = [];
+  let remainingValue = bigIntValue;
+  for (let i = 0; i < numFieldElements; i++) {
+    const fieldElement = remainingValue % FIELD_MODULUS;
+    fieldElements.push(fieldElement.toString() + "field");
+    remainingValue = remainingValue / FIELD_MODULUS;
+  }
+  if (remainingValue !== BigInt(0)) {
+    throw new Error("String is too big to be encoded.");
+  }
+  return fieldElements;
+}
+
+export function fieldsToString(fields: bigint[]) {
+  let bigIntValue = BigInt(0);
+  let multiplier = BigInt(1);
+  for (const fieldElement of fields) {
+    bigIntValue += fieldElement * multiplier;
+    multiplier *= FIELD_MODULUS;
+  }
+  return bigIntToString(bigIntValue, true);
 }
 
 export function joinBigIntsToString(bigInts: bigint[]): string {
@@ -106,6 +136,11 @@ export function getFormattedNameInput(name: string, length: number): string {
 export function getFormattedU128Input(str: string): string {
   const bint = stringToBigInt(str);
   return `${bint}u128`;
+}
+
+export function getFormattedFieldsInput(text: string, length: number): string {
+  const fields = stringToFields(text, length);
+  return `[${fields.join(",")}]`;
 }
 
 export function parseStringToBigIntArray(input: string): bigint[] {

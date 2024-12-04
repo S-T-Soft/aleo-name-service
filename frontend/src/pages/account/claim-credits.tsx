@@ -8,6 +8,7 @@ import toast from "@/components/ui/toast";
 export default function ClaimCredits({record}: React.PropsWithChildren<{
   record: Record
 }>) {
+  const enableCreditTransfer = process.env.NEXT_PUBLIC_ENABLE_CREDIT_TRANSFER === "true";
   const [claiming, setClaiming] = useState(false);
   const [status, setStatus] = useState("Claiming");
   const [claimingWithPass, setClaimingWithPass] = useState(false);
@@ -55,7 +56,7 @@ export default function ClaimCredits({record}: React.PropsWithChildren<{
     });
   }
 
-  return <>
+  return enableCreditTransfer && <>
     <div className="leading-10 mt-5">
       <span className="mr-4">Balance:</span>
       <span className="rounded-lg bg-gray-700 px-2 py-1 mr-4">{record && record.balance / 1000000} ACs</span>

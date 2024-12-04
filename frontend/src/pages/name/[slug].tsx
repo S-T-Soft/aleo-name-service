@@ -28,8 +28,8 @@ import {usePrivateFee} from "@/lib/hooks/use-private-fee";
 
 const NamePage: NextPageWithLayout = () => {
   const NEXT_PUBLIC_FEES_REGISTER = parseInt(process.env.NEXT_PUBLIC_FEES_REGISTER!);
-  const COUPON_CARD_START_HEIGHT = parseInt(process.env.NEXT_PUBLIC_COUPON_CARD_START_HEIGHT!);
-  const MINT_START_HEIGHT = parseInt(process.env.NEXT_PUBLIC_MINT_START_HEIGHT!);
+  const COUPON_CARD_START_HEIGHT = 1;
+  const MINT_START_HEIGHT = 1;
   const router = useRouter();
   const {publicKey} = useWallet();
   const {mutate} = useSWRConfig();
@@ -68,13 +68,8 @@ const NamePage: NextPageWithLayout = () => {
     return (record != "" || price == 0) && feeRecord == "" && privateFee;
   }, [record, feeRecord, privateFee, price]);
 
-  const canPublicMint = useMemo(() => {
-    return (latestHeight || 0) >= MINT_START_HEIGHT;
-  }, [latestHeight]);
-
-  const canCouponMint = useMemo(() => {
-    return (latestHeight || 0) >= COUPON_CARD_START_HEIGHT;
-  }, [latestHeight]);
+  const canPublicMint = true;
+  const canCouponMint = true;
 
   const canRegister = useMemo(() => {
     if (canPublicMint) {
@@ -95,12 +90,13 @@ const NamePage: NextPageWithLayout = () => {
     if (router.isReady) {
       const {slug} = router.query;
       if (typeof slug === 'string') {
-        const matchedTld = matchTld(slug);
+        const lowerCaseSlug = slug.toLowerCase();
+        const matchedTld = matchTld(lowerCaseSlug);
         if (matchedTld) {
-          setName(slug.split('.').slice(0, -1).join('.'));
+          setName(lowerCaseSlug.split('.').slice(0, -1).join('.'));
           setTld(matchedTld);
         } else {
-          setName(slug);
+          setName(lowerCaseSlug);
         }
       }
     }
