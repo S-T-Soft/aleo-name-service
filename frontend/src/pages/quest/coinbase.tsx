@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useTrace } from '@/lib/hooks/use-trace';
+import DOMPurify from "dompurify";
 
 const CoinbaseQuest = () => {
   const router = useRouter();
@@ -11,7 +12,8 @@ const CoinbaseQuest = () => {
     if (uuid) {
       setCbUUID(uuid as string);
       if (next && ((next as string).startsWith('/') || (next as string).startsWith(location.origin))) {
-        router.push(next as string);
+        const sanitizedNext = DOMPurify.sanitize(next as string);
+        router.push(sanitizedNext);
       } else {
         router.push('/');
       }
