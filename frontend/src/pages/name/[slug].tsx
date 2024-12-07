@@ -312,7 +312,7 @@ const NamePage: NextPageWithLayout = () => {
                                           {card.discount_percent > 0 ? `${100 - card.discount_percent}% OFF` : 'Free Card'}
                                         </h5>
                                             <p className="text-3xs-5 text-gray-500">For lengths <span className="font-bold">{card.limit_name_length}+</span></p>
-                                            <p className="text-3xs-5 text-gray-500">Can use <span className="text-red-400 font-bold">{card.count}</span> times</p>
+                                            <p className="text-3xs-5 text-gray-500">Can use <span className="text-red-400 font-bold">{card.count}</span> time{card.count > 1 && 's'}</p>
                                         {selectedCard && selectedCard.id == card.id && (
                                           <div
                                             className="absolute top-0 right-0 w-6 h-6 bg-green-500 flex justify-center items-center"
