@@ -5,7 +5,6 @@ import {useRouter} from 'next/router'
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
 import React, {useEffect, useMemo, useState} from "react";
 import Button from "@/components/ui/button";
-import * as process from "process";
 import {RefreshIcon} from "@/components/icons/refresh";
 import {useANS} from "@/lib/hooks/use-ans";
 import {Status} from "@/types";
@@ -22,12 +21,12 @@ import {WalletMultiButton} from "@/components/WalletMultiButton";
 import Layout from "@/layouts/_layout";
 import {Check} from "@/components/icons/check";
 import tlds from "@/config/tlds";
+import env from "@/config/env";
 
 import {usePrivateFee} from "@/lib/hooks/use-private-fee";
 
 
 const NamePage: NextPageWithLayout = () => {
-  const NEXT_PUBLIC_FEES_REGISTER = parseInt(process.env.NEXT_PUBLIC_FEES_REGISTER!);
   const COUPON_CARD_START_HEIGHT = 1;
   const MINT_START_HEIGHT = 1;
   const router = useRouter();
@@ -122,7 +121,7 @@ const NamePage: NextPageWithLayout = () => {
       amount.push(ans_price)
     }
     if (privateFee) {
-      amount.push(NEXT_PUBLIC_FEES_REGISTER)
+      amount.push(env.FEES.REGISTER)
     }
     if (amount.length == 0) {
       setRecord("");
@@ -238,7 +237,7 @@ const NamePage: NextPageWithLayout = () => {
   const handleConvertFee = async (event: any) => {
     event.preventDefault();
     if (publicKey) {
-      const fee = NEXT_PUBLIC_FEES_REGISTER /  1000000;
+      const fee = env.FEES.REGISTER /  1000000;
       await transferCredits("", "transfer_public_to_private", publicKey, fee, (running: boolean, status: Status) => {
         setRegistering(running);
         setStatus(status.message);

@@ -4,15 +4,11 @@ import {createContext, useContext, useEffect, useMemo, useState} from "react";
 import {NameHashBalance, Record, Statistic} from "@/types";
 import {useClient} from "@/lib/hooks/use-client";
 import useSWR from 'swr';
+import env from "@/config/env";
 import {queryByField, queryName, saveName} from "@/lib/db";
 
-const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL
-  ? process.env.NEXT_PUBLIC_GATEWAY_URL
-  : "https://gateway.pinata.cloud/ipfs/";
 
 export function createRecordContext() {
-  const NEXT_PUBLIC_PROGRAM = process.env.NEXT_PUBLIC_PROGRAM;
-  const NEXT_PUBLIC_DEBUG_ADDR = process.env.NEXT_PUBLIC_DEBUG_ADDR;
   const {getPrimaryName,getName,getNameByField,getPublicDomain,getResolver,getStatistic,getPublicBalance} = useClient();
   const {publicKey, requestRecords} = useWallet();
   const [records, setRecords] = useLocalStorage<Record[]>('records', []);
@@ -28,7 +24,7 @@ export function createRecordContext() {
   const {data: publicBalance} = useSWR('getBalance', () => getBalance(), {refreshInterval: 1000 * 60});
   useSWR('refreshRecords', () => refreshRecords("auto"), {refreshInterval: 1000 * 30});
 
-  const isDebugger = useMemo(() => publicKey === NEXT_PUBLIC_DEBUG_ADDR, [publicKey]);
+  const isDebugger = useMemo(() => publicKey === env.DEBUG_ADDR, [publicKey]);
 
   useEffect(() => {
     setRecords((records || []).map((rec) => {
@@ -85,7 +81,7 @@ export function createRecordContext() {
 
   const loadPrivateRecords = async () => {
     return new Promise<Record[]>((resolve, reject) => {
-      requestRecords!(NEXT_PUBLIC_PROGRAM!).then((privateRecords) => {
+      requestRecords!(env.REGISTRY_PROGRAM).then((privateRecords) => {
         const rs = privateRecords.filter((rec) => !rec.spent && rec.recordName != 'NFTView' && !rec.data.is_view);
         isDebugger && alert("Valid private records(" + rs.length + "): " + JSON.stringify(rs));
         return Promise.all(rs.map(async (rec) => {
@@ -174,7 +170,7 @@ export function createRecordContext() {
                 setPrimaryName(rec.name);
                 getResolver(rec.name, "avatar").then((resolver) => {
                   if (resolver != null) {
-                    setAvatar(resolver.value.replace("ipfs://", GATEWAY_URL));
+                    setAvatar(resolver.value.replace("ipfs://", env.GATEWAY_URL));
                   }
                 });
               }

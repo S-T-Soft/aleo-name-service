@@ -35,6 +35,7 @@ import {BlockNumber} from "@/components/BlockNumber";
 import {isMobile} from "@/lib/util";
 import {useTrace} from "@/lib/hooks/use-trace";
 import {useRouter} from "next/router";
+import env from "@/config/env";
 
 
 type AppPropsWithLayout = AppProps & {
@@ -72,7 +73,7 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
   const router = useRouter();
 
   useEffect(() => {
-    setIsTestnet(process.env.NEXT_PUBLIC_NETWORK === 'testnetbeta');
+    setIsTestnet(env.NETWORK === 'testnetbeta');
   }, []);
 
   useEffect(() => {
@@ -121,11 +122,11 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
           <WalletProvider
             wallets={wallets}
             decryptPermission={DecryptPermission.OnChainHistory}
-            network={process.env.NEXT_PUBLIC_NETWORK as WalletAdapterNetwork}
+            network={env.NETWORK as WalletAdapterNetwork}
             programs={["credits.aleo",
               "token_registry.aleo",
-              process.env.NEXT_PUBLIC_COUPON_CARD_PROGRAM!,
-              process.env.NEXT_PUBLIC_PROGRAM!]}
+              env.COUPON_CARD_PROGRAM,
+              env.REGISTRY_PROGRAM]}
             autoConnect
           >
             <WalletModalProvider>

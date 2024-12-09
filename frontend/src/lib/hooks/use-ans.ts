@@ -1,8 +1,7 @@
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
 import {getFormattedU128Input, getFormattedNameInput, getFormattedFieldsInput} from "@/lib/util";
-import React from "react";
-import * as process from "process";
-import {Transaction, WalletAdapterNetwork, WalletNotConnectedError} from "@demox-labs/aleo-wallet-adapter-base";
+import {useCallback} from "react";
+import {Transaction, WalletNotConnectedError} from "@demox-labs/aleo-wallet-adapter-base";
 import {useRecords} from "@/lib/hooks/use-records";
 import {CouponCard, Record, Status, StatusChangeCallback, TLD} from "@/types";
 import toast from "@/components/ui/toast";
@@ -13,67 +12,42 @@ import {useClient} from "@/lib/hooks/use-client";
 import tlds from "@/config/tlds";
 import {usePrivateFee} from "@/lib/hooks/use-private-fee";
 import {useTrace} from "@/lib/hooks/use-trace";
+import env from "@/config/env";
 
 
 export function useANS() {
-  const NEXT_PUBLIC_PROGRAM = process.env.NEXT_PUBLIC_PROGRAM;
-  const NEXT_PUBLIC_REGISTER_QUEST_PROGRAM = process.env.NEXT_PUBLIC_REGISTER_QUEST_PROGRAM;
-  const NEXT_PUBLIC_COUPON_CARD_PROGRAM = process.env.NEXT_PUBLIC_COUPON_CARD_PROGRAM;
-  const NEXT_PUBLIC_RESOLVER_PROGRAM = process.env.NEXT_PUBLIC_RESOLVER_PROGRAM;
-  const NEXT_PUBLIC_FEES_REGISTER = parseInt(process.env.NEXT_PUBLIC_FEES_REGISTER!);
-  const NEXT_PUBLIC_FEES_REGISTER_FREE = parseInt(process.env.NEXT_PUBLIC_FEES_REGISTER_FREE!);
-  const NEXT_PUBLIC_FEES_REGISTER_COUPON = parseInt(process.env.NEXT_PUBLIC_FEES_REGISTER_COUPON!);
-  const NEXT_PUBLIC_FEES_REGISTER_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_REGISTER_PUBLIC!);
-  const NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC!);
-  const NEXT_PUBLIC_FEES_CONVERT_TO_PRIVATE = parseInt(process.env.NEXT_PUBLIC_FEES_CONVERT_TO_PRIVATE!);
-  const NEXT_PUBLIC_FEES_SET_PRIMARY = parseInt(process.env.NEXT_PUBLIC_FEES_SET_PRIMARY!);
-  const NEXT_PUBLIC_FEES_UNSET_PRIMARY = parseInt(process.env.NEXT_PUBLIC_FEES_UNSET_PRIMARY!);
-  const NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD = parseInt(process.env.NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD!);
-  const NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD_PUBLIC!);
-  const NEXT_PUBLIC_FEES_UNSET_RESOLVER_RECORD = parseInt(process.env.NEXT_PUBLIC_FEES_UNSET_RESOLVER_RECORD!);
-  const NEXT_PUBLIC_FEES_UNSET_RESOLVER_RECORD_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_UNSET_RESOLVER_RECORD_PUBLIC!);
-  const NEXT_PUBLIC_FEES_TRANSFER_PRIVATE = parseInt(process.env.NEXT_PUBLIC_FEES_TRANSFER_PRIVATE!);
-  const NEXT_PUBLIC_FEES_TRANSFER_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_TRANSFER_PUBLIC!);
-  const NETWORK = process.env.NEXT_PUBLIC_NETWORK as WalletAdapterNetwork;
+  const { records, publicBalance } = useRecords();
+  const { addTransaction } = useTransaction();
+  const { getCreditRecords } = useCredit();
+  const { getAddress } = useClient();
+  const { privateFee } = usePrivateFee();
+  const { publicKey, requestTransaction, requestRecordPlaintexts } = useWallet();
+  const { cbUUID, clearCbUUID } = useTrace();
 
-  const {records, publicBalance} = useRecords();
-  const {addTransaction} = useTransaction();
-  const {getCreditRecords} = useCredit();
-  const {getAddress, getName} = useClient();
-  const {privateFee} = usePrivateFee();
-  const {publicKey, requestTransaction, requestRecordPlaintexts} = useWallet();
-  const {cbUUID, clearCbUUID} = useTrace();
-
-  const notify = React.useCallback((type: TypeOptions, message: string) => {
-    toast({type, message});
+  const notify = useCallback((type: TypeOptions, message: string) => {
+    toast({ type, message });
   }, []);
 
   const matchTld = (name: string) => {
-    const is_valid = /^([a-z0-9-_]{1,64}\.)+[a-z]{1,10}$/.test(name);
-    if (!is_valid) {
-      return undefined;
-    }
-    return tlds.find(tld => name.endsWith(`.${tld.name}`));
-  }
+    const isValid = /^([a-z0-9-_]{1,64}\.)+[a-z]{1,10}$/.test(name);
+    return isValid ? tlds.find(tld => name.endsWith(`.${tld.name}`)) : undefined;
+  };
 
   const calcPrice = (name: string, tld: TLD, card: CouponCard | null) => {
     const length = name.length;
     const maxKey = Math.max(...Object.keys(tld.prices).map(Number));
     const priceKey = Math.min(length, maxKey);
     const price = tld.prices[priceKey];
-    if (card && card.limit_name_length <= name.length) {
-      return price * card.discount_percent / 100;
-    }
-    return price;
-  }
+    return card && card.limit_name_length <= name.length ? price * card.discount_percent / 100 : price;
+  };
 
   const formatNftData = async (record: Record) => {
     return `{ metadata: [${record.nameField}, 0field, 0field, 0field] }`;
-  }
+  };
 
   const getCouponCards = async (name: string, tld: TLD) => {
     return new Promise<CouponCard[]>((resolve, reject) => {
-      requestRecordPlaintexts!(NEXT_PUBLIC_COUPON_CARD_PROGRAM!).then((records) => {
+      requestRecordPlaintexts!(env.COUPON_CARD_PROGRAM).then((records) => {
         return Promise.all(records.filter((rec) => !rec.spent && rec.data.count != '0u64.private').map(async (rec) => {
           const limit_name_length = parseInt(rec.data.limit_name_length.replace("u8.private", ""));
           let tld = rec.data.tld.replace(".private", "");
@@ -117,14 +91,14 @@ export function useANS() {
 
     let price = calcPrice(name, tld, card);
     let functionName = "register_fld";
-    let fee = NEXT_PUBLIC_FEES_REGISTER;
+    let fee = env.FEES.REGISTER;
     let amounts = [];
     if (price === 0) {
       functionName = "register_free";
-      fee = NEXT_PUBLIC_FEES_REGISTER_FREE;
+      fee = env.FEES.REGISTER_FREE;
     } else if (card) {
       functionName = "register_fld_with_coupon";
-      fee = NEXT_PUBLIC_FEES_REGISTER_COUPON;
+      fee = env.FEES.REGISTER_COUPON;
     }
     if (isPrivate) {
       if (functionName !== "register_free") {
@@ -133,7 +107,7 @@ export function useANS() {
       amounts.push(fee);
     } else if (functionName !== "register_free") {
       functionName = functionName + "_public";
-      fee = Math.ceil(fee + 24000);
+      fee = Math.ceil(fee + 16000);
 
       if (publicBalance < price + fee) {
         const error = "You don't have enough public credits";
@@ -159,11 +133,11 @@ export function useANS() {
           const memo = {msg: cbUUID, type: 'coinbase_quest'}
           inputs.push(getFormattedFieldsInput(JSON.stringify(memo), 8));
           fee += 12000;
-          program = NEXT_PUBLIC_REGISTER_QUEST_PROGRAM!;
+          program = env.REGISTER_QUEST_PROGRAM;
         }
         const aleoTransaction = Transaction.createTransaction(
           publicKey,
-          NETWORK,
+          env.NETWORK,
           program,
           functionName,
           inputs,
@@ -200,19 +174,19 @@ export function useANS() {
 
     let amounts = [];
     if (privateFee) {
-      amounts.push(NEXT_PUBLIC_FEES_REGISTER_PUBLIC);
+      amounts.push(env.FEES.REGISTER_PUBLIC);
     }
     getCreditRecords(amounts)
       .then((records) => {
         const aleoTransaction = Transaction.createTransaction(
           publicKey,
-          NETWORK,
-          NEXT_PUBLIC_PROGRAM!,
+          env.NETWORK,
+          env.REGISTRY_PROGRAM,
           "register_" + (parentRecord.private ? "private" : "public"),
           [getFormattedNameInput(name, 4),
             parentRecord.private ? parentRecord.record : parentRecord.nameHash,
             publicKey, '0field'],
-          NEXT_PUBLIC_FEES_REGISTER_PUBLIC,
+          env.FEES.REGISTER_PUBLIC,
           isPrivate // use private fee, or will leak the user address information
         );
 
@@ -262,9 +236,9 @@ export function useANS() {
 
     if (record) {
       const inputs: string[] = [];
-      let fee = NEXT_PUBLIC_FEES_TRANSFER_PUBLIC;
+      let fee = env.FEES.TRANSFER_PUBLIC;
       if (record.private) {
-        fee = NEXT_PUBLIC_FEES_TRANSFER_PRIVATE;
+        fee = env.FEES.TRANSFER_PRIVATE;
         inputs.push(record.record);
       } else {
         inputs.push(await formatNftData(record));
@@ -273,14 +247,14 @@ export function useANS() {
       inputs.push(recipient);
       let amounts = [];
       if (privateFee) {
-        amounts.push(NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC);
+        amounts.push(env.FEES.CONVERT_TO_PUBLIC);
       }
       getCreditRecords(amounts)
         .then((records) => {
           const aleoTransaction = Transaction.createTransaction(
             publicKey,
-            NETWORK,
-            NEXT_PUBLIC_PROGRAM!,
+            env.NETWORK,
+            env.REGISTRY_PROGRAM,
             `transfer_${record.private ? "private" : "public"}`,
             inputs,
             fee,
@@ -320,17 +294,17 @@ export function useANS() {
       }
       let amounts = [];
       if (privateFee) {
-        amounts.push(NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC);
+        amounts.push(env.FEES.CONVERT_TO_PUBLIC);
       }
       getCreditRecords(amounts)
         .then((records) => {
           const aleoTransaction = Transaction.createTransaction(
             publicKey,
-            NETWORK,
-            NEXT_PUBLIC_PROGRAM!,
+            env.NETWORK,
+            env.REGISTRY_PROGRAM,
             "transfer_private_to_public",
             [record.record, publicKey],
-            NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC,
+            env.FEES.CONVERT_TO_PUBLIC,
             privateFee
           );
           if (requestTransaction)
@@ -368,7 +342,7 @@ export function useANS() {
 
       let amounts = [];
       if (privateFee) {
-        amounts.push(NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC);
+        amounts.push(env.FEES.CONVERT_TO_PUBLIC);
       }
 
       const inputs = [await formatNftData(record), "0scalar", publicKey]
@@ -377,11 +351,11 @@ export function useANS() {
         .then((records) => {
           const aleoTransaction = Transaction.createTransaction(
             publicKey,
-            NETWORK,
-            NEXT_PUBLIC_PROGRAM!,
+            env.NETWORK,
+            env.REGISTRY_PROGRAM,
             "transfer_public_to_private",
             inputs,
-            NEXT_PUBLIC_FEES_CONVERT_TO_PRIVATE,
+            env.FEES.CONVERT_TO_PRIVATE,
             privateFee
           );
           if (requestTransaction)
@@ -418,17 +392,17 @@ export function useANS() {
 
       let amounts = [];
       if (privateFee) {
-        amounts.push(NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC);
+        amounts.push(env.FEES.CONVERT_TO_PUBLIC);
       }
       getCreditRecords(amounts)
         .then((records) => {
           const aleoTransaction = Transaction.createTransaction(
             publicKey,
-            NETWORK,
-            NEXT_PUBLIC_PROGRAM!,
+            env.NETWORK,
+            env.REGISTRY_PROGRAM,
             "set_primary_name",
             [record.nameHash],
-            NEXT_PUBLIC_FEES_SET_PRIMARY,
+            env.FEES.SET_PRIMARY,
             privateFee
           );
 
@@ -456,17 +430,17 @@ export function useANS() {
 
     let amounts = [];
     if (privateFee) {
-      amounts.push(NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC);
+      amounts.push(env.FEES.CONVERT_TO_PUBLIC);
     }
     getCreditRecords(amounts)
       .then((records) => {
         const aleoTransaction = Transaction.createTransaction(
           publicKey,
-          NETWORK,
-          NEXT_PUBLIC_PROGRAM!,
+          env.NETWORK,
+          env.REGISTRY_PROGRAM,
           "unset_primary_name",
           [],
-          NEXT_PUBLIC_FEES_UNSET_PRIMARY,
+          env.FEES.UNSET_PRIMARY,
           privateFee
         );
 
@@ -488,7 +462,7 @@ export function useANS() {
 
     if (record) {
       let amounts = [];
-      let fee = record.private ? NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD : NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD_PUBLIC;
+      let fee = record.private ? env.FEES.SET_RESOLVER_RECORD : env.FEES.SET_RESOLVER_RECORD_PUBLIC;
       if (privateFee) {
         amounts.push(fee);
       }
@@ -496,8 +470,8 @@ export function useANS() {
         .then((records) => {
           const aleoTransaction = Transaction.createTransaction(
             publicKey,
-            NETWORK,
-            NEXT_PUBLIC_RESOLVER_PROGRAM!,
+            env.NETWORK,
+            env.RESOLVER_PROGRAM,
             `set_resolver_record${record.private ? "" : "_public"}`,
             [
               record.private ? record.record : record.nameHash,
@@ -532,7 +506,7 @@ export function useANS() {
 
     if (record) {
       let amounts = [];
-      let fee = record.private ? NEXT_PUBLIC_FEES_UNSET_RESOLVER_RECORD : NEXT_PUBLIC_FEES_UNSET_RESOLVER_RECORD_PUBLIC;
+      let fee = record.private ? env.FEES.UNSET_RESOLVER_RECORD : env.FEES.UNSET_RESOLVER_RECORD_PUBLIC;
       if (privateFee) {
         amounts.push(fee);
       }
@@ -541,8 +515,8 @@ export function useANS() {
 
           const aleoTransaction = Transaction.createTransaction(
             publicKey,
-            NETWORK,
-            NEXT_PUBLIC_RESOLVER_PROGRAM!,
+            env.NETWORK,
+            env.RESOLVER_PROGRAM,
             `unset_resolver_record${record.private ? "" : "_public"}`,
             [record.private ? record.record : record.nameHash, getFormattedU128Input(category)],
             fee,

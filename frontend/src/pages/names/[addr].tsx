@@ -9,9 +9,9 @@ import {useClient} from "@/lib/hooks/use-client";
 import Layout from "@/layouts/_layout";
 import {DynamicAddressIcon} from "@/assets/address/DynamicAddressIcon";
 import ActiveLink from "@/components/ui/links/active-link";
+import env from "@/config/env";
 
 const NamesPage: NextPageWithLayout = () => {
-  const NEXT_PUBLIC_EXPLORER_URL = process.env.NEXT_PUBLIC_EXPLORER_URL!;
   const {publicKey} = useWallet();
   const {getPublicDomain} = useClient();
   const router = useRouter();
@@ -50,7 +50,7 @@ const NamesPage: NextPageWithLayout = () => {
         </h2>
         <div className="w-full rounded-lg [background:linear-gradient(180deg,_#2e2e2e,_rgba(46,_46,_46,_0))] py-5 px-5">
           <ActiveLink
-            href={`${NEXT_PUBLIC_EXPLORER_URL}${address}`}
+            href={`${env.EXPLORER_URL}${address}`}
             target={"_blank"}
             className="cursor-pointer [border:none] rounded-full flex flex-row items-center justify-start gap-[5px] z-[2]">
             <div className="!h-[21px] !w-[21px] relative">

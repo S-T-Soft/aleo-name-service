@@ -1,37 +1,21 @@
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
 import {StatusChangeCallback, Record, ARC21Token} from "@/types";
-import {Transaction, WalletAdapterNetwork, WalletNotConnectedError} from "@demox-labs/aleo-wallet-adapter-base";
+import {Transaction, WalletNotConnectedError} from "@demox-labs/aleo-wallet-adapter-base";
 import {useTransaction} from "@/lib/hooks/use-transaction";
 import React from "react";
 import {TypeOptions} from "react-toastify";
 import toast from "@/components/ui/toast";
 import {useClient} from "@/lib/hooks/use-client";
-import * as process from "process";
 import {getFormattedNameInput} from "@/lib/util";
 import {usePrivateFee} from "@/lib/hooks/use-private-fee";
 import tokens from "@/config/tokens";
+import env from "@/config/env";
 import {useRecords} from "@/lib/hooks/use-records";
 
 export function useCredit() {
-  const CREDIT_PROGRAM = "credits.aleo";
-  const MTSP_PROGRAM = "token_registry.aleo";
-  const FEES_CREDIT_TRANSFER = parseInt(process.env.NEXT_PUBLIC_FEES_CREDIT_TRANSFER!);
-  const FEES_CREDIT_CLAIM = parseInt(process.env.NEXT_PUBLIC_FEES_CREDIT_CLAIM!);
-  const FEES_CREDIT_CLAIM_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_CREDIT_CLAIM_PUBLIC!);
-  const FEES_TRANSFER_PRIVATE_CREDITS = parseInt(process.env.NEXT_PUBLIC_FEES_TRANSFER_PRIVATE_CREDITS!);
-  const FEES_TRANSFER_PUBLIC_CREDITS = parseInt(process.env.NEXT_PUBLIC_FEES_TRANSFER_PUBLIC_CREDITS!);
-  const FEES_TRANSFER_PUBLIC_TO_PRIVATE_CREDITS = parseInt(process.env.NEXT_PUBLIC_FEES_TRANSFER_PUBLIC_TO_PRIVATE_CREDITS!);
-  const FEES_TRANSFER_PRIVATE_TO_PUBLIC_CREDITS = parseInt(process.env.NEXT_PUBLIC_FEES_TRANSFER_PRIVATE_TO_PUBLIC_CREDITS!);
-  const FEES_TRANSFER_PRIVATE_ARC21 = parseInt(process.env.NEXT_PUBLIC_FEES_TRANSFER_PRIVATE_ARC21!);
-  const FEES_TRANSFER_PUBLIC_ARC21 = parseInt(process.env.NEXT_PUBLIC_FEES_TRANSFER_PUBLIC_ARC21!);
-  const FEES_TRANSFER_PUBLIC_TO_PRIVATE_ARC21 = parseInt(process.env.NEXT_PUBLIC_FEES_TRANSFER_PUBLIC_TO_PRIVATE_ARC21!);
-  const FEES_TRANSFER_PRIVATE_TO_PUBLIC_ARC21 = parseInt(process.env.NEXT_PUBLIC_FEES_TRANSFER_PRIVATE_TO_PUBLIC_ARC21!);
-  const NETWORK = process.env.NEXT_PUBLIC_NETWORK as WalletAdapterNetwork;
-
   const {addTransaction} = useTransaction();
   const {publicBalance} = useRecords();
   const {getAddress, getNameHash} = useClient();
-  const TRANSFER_PROGRAM = process.env.NEXT_PUBLIC_TRANSFER_PROGRAM!;
   const {privateFee} = usePrivateFee();
   const {publicKey, requestRecordPlaintexts, requestTransaction} = useWallet();
 
@@ -45,7 +29,7 @@ export function useCredit() {
         resolve([]);
         return;
       }
-      requestRecordPlaintexts!(CREDIT_PROGRAM)
+      requestRecordPlaintexts!(env.CREDIT_PROGRAM)
       .then((originalRecords) => {
         originalRecords = originalRecords.filter((rec) => !rec.spent && rec.data.microcredits !== "0u64.private");
         // sort amounts in descending order
@@ -93,7 +77,7 @@ export function useCredit() {
         resolve([]);
         return;
       }
-      requestRecordPlaintexts!(MTSP_PROGRAM)
+      requestRecordPlaintexts!(env.MTSP_PROGRAM)
       .then((originalRecords) => {
         originalRecords = originalRecords.filter((rec) => !rec.spent && rec.data.amount !== "0u128.private" && rec.data.token_id === token.id);
         let sortedAmounts = amounts
@@ -172,22 +156,22 @@ export function useCredit() {
 
     const token = tokens.filter((token) => token.id === tokenId)[0];
     amount = amount * 10**token.decimals;
-    const program = tokenId === "" ? CREDIT_PROGRAM : MTSP_PROGRAM;
+    const program = tokenId === "" ? env.CREDIT_PROGRAM : env.MTSP_PROGRAM;
 
     let fee = 0;
-    if (program == CREDIT_PROGRAM) {
+    if (program == env.CREDIT_PROGRAM) {
       fee = {
-        "transfer_private": FEES_TRANSFER_PRIVATE_CREDITS,
-        "transfer_public": FEES_TRANSFER_PUBLIC_CREDITS,
-        "transfer_private_to_public": FEES_TRANSFER_PRIVATE_TO_PUBLIC_CREDITS,
-        "transfer_public_to_private": FEES_TRANSFER_PUBLIC_TO_PRIVATE_CREDITS
+        "transfer_private": env.FEES.TRANSFER_PRIVATE_CREDITS,
+        "transfer_public": env.FEES.TRANSFER_PUBLIC_CREDITS,
+        "transfer_private_to_public": env.FEES.TRANSFER_PRIVATE_TO_PUBLIC_CREDITS,
+        "transfer_public_to_private": env.FEES.TRANSFER_PUBLIC_TO_PRIVATE_CREDITS
       }[method]!;
     } else {
       fee = {
-        "transfer_private": FEES_TRANSFER_PRIVATE_ARC21,
-        "transfer_public": FEES_TRANSFER_PUBLIC_ARC21,
-        "transfer_private_to_public": FEES_TRANSFER_PRIVATE_TO_PUBLIC_ARC21,
-        "transfer_public_to_private": FEES_TRANSFER_PUBLIC_TO_PRIVATE_ARC21
+        "transfer_private": env.FEES.TRANSFER_PRIVATE_ARC21,
+        "transfer_public": env.FEES.TRANSFER_PUBLIC_ARC21,
+        "transfer_private_to_public": env.FEES.TRANSFER_PRIVATE_TO_PUBLIC_ARC21,
+        "transfer_public_to_private": env.FEES.TRANSFER_PUBLIC_TO_PRIVATE_ARC21
       }[method]!;
     }
 
@@ -196,7 +180,7 @@ export function useCredit() {
         case "transfer_private":
         case "transfer_private_to_public":
           const getRecords =
-            program === MTSP_PROGRAM
+            program === env.MTSP_PROGRAM
               ? getMTSPRecords(token, privateFee ? [amount, fee!] : [amount])
               : getCreditRecords(privateFee ? [amount, fee!] : [amount]);
 
@@ -206,13 +190,13 @@ export function useCredit() {
             }
 
             let inputs =
-              program === MTSP_PROGRAM
+              program === env.MTSP_PROGRAM
                 ? [recipient, amount + "u128", records[0]]
                 : [records[0], recipient, amount + "u64"];
 
             const aleoTransaction = Transaction.createTransaction(
               publicKey,
-              NETWORK,
+              env.NETWORK,
               program,
               method,
               inputs,
@@ -236,14 +220,14 @@ export function useCredit() {
           }
 
           let inputs =
-            program === MTSP_PROGRAM
+            program === env.MTSP_PROGRAM
               ? [tokenId, recipient, amount + "u128"]
               : [recipient, amount + "u64"];
 
           return Promise.resolve().then(() => {
             const aleoTransaction = Transaction.createTransaction(
               publicKey,
-              NETWORK,
+              env.NETWORK,
               program,
               method,
               inputs,
@@ -288,7 +272,7 @@ export function useCredit() {
 
     const token = tokens.filter((token) => token.id === tokenId)[0];
     amount = amount * 10**token.decimals;
-    const amounts = privateFee ? [amount, FEES_CREDIT_TRANSFER] : [];
+    const amounts = privateFee ? [amount, env.FEES.CREDIT_TRANSFER] : [];
 
     Promise.all([getCreditRecords(amounts), getNameHash(recipient)])
       .then(([records, nameHash]) => {
@@ -308,11 +292,11 @@ export function useCredit() {
         }
         const aleoTransaction = Transaction.createTransaction(
           publicKey,
-          NETWORK,
-          TRANSFER_PROGRAM,
+          env.NETWORK,
+          env.TRANSFER_PROGRAM,
           functionName,
           inputs,
-          FEES_CREDIT_TRANSFER,
+          env.FEES.CREDIT_TRANSFER,
           privateFee
         );
         console.log(aleoTransaction);
@@ -334,12 +318,12 @@ export function useCredit() {
     if (!publicKey) throw new WalletNotConnectedError();
     onStatusChange && onStatusChange(true, {hasError: false, message: "Claiming"});
 
-    const fee = record.private ? FEES_CREDIT_CLAIM : FEES_CREDIT_CLAIM_PUBLIC;
+    const fee = record.private ? env.FEES.CREDIT_CLAIM : env.FEES.CREDIT_CLAIM_PUBLIC;
 
     const aleoTransaction = Transaction.createTransaction(
       publicKey,
-      NETWORK,
-      TRANSFER_PROGRAM,
+      env.NETWORK,
+      env.TRANSFER_PROGRAM,
       record.private ? "claim_credits_private" : "claim_credits_public",
       [record.private ? record.record : record.nameHash, getFormattedNameInput(password, 2), amount + "u64"],
       fee,

@@ -1,15 +1,12 @@
-import * as process from "process";
 import pMemoize from 'p-memoize';
 import ExpiryMap from 'expiry-map';
+import env from "@/config/env";
 import {NameHashBalance, Record, Resolver, Statistic} from "@/types";
 
 export function useClient() {
-  const API_URL = process.env.NEXT_PUBLIC_API_URL!;
-  const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL!;
-
   const getStatistic = pMemoize(async () => {
     return new Promise<Statistic>((resolve, reject) => {
-      fetch(`${API_URL}/statistic`)
+      fetch(`${env.API_URL}/statistic`)
         .then((response) => response.json())
         .then((data) => {
           resolve({
@@ -29,7 +26,7 @@ export function useClient() {
 
   const getAddress = pMemoize(async (name: string) => {
     return new Promise<string>((resolve, reject) => {
-      fetch(`${API_URL}/address/${name}`)
+      fetch(`${env.API_URL}/address/${name}`)
         .then((response) => response.json())
         .then((data) => {
           resolve(data.address);
@@ -42,7 +39,7 @@ export function useClient() {
 
   const getNameHash = pMemoize(async (name: string) => {
     return new Promise<string>((resolve, reject) => {
-      fetch(`${API_URL}/name_to_hash/${name}`)
+      fetch(`${env.API_URL}/name_to_hash/${name}`)
         .then((response) => response.json())
         .then((data) => {
           resolve(data.name_hash);
@@ -55,7 +52,7 @@ export function useClient() {
 
   const getName = pMemoize(async (hashName: string) => {
     return new Promise<NameHashBalance>((resolve, reject) => {
-      fetch(`${API_URL}/hash_to_name/${hashName}`)
+      fetch(`${env.API_URL}/hash_to_name/${hashName}`)
         .then((response) => response.json())
         .then((data) => {
           resolve({
@@ -73,7 +70,7 @@ export function useClient() {
 
   const getNameByField = pMemoize(async (field: string) => {
     return new Promise<NameHashBalance>((resolve, reject) => {
-      fetch(`${API_URL}/field_to_name/${field}`)
+      fetch(`${env.API_URL}/field_to_name/${field}`)
         .then((response) => response.json())
         .then((data) => {
           resolve({
@@ -92,7 +89,7 @@ export function useClient() {
   const getPrimaryName = pMemoize(async (publicKey: string) => {
     return new Promise<string>((resolve, reject) => {
       if (publicKey) {
-        fetch(`${API_URL}/primary_name/${publicKey}`)
+        fetch(`${env.API_URL}/primary_name/${publicKey}`)
           .then((response) => response.json())
           .then((data) => {
             resolve(data.name);
@@ -108,7 +105,7 @@ export function useClient() {
 
   const getSubNames = pMemoize(async (name: string) => {
     return new Promise<Array<Record>>((resolve, reject) => {
-      fetch(`${API_URL}/subdomain/${name}`)
+      fetch(`${env.API_URL}/subdomain/${name}`)
         .then((response) => response.json())
         .then((data: Array<{name: string, address: string, name_hash: string}>) => {
           resolve(data.map(item => {
@@ -128,7 +125,7 @@ export function useClient() {
 
   const getResolvers = pMemoize(async (name: string) => {
     return new Promise<Array<Resolver>>((resolve, reject) => {
-      fetch(`${API_URL}/resolvers/${name}`)
+      fetch(`${env.API_URL}/resolvers/${name}`)
         .then((response) => response.json())
         .then((data: Array<{content: string, category: string, name_hash: string}>) => {
           resolve(data.map(item => {
@@ -148,7 +145,7 @@ export function useClient() {
 
   const getResolver = pMemoize(async (name: string, category: string) => {
     return new Promise<Resolver | null>((resolve, reject) => {
-      fetch(`${API_URL}/resolver?name=${name}&category=${category}`)
+      fetch(`${env.API_URL}/resolver?name=${name}&category=${category}`)
         .then((response) => response.json())
         .then((data: {content: string, category: string, name_hash: string}) => {
           resolve({
@@ -167,7 +164,7 @@ export function useClient() {
 
   const getPublicDomain = pMemoize(async (publicKey: string) => {
     return new Promise<Array<Record>>((resolve, reject) => {
-      fetch(`${API_URL}/public_ans/${publicKey}`)
+      fetch(`${env.API_URL}/public_ans/${publicKey}`)
         .then((response) => response.json())
         .then((data: Array<{name: string, address: string, name_hash: string, name_field: string, is_primary_name: boolean, balance: number}>) => {
           resolve(data.map(item => {
@@ -189,7 +186,7 @@ export function useClient() {
 
   const getPublicBalance = pMemoize(async (address: string): Promise<number> => {
     return new Promise<number>((resolve, reject) => {
-      fetch(RPC_URL, {
+      fetch(env.RPC_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -217,7 +214,7 @@ export function useClient() {
 
   const getLatestHeight = pMemoize(async () => {
     return new Promise<number>((resolve, reject) => {
-      fetch(RPC_URL, {
+      fetch(env.RPC_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

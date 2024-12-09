@@ -5,9 +5,9 @@ import {useRouter} from "next/router";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import RotatingCoin from "@/pages/tapns/rotating-coin";
 import SearchView from "@/components/search/view";
+import env from "@/config/env";
 
 const NamePage: NextPageWithLayout = () => {
-  const GO_URL = process.env.NEXT_PUBLIC_GO_URL!
   const router = useRouter();
   const [code, setCode] = useState("");
   const [address, setAddress] = useState("");
@@ -31,7 +31,7 @@ const NamePage: NextPageWithLayout = () => {
   useEffect(() => {
     const fetchQueuePosition = async () => {
       try {
-        const response = await fetch(`${GO_URL}/tapns/queue/${code}`);
+        const response = await fetch(`${env.GO_URL}/tapns/queue/${code}`);
         const data = await response.json();
         setQueue(data.queue);
         if (data.queue === 0) {

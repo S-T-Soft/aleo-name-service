@@ -5,13 +5,10 @@ import {useEffect, useRef, useState} from "react";
 import toast from "@/components/ui/toast";
 import Button from "@/components/ui/button";
 import {useBoolean} from "react-use";
-import * as process from "process";
+import env from "@/config/env";
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
 import {RefreshIcon} from "@/components/icons/refresh";
 
-const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL
-  ? process.env.NEXT_PUBLIC_GATEWAY_URL
-  : "https://gateway.pinata.cloud/ipfs/";
 
 export default function Avatar({record, onlyView = false, ...props}: { record: Record, onlyView: boolean }) {
   const {getResolver} = useClient();
@@ -45,7 +42,7 @@ export default function Avatar({record, onlyView = false, ...props}: { record: R
         throw new Error("Max file size is 5MB");
       }
 
-      signMessage(encoder.encode(message)).then((signature) => {
+      signMessage!(encoder.encode(message)).then((signature) => {
         formData.append("file", fileToUpload, fileToUpload.name);
         formData.append("address", publicKey || "");
         formData.append("message", message);
@@ -65,7 +62,7 @@ export default function Avatar({record, onlyView = false, ...props}: { record: R
           setSetting(running);
           setStatus(status.message);
           if (status.message === 'Finalized') {
-            setAvatar(`${GATEWAY_URL}${ipfsHash}`);
+            setAvatar(`${env.GATEWAY_URL}${ipfsHash}`);
             toast(
               {
                 type: "success",
@@ -101,7 +98,7 @@ export default function Avatar({record, onlyView = false, ...props}: { record: R
       setLoading(true);
       getResolver(record.name, "avatar").then((resolver) => {
         if (resolver != null) {
-          setAvatar(resolver.value.replace("ipfs://", GATEWAY_URL));
+          setAvatar(resolver.value.replace("ipfs://", env.GATEWAY_URL));
         }
       }).finally(() => {
         setLoading(false);

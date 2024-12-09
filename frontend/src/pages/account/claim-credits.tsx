@@ -4,11 +4,11 @@ import Button from "@/components/ui/button";
 import {RefreshIcon} from "@/components/icons/refresh";
 import {useCredit} from "@/lib/hooks/use-credit";
 import toast from "@/components/ui/toast";
+import env from "@/config/env";
 
 export default function ClaimCredits({record}: React.PropsWithChildren<{
   record: Record
 }>) {
-  const enableCreditTransfer = process.env.NEXT_PUBLIC_ENABLE_CREDIT_TRANSFER === "true";
   const [claiming, setClaiming] = useState(false);
   const [status, setStatus] = useState("Claiming");
   const [claimingWithPass, setClaimingWithPass] = useState(false);
@@ -20,7 +20,7 @@ export default function ClaimCredits({record}: React.PropsWithChildren<{
 
   const handleClaim = async (event: any) => {
     event.preventDefault();
-    await claimCreditsFromANS(record, record.balance, "", (running: boolean, status: Status) => {
+    await claimCreditsFromANS("", record, record.balance, "", (running: boolean, status: Status) => {
       setClaiming(running);
       setStatus(status.message);
     });
@@ -50,13 +50,13 @@ export default function ClaimCredits({record}: React.PropsWithChildren<{
     }
     setShowModal(false);
     setClaimingWithPass(true);
-    await claimCreditsFromANS(record, amount * 1000000, password, (running: boolean, status: Status) => {
+    await claimCreditsFromANS("", record, amount * 1000000, password, (running: boolean, status: Status) => {
       setClaimingWithPass(running);
       setStatusPass(status.message);
     });
   }
 
-  return enableCreditTransfer && <>
+  return env.ENABLE_CREDIT_TRANSFER && <>
     <div className="leading-10 mt-5">
       <span className="mr-4">Balance:</span>
       <span className="rounded-lg bg-gray-700 px-2 py-1 mr-4">{record && record.balance / 1000000} ACs</span>

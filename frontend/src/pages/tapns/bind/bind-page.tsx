@@ -5,13 +5,13 @@ import { useRouter } from 'next/router'
 import Button from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
+import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
 import RotatingCoin from "@/pages/tapns/rotating-coin";
 import {WalletMultiButton} from "@/components/WalletMultiButton";
+import env from "@/config/env";
 
 export default function BindPage({ params }: { params: { code: string } }) {
-  const GO_URL = process.env.NEXT_PUBLIC_GO_URL!
   const [address, setAddress] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -31,7 +31,7 @@ export default function BindPage({ params }: { params: { code: string } }) {
     setError('')
 
     try {
-      const response = await fetch(`${GO_URL}/tapns/${params.code}`, {
+      const response = await fetch(`${env.GO_URL}/tapns/${params.code}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
