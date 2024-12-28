@@ -5,12 +5,13 @@ import {NameHashBalance, Record, Statistic} from "@/types";
 import {useClient} from "@/lib/hooks/use-client";
 import useSWR from 'swr';
 import env from "@/config/env";
-import {queryByField, queryName, saveName} from "@/lib/db";
+import {queryByField, saveName} from "@/lib/db";
 
 
 export function createRecordContext() {
   const {getPrimaryName,getName,getNameByField,getPublicDomain,getResolver,getStatistic,getPublicBalance} = useClient();
   const {publicKey, requestRecords} = useWallet();
+  const [activeRecord, setActiveRecord] = useState<Record|undefined>(undefined);
   const [records, setRecords] = useLocalStorage<Record[]>('records', []);
   const [statistic, setStatistic] = useState<Statistic>({totalNFTOwners: 0, totalPriNames: 0, totalNames: 0, totalNames24h: 0, blockHeight: 0, healthy: true} as Statistic);
   const [names, setNames] = useState<string[]>([]);
@@ -240,6 +241,8 @@ export function createRecordContext() {
     primaryName,
     avatar,
     loading,
+    activeRecord,
+    setActiveRecord,
     refreshRecords,
     addRecord,
     removeRecord,
@@ -258,6 +261,8 @@ interface RecordContextState {
   primaryName?: string;
   avatar?: string;
   loading: boolean;
+  activeRecord: Record | undefined;
+  setActiveRecord: (record: Record | undefined) => void;
   refreshRecords: (mode: string) => void;
   addRecord: (record: Record) => void;
   removeRecord: (name: string) => void;
@@ -275,6 +280,8 @@ const DEFAULT = {
   primaryName: "",
   avatar: "",
   loading: false,
+  activeRecord: undefined,
+  setActiveRecord: () => {},
   refreshRecords: () => {},
   addRecord: () => {},
   removeRecord: () => {},

@@ -87,7 +87,16 @@ export function useANS() {
   const register = async (name: string, tld: TLD, card: CouponCard | null, isPrivate: boolean, onStatusChange?: StatusChangeCallback) => {
     if (!publicKey) throw new WalletNotConnectedError();
 
-    onStatusChange && onStatusChange(true, {hasError: false, message: "Registering"});
+    // make sure the name is not registered
+    try {
+      await getAddress(`${name}.${tld.name}`);
+      onStatusChange && onStatusChange(false, {hasError: true, message: "Registered"});
+      return;
+    } catch (error) {
+      onStatusChange && onStatusChange(true, {hasError: false, message: "Registering"});
+    }
+
+    const isCbQuest = cbUUID != '' && tld.name == 'ans';
 
     let price = calcPrice(name, tld, card);
     let functionName = "register_fld";
@@ -116,8 +125,6 @@ export function useANS() {
         return;
       }
     }
-
-    const isCbQuest = cbUUID != '' && tld.name == 'ans';
 
     getCreditRecords(amounts)
       .then((records) => {

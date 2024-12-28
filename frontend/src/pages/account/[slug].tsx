@@ -20,7 +20,7 @@ const ManageNamePage: NextPageWithLayout = () => {
   const {wallet, publicKey} = useWallet();
   const {getAddress} = useClient();
   const {convertToPrivate, convertToPublic, setPrimaryName, unsetPrimaryName, transfer} = useANS();
-  const {records, updateRecodeBalance} = useRecords();
+  const {records, updateRecodeBalance, setActiveRecord, activeRecord} = useRecords();
   const [activeTab, setActiveTab] = useState('profile');
   const [available, setAvailable] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -29,7 +29,6 @@ const ManageNamePage: NextPageWithLayout = () => {
   const [isMine, setIsMine] = useState(true);
   const [isPrimaryName, setIsPrimaryName] = useState(false);
   const [name, setName] = useState("");
-  const [record, setRecord] = useState<Record | undefined>(undefined);
 
   useEffect(() => {
     if (!loading && name && name.length > 0) {
@@ -60,7 +59,7 @@ const ManageNamePage: NextPageWithLayout = () => {
         .then((address) => {
           setAvailable(false);
           const record = records?.find((rec) => rec.name === name);
-          setRecord(record);
+          setActiveRecord(record);
           record && updateRecodeBalance(record);
           const isPrivate = address.startsWith("Private");
           if (!isPrivate) {
@@ -130,22 +129,22 @@ const ManageNamePage: NextPageWithLayout = () => {
           {!loading && available || !isMine && <span>Redirecting...</span>}
           {!loading && activeTab == "profile" && isPrivate &&
               <PrivateName
-                record={record!}
+                record={activeRecord!}
                 setTriggerRecheck={() => {setTriggerRecheck(triggerRecheck + 1)}}
                 convertToPublic={convertToPublic}
                 transfer={transfer}
               />}
-          {!loading && record && activeTab == "profile" && !isPrivate &&
+          {!loading && activeRecord && activeTab == "profile" && !isPrivate &&
               <PublicName
-                record={record}
+                record={activeRecord}
                 setTriggerRecheck={() => {setTriggerRecheck(triggerRecheck + 1)}}
                 convertToPrivate={convertToPrivate}
                 setPrimaryName={setPrimaryName}
                 unsetPrimaryName={unsetPrimaryName}
                 transfer={transfer}
               />}
-          {!loading && activeTab == "subnames" && <SubNameView record={record!}/>}
-          {!loading && activeTab == "resolver" && record && <ResolverView record={record} onlyView={false}/>}
+          {!loading && activeTab == "subnames" && <SubNameView record={activeRecord!}/>}
+          {!loading && activeTab == "resolver" && activeRecord && <ResolverView record={activeRecord} onlyView={false}/>}
           </div>
         </div>
       </div>

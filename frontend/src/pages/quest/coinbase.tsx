@@ -7,12 +7,13 @@ import {usePrivateFee} from "@/lib/hooks/use-private-fee";
 const CoinbaseQuest = () => {
   const router = useRouter();
   const {setPrivateFee} = usePrivateFee();
-  const { setCbUUID } = useTrace();
+  const { setCbUUID, setQuestId } = useTrace();
 
   useEffect(() => {
-    const { uuid, next } = router.query;
+    const { uuid, questId, next } = router.query;
     if (uuid) {
       setCbUUID(uuid as string);
+      setQuestId(questId as string);
       setPrivateFee(false);
       if (next && ((next as string).startsWith('/') || (next as string).startsWith(location.origin))) {
         const sanitizedNext = DOMPurify.sanitize(next as string);
@@ -21,7 +22,7 @@ const CoinbaseQuest = () => {
         router.push('/');
       }
     }
-  }, [router.query, setCbUUID]);
+  }, [router.query]);
 
   return null;
 };
