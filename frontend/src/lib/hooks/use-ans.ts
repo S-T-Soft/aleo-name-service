@@ -22,7 +22,7 @@ export function useANS() {
   const { getAddress } = useClient();
   const { privateFee } = usePrivateFee();
   const { publicKey, requestTransaction, requestRecordPlaintexts } = useWallet();
-  const { cbUUID, clearCbUUID } = useTrace();
+  const { cbUUID, questId, isPrimaryQuest, isRegisterQuest, isConvertQuest, clearCbQuest } = useTrace();
 
   const notify = useCallback((type: TypeOptions, message: string) => {
     toast({ type, message });
@@ -96,7 +96,7 @@ export function useANS() {
       onStatusChange && onStatusChange(true, {hasError: false, message: "Registering"});
     }
 
-    const isCbQuest = cbUUID != '' && tld.name == 'ans';
+    const isCbQuest = isRegisterQuest && tld.name == 'ans';
 
     let price = calcPrice(name, tld, card);
     let functionName = "register_fld";
@@ -137,7 +137,7 @@ export function useANS() {
         }
         let program = tld.registrar;
         if (isCbQuest) {
-          const memo = {msg: cbUUID, type: 'coinbase_quest'}
+          const memo = {msg: cbUUID, type: 'coinbase_quest', id: questId}
           inputs.push(getFormattedFieldsInput(JSON.stringify(memo), 8));
           fee += 12000;
           program = env.REGISTER_QUEST_PROGRAM;
@@ -162,7 +162,7 @@ export function useANS() {
       .then((txId) => {
         const onCbStatusChange = (running: boolean, status: Status) => {
           if (!running && !status.hasError) {
-            clearCbUUID();
+            clearCbQuest();
           }
           onStatusChange && onStatusChange(running, status);
         }
@@ -174,14 +174,15 @@ export function useANS() {
       });
   }
 
-  const registerSubName = async (name: string, parentRecord: Record, isPrivate: boolean, onStatusChange?: StatusChangeCallback) => {
+  const registerSubName = async (name: string, parentRecord: Record, onStatusChange?: StatusChangeCallback) => {
     if (!publicKey) throw new WalletNotConnectedError();
 
     onStatusChange && onStatusChange(true, {hasError: false, message: "Registering"});
 
     let amounts = [];
+    const fee = env.FEES.REGISTER_PUBLIC;
     if (privateFee) {
-      amounts.push(env.FEES.REGISTER_PUBLIC);
+      amounts.push(fee);
     }
     getCreditRecords(amounts)
       .then((records) => {
@@ -193,8 +194,8 @@ export function useANS() {
           [getFormattedNameInput(name, 4),
             parentRecord.private ? parentRecord.record : parentRecord.nameHash,
             publicKey, '0field'],
-          env.FEES.REGISTER_PUBLIC,
-          isPrivate // use private fee, or will leak the user address information
+          fee,
+          privateFee // use private fee, or will leak the user address information
         );
 
         if (requestTransaction)
@@ -254,7 +255,7 @@ export function useANS() {
       inputs.push(recipient);
       let amounts = [];
       if (privateFee) {
-        amounts.push(env.FEES.CONVERT_TO_PUBLIC);
+        amounts.push(fee);
       }
       getCreditRecords(amounts)
         .then((records) => {
@@ -300,9 +301,11 @@ export function useANS() {
         return;
       }
       let amounts = [];
+      const fee = env.FEES.CONVERT_TO_PUBLIC;
       if (privateFee) {
-        amounts.push(env.FEES.CONVERT_TO_PUBLIC);
+        amounts.push(fee);
       }
+      const inputs = [record.record, publicKey];
       getCreditRecords(amounts)
         .then((records) => {
           const aleoTransaction = Transaction.createTransaction(
@@ -310,8 +313,8 @@ export function useANS() {
             env.NETWORK,
             env.REGISTRY_PROGRAM,
             "transfer_private_to_public",
-            [record.record, publicKey],
-            env.FEES.CONVERT_TO_PUBLIC,
+            inputs,
+            fee,
             privateFee
           );
           if (requestTransaction)
@@ -348,8 +351,9 @@ export function useANS() {
       }
 
       let amounts = [];
+      const fee = env.FEES.CONVERT_TO_PRIVATE;
       if (privateFee) {
-        amounts.push(env.FEES.CONVERT_TO_PUBLIC);
+        amounts.push(fee);
       }
 
       const inputs = [await formatNftData(record), "0scalar", publicKey]
@@ -362,7 +366,7 @@ export function useANS() {
             env.REGISTRY_PROGRAM,
             "transfer_public_to_private",
             inputs,
-            env.FEES.CONVERT_TO_PRIVATE,
+            fee,
             privateFee
           );
           if (requestTransaction)
@@ -398,9 +402,11 @@ export function useANS() {
       }
 
       let amounts = [];
+      const fee = env.FEES.SET_PRIMARY;
       if (privateFee) {
-        amounts.push(env.FEES.CONVERT_TO_PUBLIC);
+        amounts.push(fee);
       }
+      const inputs = [record.nameHash];
       getCreditRecords(amounts)
         .then((records) => {
           const aleoTransaction = Transaction.createTransaction(
@@ -408,8 +414,8 @@ export function useANS() {
             env.NETWORK,
             env.REGISTRY_PROGRAM,
             "set_primary_name",
-            [record.nameHash],
-            env.FEES.SET_PRIMARY,
+            inputs,
+            fee,
             privateFee
           );
 
@@ -436,8 +442,9 @@ export function useANS() {
     onStatusChange && onStatusChange(true, {hasError: false, message: "Unsetting"});
 
     let amounts = [];
+    const fee = env.FEES.UNSET_PRIMARY;
     if (privateFee) {
-      amounts.push(env.FEES.CONVERT_TO_PUBLIC);
+      amounts.push(fee);
     }
     getCreditRecords(amounts)
       .then((records) => {
@@ -447,7 +454,7 @@ export function useANS() {
           env.REGISTRY_PROGRAM,
           "unset_primary_name",
           [],
-          env.FEES.UNSET_PRIMARY,
+          fee,
           privateFee
         );
 

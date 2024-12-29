@@ -1,12 +1,13 @@
 import type { AppProps } from 'next/app';
 import type { NextPageWithLayout } from '@/types';
-import {useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import Head from 'next/head';
 import { Hydrate, QueryClient, QueryClientProvider } from 'react-query';
 import { ReactQueryDevtools } from 'react-query/devtools';
 import { ThemeProvider } from 'next-themes';
 import ModalsContainer from '@/components/modal-views/container';
 import DrawersContainer from '@/components/drawer-views/container';
+import {CoinbaseBanner} from "@/components/CoinbaseBanner";
 // base css file
 import 'swiper/css';
 import '@/assets/css/scrollbar.css';
@@ -33,10 +34,8 @@ import {
 import {PrivateFeeProvider} from "@/context/private-fee-context";
 import {BlockNumber} from "@/components/BlockNumber";
 import {isMobile} from "@/lib/util";
-import {useTrace} from "@/lib/hooks/use-trace";
-import {useRouter} from "next/router";
 import env from "@/config/env";
-import {useRecords} from "@/lib/hooks/use-records";
+import {TraceProvider} from "@/context/trace-context";
 
 
 type AppPropsWithLayout = AppProps & {
@@ -70,24 +69,6 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
   const [queryClient] = useState(() => new QueryClient());
   const getLayout = Component.getLayout ?? ((page) => page);
   const [isTestnet, setIsTestnet] = useState(false);
-  const {cbUUID, questId} = useTrace();
-  const {activeRecord} = useRecords();
-  const router = useRouter();
-
-  const coinbaseTips = {
-    register_ans: 'Register a name to complete the Quest.',
-    convert_ans_to_public: 'Convert your private name to a public name to complete the Quest.',
-    set_ans_primary_name: 'Set a primary name to complete the Quest.'
-  };
-
-  const showCoinbase = useMemo(() => {
-    const isRegisterQuest = questId === 'register_ans' &&
-      (router.pathname === '/' || router.pathname.startsWith('/name/'));
-    const isConvertQuest = questId === 'convert_ans_to_public' && router.pathname.startsWith('/account/') && activeRecord && activeRecord.private;
-    const isPrimaryQuest = questId === 'set_ans_primary_name' && router.pathname.startsWith('/account/') && activeRecord && !activeRecord?.private && !activeRecord?.isPrimaryName;
-
-    return cbUUID && (isRegisterQuest || isConvertQuest || isPrimaryQuest);
-  }, [cbUUID, questId, router.pathname, activeRecord]);
 
   useEffect(() => {
     setIsTestnet(env.NETWORK === 'testnetbeta');
@@ -123,17 +104,6 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
           You are viewing the ANS app on testnet.
         </div>
       )}
-      {showCoinbase && (
-        <div style={{
-          backgroundColor: 'rgb(0, 82, 255)',
-          color: '#ffffff',
-          textAlign: 'center',
-          padding: '5px',
-          fontSize: '1rem'
-        }}>
-          { coinbaseTips[questId!] }
-        </div>
-      )}
       <QueryClientProvider client={queryClient}>
         <Hydrate state={pageProps.dehydratedState}>
           <WalletProvider
@@ -148,18 +118,21 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
           >
             <WalletModalProvider>
               <PrivateFeeProvider>
-                <RecordProvider>
-                  <ThemeProvider
-                    attribute="class"
-                    enableSystem={false}
-                    defaultTheme="dark"
-                  >
-                    {getLayout(<Component {...pageProps} />)}
-                    <BlockNumber />
-                    <ModalsContainer />
-                    <DrawersContainer />
-                  </ThemeProvider>
-                </RecordProvider>
+                <TraceProvider>
+                  <RecordProvider>
+                    <ThemeProvider
+                      attribute="class"
+                      enableSystem={false}
+                      defaultTheme="dark"
+                    >
+                      <CoinbaseBanner />
+                      {getLayout(<Component {...pageProps} />)}
+                      <BlockNumber />
+                      <ModalsContainer />
+                      <DrawersContainer />
+                    </ThemeProvider>
+                  </RecordProvider>
+                </TraceProvider>
               </PrivateFeeProvider>
             </WalletModalProvider>
           </WalletProvider>
