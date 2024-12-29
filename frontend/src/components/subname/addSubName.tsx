@@ -57,7 +57,7 @@ const AddSubName = ({record, onSuccess}: React.PropsWithChildren<{
     if (!inputValue || inputValue.length == 0) {
       return;
     }
-    await registerSubName(inputValue, record, privateFee, (running: boolean, status: Status) => {
+    await registerSubName(inputValue, record, (running: boolean, status: Status) => {
       setRegistering(running);
       setStatus(status.message);
       if (status.message === 'Finalized') {
