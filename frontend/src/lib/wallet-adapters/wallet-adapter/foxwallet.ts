@@ -68,7 +68,11 @@ export class FoxWalletAdapter extends BaseMessageSignerWalletAdapter {
             if (cbUUID != null) {
                 cbUUID = JSON.parse(cbUUID);
             }
-            const url = cbUUID ? `https://${location.host}/quest/coinbase?uuid=${cbUUID}&next=${location.href}` : location.href;
+            let questId = localStorage.getItem('questId');
+            if (questId != null) {
+                questId = JSON.parse(questId);
+            }
+            const url = cbUUID ? `https://${location.host}/quest/coinbase?uuid=${cbUUID}&questId=${questId}&next=${location.href}` : location.href;
             return `https://link.foxwallet.com/dapp?url=${encodeURIComponent(url)}`;
         }
         return 'https://foxwallet.com/download';
