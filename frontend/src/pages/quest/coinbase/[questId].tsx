@@ -12,6 +12,7 @@ const CoinbaseQuest = () => {
   useEffect(() => {
     const { uuid, questId, next } = router.query;
     if (uuid) {
+      console.log('CoinbaseQuest', uuid, questId, next);
       setCbUUID(uuid as string);
       setQuestId(questId as string);
       setPrivateFee(false);
