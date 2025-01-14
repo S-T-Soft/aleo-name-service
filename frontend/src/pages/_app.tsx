@@ -21,7 +21,7 @@ import {
   WalletAdapterNetwork
 } from '@demox-labs/aleo-wallet-adapter-base';
 import { WalletProvider } from '@demox-labs/aleo-wallet-adapter-react';
-import { WalletModalProvider } from '@demox-labs/aleo-wallet-adapter-reactui';
+import { WalletModalProvider } from '@/components/WalletModalProvider';
 import {RecordProvider} from "@/context/record-context";
 import { AxiomWebVitals } from 'next-axiom';
 import {
@@ -53,6 +53,7 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
         }),
         new PuzzleWalletAdapter({
           appName: 'Aleo Name Service',
+          isMobile: isMobile()
         }),
         new FoxWalletAdapter({
           appName: 'Aleo Name Service',

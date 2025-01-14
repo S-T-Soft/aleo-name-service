@@ -80,6 +80,13 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
           this._readyState = WalletReadyState.Installed;
           this.emit('readyStateChange', this._readyState);
           return true;
+        } else {
+          // Check if user is on a mobile device
+          if (this._isMobile) {
+            this._readyState = WalletReadyState.Loadable;
+            this.emit('readyStateChange', this._readyState);
+            return true;
+          }
         }
         return false;
       });
