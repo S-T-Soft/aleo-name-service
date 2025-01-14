@@ -20,7 +20,7 @@ const CoinbaseQuest = () => {
         const sanitizedNext = DOMPurify.sanitize(next as string);
         router.push(sanitizedNext);
       } else {
-        router.push('/');
+        router.push(questId == 'aleo_names_register' ? '/' : '/account');
       }
     }
   }, [router.query]);
