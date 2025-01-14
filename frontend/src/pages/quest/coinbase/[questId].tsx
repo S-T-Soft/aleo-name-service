@@ -10,10 +10,10 @@ const CoinbaseQuest = () => {
   const { setCbUUID, setQuestId } = useTrace();
 
   useEffect(() => {
-    const { uuid, questId, next } = router.query;
-    if (uuid) {
-      console.log('CoinbaseQuest', uuid, questId, next);
-      setCbUUID(uuid as string);
+    const { questId, next, coinbase_uuid } = router.query;
+    if (coinbase_uuid) {
+      console.log('CoinbaseQuest', coinbase_uuid, questId, next);
+      setCbUUID(coinbase_uuid as string);
       setQuestId(questId as string);
       setPrivateFee(false);
       if (next && ((next as string).startsWith('/') || (next as string).startsWith(location.origin))) {
