@@ -22,13 +22,17 @@ export const TraceProvider: FC<TraceProviderProps> = ({ children, ...props }) =>
     return cbUUID && questId === 'set_ans_primary_name'
   }, [cbUUID, questId]);
 
+  const isAvatarQuest = useMemo(() => {
+    return cbUUID && questId === 'set_ans_avatar'
+  }, [cbUUID, questId]);
+
   const clearCbQuest = () => {
     clearCbUUID();
     clearQuestId();
   }
 
   return (
-    <TraceContext.Provider value={{ cbUUID, setCbUUID, clearCbQuest, questId, setQuestId, isPrimaryQuest, isConvertQuest, isRegisterQuest }}>
+    <TraceContext.Provider value={{ cbUUID, setCbUUID, clearCbQuest, questId, setQuestId, isPrimaryQuest, isConvertQuest, isRegisterQuest, isAvatarQuest }}>
       {children}
     </TraceContext.Provider>
   );
