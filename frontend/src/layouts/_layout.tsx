@@ -9,6 +9,7 @@ import { MenuItems } from '@/layouts/_layout-menu';
 import React, {useEffect} from 'react';
 import {WalletMultiButton} from "@/components/WalletMultiButton";
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
+import toast from "@/components/ui/toast";
 
 
 require('@demox-labs/aleo-wallet-adapter-reactui/dist/styles.css');
@@ -21,7 +22,7 @@ function HeaderRightArea() {
 
   useEffect(() => {
     if (wallet) {
-      wallet.adapter.on('connect', (address) => {
+      wallet.adapter.off('connect').on('connect', (address) => {
         (typeof gtag === 'function') && gtag('event', 'wallet_connected', {
             'event_category': 'User Interaction',
             'event_label': wallet.adapter.name,
@@ -29,6 +30,9 @@ function HeaderRightArea() {
         });
         console.log('Connect wallet('+wallet.adapter.name+'): ', address);
       });
+      wallet.adapter.off('error').on('error', (error) => {
+        toast({type: 'error', message: 'Wallet error: ' + error.message});
+      })
     }
   }, [wallet]);
 

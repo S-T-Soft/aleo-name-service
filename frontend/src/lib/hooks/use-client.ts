@@ -212,6 +212,76 @@ export function useClient() {
     });
   }, {cache: new ExpiryMap(5000)})
 
+  const getLatestAleoPrice = pMemoize(async () => {
+    // Fetch the latest price of Aleo from Office Oracle Mapping
+    return Promise.all(['sgx_attested_data', 'nitro_attested_data'].map(async (mapping_name) => {
+      return fetch(env.RPC_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'getMappingValue',
+          params: {
+            "program_id": env.ORACLE_PROGRAM,
+            "mapping_name": mapping_name,
+            "key": mapping_name === 'sgx_attested_data' ? env.REQUEST_HASH.SGX : env.REQUEST_HASH.NITRO
+          }
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.result == null) {
+            return null;
+          }
+          // 使用正则表达式提取数值
+          const dataMatch = data.result.match(/data:\s*(\d+)u128/);
+          const timestampMatch = data.result.match(/attestation_timestamp:\s*(\d+)u128/);
+          
+          return {
+            data: dataMatch ? parseInt(dataMatch[1]) : 0,
+            attestationTimestamp: timestampMatch ? parseInt(timestampMatch[1]) : 0
+          };
+        })
+    })).then(([sgxData, nitroData]) => {
+      console.log(sgxData, nitroData);
+      // if both data sources are empty, return a default value
+      if (!sgxData && !nitroData) {
+        return {
+          isSgx: true,
+          price: 0,
+          timestamp: 0
+        };
+      }
+
+      // if one data source is empty, return the other
+      if (!sgxData) {
+        return {
+          isSgx: false,
+          price: nitroData.data,
+          timestamp: nitroData.attestationTimestamp
+        };
+      }
+      if (!nitroData) {
+        return {
+          isSgx: true,
+          price: sgxData.data,
+          timestamp: sgxData.attestationTimestamp
+        };
+      }
+
+      // compare the timestamps of the two data sources
+      const isSgx = sgxData.attestationTimestamp >= nitroData.attestationTimestamp;
+      return {
+        isSgx,
+        price: isSgx ? sgxData.data : nitroData.data,
+        timestamp: isSgx ? sgxData.attestationTimestamp : nitroData.attestationTimestamp
+      };
+    });
+  }, {cache: new ExpiryMap(10000)})
+
   const getLatestHeight = pMemoize(async () => {
     return new Promise<number>((resolve, reject) => {
       fetch(env.RPC_URL, {
@@ -236,5 +306,5 @@ export function useClient() {
   }, {cache: new ExpiryMap(3000)})
 
   return {getAddress, getNameHash, getPrimaryName, getName, getSubNames, getPublicDomain, getResolvers, getResolver,
-    getStatistic, getPublicBalance, getNameByField, getLatestHeight};
+    getStatistic, getPublicBalance, getNameByField, getLatestHeight, getLatestAleoPrice};
 }

@@ -58,6 +58,8 @@ const NamePage: NextPageWithLayout = () => {
   const {data: latestHeight} = useSWR('getLatestHeight', () => getLatestHeight(), {refreshInterval: (l) => {
     return l > MINT_START_HEIGHT ? 100000000000 : 3000;
     }});
+  const [priceUSD, setPriceUSD] = useState(0);
+  const [oriPriceUSD, setOriPriceUSD] = useState(0);
 
   const needCreateRecord = useMemo(() => {
     return record == "" && privateFee && price > 0;
@@ -111,14 +113,16 @@ const NamePage: NextPageWithLayout = () => {
     }
   }
 
-  const checkRecords = () => {
-    const ans_price = calcPrice(name, tld, selectedCard);
-    setPrice(ans_price / 1000000);
-    const ori_ans_price = calcPrice(name, tld, null);
-    setOriPrice(ori_ans_price / 1000000);
+  const checkRecords = async () => {
+    const ans_price = await calcPrice(name, tld, selectedCard);
+    setPrice(ans_price.aleo / 1000000);
+    setPriceUSD(ans_price.usd);
+    const ori_ans_price = await calcPrice(name, tld, null);
+    setOriPrice(ori_ans_price.aleo / 1000000);
+    setOriPriceUSD(ori_ans_price.usd);
     let amount = [];
-    if (ans_price > 0) {
-      amount.push(ans_price)
+    if (ans_price.aleo > 0) {
+      amount.push(ans_price.aleo)
     }
     if (privateFee) {
       amount.push(env.FEES.REGISTER)
@@ -130,7 +134,7 @@ const NamePage: NextPageWithLayout = () => {
     }
     console.log("Check records", amount);
     getCreditRecords(amount, false).then((records) => {
-      if (ans_price > 0) {
+      if (ans_price.aleo > 0) {
         setRecord(records[0].plaintext);
         privateFee && setFeeRecord(records[1].plaintext);
       } else {
@@ -159,12 +163,13 @@ const NamePage: NextPageWithLayout = () => {
         setIsValid(true);
         setAvailable(false);
         setOwner(address);
-      }).catch((error) => {
+      }).catch(async (error) => {
         const is_valid = /^[a-z0-9-_]{1,64}$/.test(name);
         setIsValid(is_valid);
         if (is_valid) {
-          const ans_price = calcPrice(name, tld, selectedCard);
-          setPrice(ans_price / 1000000);
+          const ans_price = await calcPrice(name, tld, selectedCard);
+          setPrice(ans_price.aleo / 1000000);
+          setPriceUSD(ans_price.usd);
           if (couponCards.length > 0) {
             couponCards.forEach((card) => {
               card.enable = card.limit_name_length <= name.length;
@@ -280,17 +285,20 @@ const NamePage: NextPageWithLayout = () => {
                   {!loading && available &&
                       <>
                           <div className="mt-3 text-xl tracking-tighter text-gray-600 dark:text-gray-400 sm:block">
-                              <span className="mr-2">Register Price:</span>
-                            {(selectedCard != null) && <span className="bg-gray-700 p-1 pl-2 pr-2 mr-2 rounded-lg text-gray-300 font-bold line-through">
-                              {oriPrice} ALEO </span>}
-                            {price > 0 &&
-                                <span className="bg-gray-700 p-1 pl-2 pr-2 rounded-lg text-gray-300 font-bold">
-                                {price} {privateFee ? "Private" : "Public"} ALEO
-                              </span>}
-                            {price == 0 &&
-                                <span className="bg-gray-700 p-1 pl-2 pr-2 rounded-lg text-gray-300 font-bold">
-                                FREE
-                              </span>}
+                              <div className="flex items-center">
+                                <span className="mr-2">Register Price:</span>
+                                {(selectedCard != null) && <span className="bg-gray-700 p-1 pl-2 pr-2 mr-2 rounded-lg text-gray-300 font-bold line-through">
+                                  ${oriPriceUSD}
+                                </span>}
+                                {price > 0 &&
+                                    <span className="bg-gray-700 p-1 pl-2 pr-2 rounded-lg text-gray-300 font-bold">
+                                    ${priceUSD} <span className="text-sm">({price} {privateFee ? "Private" : "Public"} ALEO)</span>
+                                  </span>}
+                                {price == 0 &&
+                                    <span className="bg-gray-700 p-1 pl-2 pr-2 rounded-lg text-gray-300 font-bold">
+                                    FREE
+                                  </span>}
+                              </div>
                           </div>
                         {couponCards.length > 0 &&
                             <div className="flex justify-left items-center overflow-hidden mt-5">

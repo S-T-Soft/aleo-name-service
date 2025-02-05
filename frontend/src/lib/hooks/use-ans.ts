@@ -13,16 +13,18 @@ import tlds from "@/config/tlds";
 import {usePrivateFee} from "@/lib/hooks/use-private-fee";
 import {useTrace} from "@/lib/hooks/use-trace";
 import env from "@/config/env";
+import useSWR from "swr";
 
 
 export function useANS() {
   const { records, publicBalance } = useRecords();
   const { addTransaction } = useTransaction();
   const { getCreditRecords } = useCredit();
-  const { getAddress } = useClient();
+  const { getAddress, getLatestAleoPrice } = useClient();
   const { privateFee } = usePrivateFee();
   const { publicKey, requestTransaction, requestRecordPlaintexts } = useWallet();
   const { cbUUID, questId, isPrimaryQuest, isRegisterQuest, isConvertQuest, clearCbQuest } = useTrace();
+  const {data: aleoPrice} = useSWR('getLatestAleoPrice', () => getLatestAleoPrice(), {refreshInterval: 1000 * 60});
 
   const notify = useCallback((type: TypeOptions, message: string) => {
     toast({ type, message });
@@ -33,12 +35,19 @@ export function useANS() {
     return isValid ? tlds.find(tld => name.endsWith(`.${tld.name}`)) : undefined;
   };
 
-  const calcPrice = (name: string, tld: TLD, card: CouponCard | null) => {
+  const calcPrice = async (name: string, tld: TLD, card: CouponCard | null) => {
+    let currentAleoPrice = aleoPrice;
+    if (!currentAleoPrice) {
+      currentAleoPrice = await getLatestAleoPrice();
+    }
     const length = name.length;
     const maxKey = Math.max(...Object.keys(tld.prices).map(Number));
     const priceKey = Math.min(length, maxKey);
     const price = tld.prices[priceKey];
-    return card && card.limit_name_length <= name.length ? price * card.discount_percent / 100 : price;
+    const priceInUSD = card && card.limit_name_length <= name.length ? price * card.discount_percent / 100 : price;
+    const priceInAleo = Math.floor(priceInUSD * 1000000000000 / currentAleoPrice.price);
+    return {usd: priceInUSD, aleo: priceInAleo, rate: currentAleoPrice.price,
+      isSgx: currentAleoPrice.isSgx, timestamp: currentAleoPrice.timestamp}
   };
 
   const formatNftData = async (record: Record) => {
@@ -98,11 +107,11 @@ export function useANS() {
 
     const isCbQuest = isRegisterQuest && tld.name == 'ans';
 
-    let price = calcPrice(name, tld, card);
+    let price = await calcPrice(name, tld, card);
     let functionName = "register_fld";
     let fee = env.FEES.REGISTER;
     let amounts = [];
-    if (price === 0) {
+    if (price.aleo === 0) {
       functionName = "register_free";
       fee = env.FEES.REGISTER_FREE;
     } else if (card) {
@@ -111,14 +120,14 @@ export function useANS() {
     }
     if (isPrivate) {
       if (functionName !== "register_free") {
-        amounts.push(price);
+        amounts.push(price.aleo);
       }
       amounts.push(fee);
     } else if (functionName !== "register_free") {
       functionName = functionName + "_public";
       fee = Math.ceil(fee + 16000);
 
-      if (publicBalance < price + fee) {
+      if (publicBalance < price.aleo + fee) {
         const error = "You don't have enough public credits";
         notify("error", error);
         onStatusChange && onStatusChange(false, {hasError: true, message: error});
@@ -142,6 +151,9 @@ export function useANS() {
           fee += 12000;
           program = env.REGISTER_QUEST_PROGRAM;
         }
+        inputs.push(price.isSgx ? 'true': 'false');
+        inputs.push(price.timestamp + 'u128');
+        inputs.push(price.rate + 'u64');
         const aleoTransaction = Transaction.createTransaction(
           publicKey,
           env.NETWORK,

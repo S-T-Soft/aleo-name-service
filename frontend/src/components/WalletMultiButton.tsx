@@ -95,7 +95,7 @@ export const WalletMultiButton: FC<ButtonProps> = ({ children, className, ...pro
     <div className="wallet-adapter-dropdown">
       <Button
         aria-expanded={active}
-        style={{pointerEvents: active ? 'none' : 'auto', ...props.style}}
+        style={{pointerEvents: active ? 'none' : 'auto', ...props.style, minWidth: '180px'}}
         onClick={openDropdown}
         {...props}
       >

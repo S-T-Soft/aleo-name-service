@@ -24,29 +24,34 @@ import {
   disconnect,
   EventStatus,
   EventType,
-  getAccount,
   getEvent,
   getRecords,
+  Network,
   RecordsFilter,
   requestCreateEvent,
-  requestSignature,
-  SessionTypes
+  requestSignature
 } from "@puzzlehq/sdk";
 import {LeoWallet} from "@demox-labs/aleo-wallet-adapter-leo";
 import {RecordStatus} from "@puzzlehq/types";
+import {ConnectionWithAccountInfo} from "@puzzlehq/sdk-core/src/messages/connect";
 
 
-export interface PuzzleWindow extends Window {
-  puzzle?: LeoWallet;
+interface puzzleWalletClient {
+  puzzleWalletClient?: LeoWallet
 }
 
+export interface PuzzleWindow extends Window {
+  aleo?: puzzleWalletClient;
+}
 
 declare const window: PuzzleWindow;
 
 export interface PuzzleWalletAdapterConfig {
   appName?: string
   isMobile?: boolean
-  mobileWebviewUrl?: string
+  mobileWebviewUrl?: string,
+  appDescription?: string,
+  appIconURL?: string
 }
 
 export const PuzzleWalletName = 'Puzzle Wallet' as WalletName<'Puzzle Wallet'>;
@@ -57,7 +62,8 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
   readonly supportedTransactionVersions = null;
 
   private _connecting: boolean;
-  private _wallet: SessionTypes.Struct | undefined | null;
+  private _dAppInfo: object;
+  private _wallet: ConnectionWithAccountInfo | undefined | null;
   private _publicKey: string | null;
   private _decryptPermission: string;
   private _isMobile: boolean;
@@ -66,8 +72,13 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
       ? WalletReadyState.Unsupported
       : WalletReadyState.NotDetected;
 
-  constructor({appName = 'sample', isMobile = false, mobileWebviewUrl}: PuzzleWalletAdapterConfig = {}) {
+  constructor({appName = 'sample', isMobile = false, mobileWebviewUrl, appIconURL, appDescription}: PuzzleWalletAdapterConfig = {}) {
     super();
+    this._dAppInfo = {
+      name: appName,
+      description: appDescription,
+      iconUrl: appIconURL,
+    }
     this._connecting = false;
     this._wallet = null;
     this._publicKey = null;
@@ -76,17 +87,10 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
 
     if (this._readyState !== WalletReadyState.Unsupported) {
       scopePollingDetectionStrategy(() => {
-        if (window?.puzzle) {
+        if (!!window?.aleo?.puzzleWalletClient) {
           this._readyState = WalletReadyState.Installed;
           this.emit('readyStateChange', this._readyState);
           return true;
-        } else {
-          // Check if user is on a mobile device
-          if (this._isMobile) {
-            this._readyState = WalletReadyState.Loadable;
-            this.emit('readyStateChange', this._readyState);
-            return true;
-          }
         }
         return false;
       });
@@ -142,9 +146,6 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
         case DecryptPermission.OnChainHistory: {
           try {
             const text = await decrypt([cipherText]);
-            if (text.error) {
-              throw new Error(text.error);
-            }
             return text.plaintexts![0];
           } catch (error: any) {
             throw new WalletDecryptionError(error?.message || "Permission Not Granted", error);
@@ -177,14 +178,12 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
       while (true) {
         console.log(`Requesting records for:`);
         console.log(filter)
-        const result = await getRecords({ address: this.publicKey, filter, page });
-
-        if (result.error) {
-          if (allRecords.length > 0) {
-            break;
-          }
-          throw new Error(result.error);
-        }
+        const result = await getRecords({
+          address: this.publicKey,
+          filter,
+          page,
+          network: wallet.network
+        });
 
         const records = result.records || [];
         allRecords = allRecords.concat(records.map((record: any) => {
@@ -200,8 +199,7 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
           }
         }));
 
-        // If the number of records is less than 20, it means that there are no more records
-        if (records.length != 20) {
+        if (result.pageCount === page) {
           break;
         }
 
@@ -248,10 +246,11 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
       const wallet = this._wallet;
       if (!wallet || !this.publicKey) throw new WalletNotConnectedError();
       try {
-        const result = await getEvent({id: transactionId, address: this.publicKey});
-        if (result.error) {
-          throw new Error(result.error);
-        }
+        const result = await getEvent({
+          id: transactionId,
+          address: this.publicKey,
+          network: this._wallet?.network
+        });
         return result.event ? (result.event.status == EventStatus.Settled ? "Finalized" : result.event.status) : "";
       } catch (error: any) {
         throw new WalletTransactionError(error?.message, error);
@@ -266,17 +265,6 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
     return this.requestRecords(program);
   }
 
-  getChainId(network: WalletAdapterNetwork) {
-    switch (network) {
-      case WalletAdapterNetwork.MainnetBeta:
-        return 'aleo:0';
-      case WalletAdapterNetwork.TestnetBeta:
-        return 'aleo:1';
-      default:
-        return 'aleo:1';
-    }
-  }
-
   async connect(decryptPermission: DecryptPermission, network: WalletAdapterNetwork, programs?: string[]): Promise<void> {
     try {
       if (this.connected || this.connecting) return;
@@ -286,12 +274,21 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
       this._connecting = true;
 
       try {
-        this._wallet = await connect();
-        const account = await getAccount(this.getChainId(network));
-        if (account.error) {
-          throw new Error(account.error);
+        const n = network == WalletAdapterNetwork.MainnetBeta ? Network.AleoMainnet : Network.AleoTestnet;
+        const resp = await connect({
+          dAppInfo: this._dAppInfo,
+          permissions: {
+            programIds: {
+              [n]: programs
+            }
+          }
+        });
+        this._wallet = resp.connection;
+        console.log(this._wallet);
+        if (this._wallet.network !== n) {
+          throw new Error('Network mismatch');
         }
-        this._publicKey = account.account?.address;
+        this._publicKey = this._wallet.address;
         this.emit('connect', this._publicKey);
       } catch (error: any) {
         throw new WalletConnectionError(error?.message, error);
@@ -333,12 +330,8 @@ export class PuzzleWalletAdapter extends BaseMessageSignerWalletAdapter {
         // convert message to string
         const messageString = new TextDecoder().decode(message);
         const signature = await requestSignature({
-          message: messageString,
-          address: this.publicKey
+          message: messageString
         });
-        if (signature.error) {
-          throw new Error(signature.error);
-        }
         // convert signature to Uint8Array
         return new TextEncoder().encode(signature.signature!);
       } catch (error: any) {
