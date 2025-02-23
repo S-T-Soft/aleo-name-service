@@ -520,7 +520,7 @@ export function useANS() {
         getFormattedU128Input(category),
         getFormattedNameInput(content, 8)
       ];
-      let program = env.REGISTRY_PROGRAM;
+      let program = env.RESOLVER_PROGRAM;
       if (isAvatarQuest && category === 'avatar' && record.private) {
         const memo = {msg: cbUUID, id: questId}
         inputs.push(getFormattedFieldsInput(JSON.stringify(memo), 8));
