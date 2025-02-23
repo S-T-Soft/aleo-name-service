@@ -50,7 +50,6 @@ const NamePage: NextPageWithLayout = () => {
   const [name, setName] = useState("");
   const [tld, setTld] = useState<TLD>(tlds[0]);
   const [price, setPrice] = useState<number>(2);
-  const [oriPrice, setOriPrice] = useState<number>(2);
   const [record, setRecord] = useState("");
   const [feeRecord, setFeeRecord] = useState("");
   const [resolverRecordCount, setResolverRecordCount] = useState(0);
@@ -118,7 +117,6 @@ const NamePage: NextPageWithLayout = () => {
     setPrice(ans_price.aleo / 1000000);
     setPriceUSD(ans_price.usd);
     const ori_ans_price = await calcPrice(name, tld, null);
-    setOriPrice(ori_ans_price.aleo / 1000000);
     setOriPriceUSD(ori_ans_price.usd);
     let amount = [];
     if (ans_price.aleo > 0) {
@@ -292,7 +290,7 @@ const NamePage: NextPageWithLayout = () => {
                                 </span>}
                                 {price > 0 &&
                                     <span className="bg-gray-700 p-1 pl-2 pr-2 rounded-lg text-gray-300 font-bold">
-                                    ${priceUSD} <span className="text-sm">({price} {privateFee ? "Private" : "Public"} ALEO)</span>
+                                    ${priceUSD} <span className="text-sm">({Math.ceil(price * 100) / 100} ALEO)</span>
                                   </span>}
                                 {price == 0 &&
                                     <span className="bg-gray-700 p-1 pl-2 pr-2 rounded-lg text-gray-300 font-bold">

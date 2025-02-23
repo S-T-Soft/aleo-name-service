@@ -1,6 +1,7 @@
 import {FC, ReactNode, useMemo} from 'react';
 import {TraceContext} from "@/lib/hooks/use-trace";
 import {useLocalStorage} from "react-use";
+import env from "@/config/env";
 
 export interface TraceProviderProps {
     children: ReactNode;
@@ -31,8 +32,18 @@ export const TraceProvider: FC<TraceProviderProps> = ({ children, ...props }) =>
     clearQuestId();
   }
 
+  const recordAddress = async (address: String) => {
+    await fetch(`${env.QUEST_URL}/quest/${questId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ address, coinbase_uuid: cbUUID }),
+    })
+  }
+
   return (
-    <TraceContext.Provider value={{ cbUUID, setCbUUID, clearCbQuest, questId, setQuestId, isPrimaryQuest, isConvertQuest, isRegisterQuest, isAvatarQuest }}>
+    <TraceContext.Provider value={{ cbUUID, setCbUUID, clearCbQuest, questId, setQuestId, isPrimaryQuest, isConvertQuest, isRegisterQuest, isAvatarQuest, recordAddress }}>
       {children}
     </TraceContext.Provider>
   );

@@ -23,7 +23,7 @@ export function useANS() {
   const { getAddress, getLatestAleoPrice } = useClient();
   const { privateFee } = usePrivateFee();
   const { publicKey, requestTransaction, requestRecordPlaintexts } = useWallet();
-  const { cbUUID, questId, isPrimaryQuest, isRegisterQuest, isConvertQuest, clearCbQuest } = useTrace();
+  const { cbUUID, questId, isPrimaryQuest, isRegisterQuest, isConvertQuest, isAvatarQuest, clearCbQuest, recordAddress } = useTrace();
   const {data: aleoPrice} = useSWR('getLatestAleoPrice', () => getLatestAleoPrice(), {refreshInterval: 1000 * 60});
 
   const notify = useCallback((type: TypeOptions, message: string) => {
@@ -146,10 +146,10 @@ export function useANS() {
         }
         let program = tld.registrar;
         if (isCbQuest) {
-          const memo = {msg: cbUUID, type: 'coinbase_quest', id: questId}
+          const memo = {msg: cbUUID, id: questId}
           inputs.push(getFormattedFieldsInput(JSON.stringify(memo), 8));
           fee += 12000;
-          program = env.REGISTER_QUEST_PROGRAM;
+          program = env.REGISTER_QUEST1_PROGRAM;
         }
         inputs.push(price.isSgx ? 'true': 'false');
         inputs.push(price.timestamp + 'u128');
@@ -313,17 +313,24 @@ export function useANS() {
         return;
       }
       let amounts = [];
-      const fee = env.FEES.CONVERT_TO_PUBLIC;
+      let fee = env.FEES.CONVERT_TO_PUBLIC;
       if (privateFee) {
         amounts.push(fee);
       }
       const inputs = [record.record, publicKey];
+      let program = env.REGISTRY_PROGRAM;
+      if (isConvertQuest) {
+        const memo = {msg: cbUUID, id: questId}
+        inputs.push(getFormattedFieldsInput(JSON.stringify(memo), 8));
+        fee += 12000;
+        program = env.REGISTER_QUEST2_PROGRAM;
+      }
       getCreditRecords(amounts)
         .then((records) => {
           const aleoTransaction = Transaction.createTransaction(
             publicKey,
             env.NETWORK,
-            env.REGISTRY_PROGRAM,
+            program,
             "transfer_private_to_public",
             inputs,
             fee,
@@ -335,8 +342,15 @@ export function useANS() {
             throw new Error("requestTransaction is not defined");
         })
         .then((txId) => {
-          addTransaction("convertToPublic", txId, [name], onStatusChange);
-        }).catch((error) => {
+          const onCbStatusChange = (running: boolean, status: Status) => {
+            if (!running && !status.hasError) {
+              clearCbQuest();
+            }
+            onStatusChange && onStatusChange(running, status);
+          }
+          addTransaction("convertToPublic", txId, [name], isConvertQuest ? onCbStatusChange : onStatusChange);
+        })
+        .catch((error) => {
         notify("error", error.message);
         onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
       });
@@ -414,17 +428,18 @@ export function useANS() {
       }
 
       let amounts = [];
-      const fee = env.FEES.SET_PRIMARY;
+      let fee = env.FEES.SET_PRIMARY;
       if (privateFee) {
         amounts.push(fee);
       }
       const inputs = [record.nameHash];
+      let program = env.REGISTRY_PROGRAM;
       getCreditRecords(amounts)
         .then((records) => {
           const aleoTransaction = Transaction.createTransaction(
             publicKey,
             env.NETWORK,
-            env.REGISTRY_PROGRAM,
+            program,
             "set_primary_name",
             inputs,
             fee,
@@ -435,9 +450,17 @@ export function useANS() {
             return requestTransaction(aleoTransaction)
           else
             throw new Error("requestTransaction is not defined");
-        }).then((txId) => {
-        addTransaction("setPrimaryName", txId, [name], onStatusChange);
-      }).catch((error) => {
+        })
+        .then((txId) => {
+          const onCbStatusChange = (running: boolean, status: Status) => {
+            if (!running && !status.hasError) {
+              clearCbQuest();
+            }
+            onStatusChange && onStatusChange(running, status);
+          }
+          isPrimaryQuest && recordAddress(publicKey);
+          addTransaction("setPrimaryName", txId, [name], isPrimaryQuest ? onCbStatusChange : onStatusChange);
+        }).catch((error) => {
         notify("error", error.message);
         onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
       })
@@ -492,18 +515,26 @@ export function useANS() {
       if (privateFee) {
         amounts.push(fee);
       }
+      let inputs = [
+        record.private ? record.record : record.nameHash,
+        getFormattedU128Input(category),
+        getFormattedNameInput(content, 8)
+      ];
+      let program = env.REGISTRY_PROGRAM;
+      if (isAvatarQuest && category === 'avatar' && record.private) {
+        const memo = {msg: cbUUID, id: questId}
+        inputs.push(getFormattedFieldsInput(JSON.stringify(memo), 8));
+        fee += 12000;
+        program = env.REGISTER_QUEST2_PROGRAM;
+      }
       getCreditRecords(amounts)
         .then((records) => {
           const aleoTransaction = Transaction.createTransaction(
             publicKey,
             env.NETWORK,
-            env.RESOLVER_PROGRAM,
+            program,
             `set_resolver_record${record.private ? "" : "_public"}`,
-            [
-              record.private ? record.record : record.nameHash,
-              getFormattedU128Input(category),
-              getFormattedNameInput(content, 8)
-            ],
+            inputs,
             fee,
             privateFee
           );
@@ -512,9 +543,17 @@ export function useANS() {
             return requestTransaction(aleoTransaction)
           else
             throw new Error("requestTransaction is not defined");
-        }).then((txId) => {
-        addTransaction("setResolverRecord", txId, [name], onStatusChange);
-      }).catch((error) => {
+        })
+        .then((txId) => {
+          const onCbStatusChange = (running: boolean, status: Status) => {
+            if (!running && !status.hasError) {
+              clearCbQuest();
+            }
+            onStatusChange && onStatusChange(running, status);
+          }
+          isAvatarQuest && category === 'avatar' && !record.private && recordAddress(publicKey);
+          addTransaction("setResolverRecord", txId, [], (isAvatarQuest && category === 'avatar') ? onCbStatusChange : onStatusChange);
+        }).catch((error) => {
         notify("error", error.message);
         onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
       });
@@ -554,7 +593,7 @@ export function useANS() {
           else
             throw new Error("requestTransaction is not defined");
         }).then((txId) => {
-        addTransaction("unsetResolverRecord", txId, [name], onStatusChange);
+        addTransaction("unsetResolverRecord", txId, [], onStatusChange);
       }).catch((error) => {
         notify("error", error.message);
         onStatusChange && onStatusChange(false, {hasError: true, message: error.message});

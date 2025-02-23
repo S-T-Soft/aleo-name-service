@@ -84,7 +84,7 @@ export function createRecordContext() {
     return new Promise<Record[]>((resolve, reject) => {
       requestRecords!(env.REGISTRY_PROGRAM).then((privateRecords) => {
         const rs = privateRecords.filter((rec) => !rec.spent && rec.recordName != 'NFTView' && !rec.data.is_view);
-        isDebugger && alert("Valid private records(" + rs.length + "): " + JSON.stringify(rs));
+        isDebugger && console.log("Valid private records(" + rs.length + "): " + JSON.stringify(rs));
         return Promise.all(rs.map(async (rec) => {
           const nameField = rec.data.data.metadata[0].replace(".private", "");
           try {
@@ -115,17 +115,17 @@ export function createRecordContext() {
               balance: item.balance
             } as Record;
           } catch (e) {
-            isDebugger && alert("Error: " + e);
+            isDebugger && console.error("Error: " + e);
             return {} as Record;
           }
         }));
       }).then((privateRecords) => {
-        isDebugger && alert("Result private records(" + privateRecords.length + "): " + JSON.stringify(privateRecords));
+        isDebugger && console.log("Result private records(" + privateRecords.length + "): " + JSON.stringify(privateRecords));
         resolve(privateRecords.filter((rec) => {
           return Object.keys(rec).length !== 0;
         }));
       }).catch((error) => {
-        isDebugger && alert("Error: " + error);
+        isDebugger && console.error("Error: " + error);
         console.log(error);
         resolve([]);
       })
