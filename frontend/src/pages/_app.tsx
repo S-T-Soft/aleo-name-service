@@ -108,7 +108,8 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
               "token_registry.aleo",
               env.COUPON_CARD_PROGRAM,
               env.REGISTRY_PROGRAM,
-              env.REGISTER_QUEST_PROGRAM,
+              env.REGISTER_QUEST1_PROGRAM,
+              env.REGISTER_QUEST2_PROGRAM,
               env.RESOLVER_PROGRAM,
               env.REGISTER_PROGRAM]}
             autoConnect
