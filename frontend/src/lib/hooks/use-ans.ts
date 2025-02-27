@@ -151,9 +151,11 @@ export function useANS() {
           fee += 12000;
           program = env.REGISTER_QUEST1_PROGRAM;
         }
-        inputs.push(price.isSgx ? 'true': 'false');
-        inputs.push(price.timestamp + 'u128');
-        inputs.push(price.rate + 'u64');
+        if (functionName != "register_free") {
+          inputs.push(price.isSgx ? 'true' : 'false');
+          inputs.push(price.timestamp + 'u128');
+          inputs.push(price.rate + 'u64');
+        }
         const aleoTransaction = Transaction.createTransaction(
           publicKey,
           env.NETWORK,
