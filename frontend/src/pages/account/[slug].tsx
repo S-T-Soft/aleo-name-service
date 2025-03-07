@@ -92,28 +92,28 @@ const ManageNamePage: NextPageWithLayout = () => {
           {isPrimaryName && <span className="bg-green-700 mx-3 px-2 py-1 rounded-lg text-lg sm:text-xl">PrimaryName</span>}
         </h2>
         <div>
-            <ul className="flex text-gray-300">
-                <li className="-mb-px mr-2 last:mr-0 flex-auto text-center">
+            <ul className="flex text-gray-300 justify-around">
+                <li className="-mb-px mr-1 sm:mr-2 last:mr-0 flex-auto text-center">
                   <button
-                      className={`font-bold uppercase px-5 py-3 block leading-normal ${activeTab === 'profile' ? 'text-aquamarine' : ''}`}
+                      className={`font-bold uppercase px-2 sm:px-5 py-2 sm:py-3 text-sm sm:text-base block leading-normal ${activeTab === 'profile' ? 'text-aquamarine' : ''}`}
                       onClick={() => router.push(name)}
                       style={{ border: 'none', background: 'transparent', outline: 'none', cursor: 'pointer' }}
                   >
                       Profile
                   </button>
                 </li>
-                <li className="-mb-px mr-2 last:mr-0 flex-auto text-center">
+                <li className="-mb-px mr-1 sm:mr-2 last:mr-0 flex-auto text-center">
                   <button
-                      className={`font-bold uppercase px-5 py-3 block leading-normal ${activeTab === 'subnames' ? 'text-aquamarine' : ''}`}
+                      className={`font-bold uppercase px-2 sm:px-5 py-2 sm:py-3 text-sm sm:text-base block leading-normal ${activeTab === 'subnames' ? 'text-aquamarine' : ''}`}
                       onClick={() => router.push(name + '?tab=subnames')}
                       style={{ border: 'none', background: 'transparent', outline: 'none', cursor: 'pointer' }}
                   >
                       Subnames
                   </button>
                 </li>
-              {!loading && <li className="-mb-px mr-2 last:mr-0 flex-auto text-center">
+              {!loading && <li className="-mb-px mr-1 sm:mr-2 last:mr-0 flex-auto text-center">
                   <button
-                      className={`font-bold uppercase px-5 py-3 block leading-normal ${activeTab === 'resolver' ? 'text-aquamarine' : ''}`}
+                      className={`font-bold uppercase px-2 sm:px-5 py-2 sm:py-3 text-sm sm:text-base block leading-normal ${activeTab === 'resolver' ? 'text-aquamarine' : ''}`}
                       onClick={() => router.push(name + '?tab=resolver')}
                       style={{ border: 'none', background: 'transparent', outline: 'none', cursor: 'pointer' }}
                   >

@@ -28,8 +28,7 @@ import {
   FoxWalletAdapter,
   SoterWalletAdapter,
   LeoWalletAdapter,
-  PuzzleWalletAdapter,
-  configureConnectionForPuzzle
+  PuzzleWalletAdapter
 } from '@/lib/wallet-adapters';
 import {PrivateFeeProvider} from "@/context/private-fee-context";
 import {BlockNumber} from "@/components/BlockNumber";
@@ -111,7 +110,8 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
               env.REGISTER_QUEST1_PROGRAM,
               env.REGISTER_QUEST2_PROGRAM,
               env.RESOLVER_PROGRAM,
-              env.REGISTER_PROGRAM]}
+              env.REGISTER_PROGRAM,
+              env.TRANSFER_PROGRAM]}
             autoConnect
           >
             <WalletModalProvider>

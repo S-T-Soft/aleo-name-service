@@ -9,22 +9,12 @@ import env from "@/config/env";
 export default function ClaimCredits({record}: React.PropsWithChildren<{
   record: Record
 }>) {
-  const [claiming, setClaiming] = useState(false);
-  const [status, setStatus] = useState("Claiming");
   const [claimingWithPass, setClaimingWithPass] = useState(false);
   const [statusPass, setStatusPass] = useState("Claiming");
   const [showModel, setShowModal] = useState(false);
   const [amount, setAmount] = useState<number|undefined>(undefined);
   const [password, setPassword] = useState<string>("");
   const {claimCreditsFromANS} = useCredit();
-
-  const handleClaim = async (event: any) => {
-    event.preventDefault();
-    await claimCreditsFromANS("", record, record.balance, "", (running: boolean, status: Status) => {
-      setClaiming(running);
-      setStatus(status.message);
-    });
-  }
 
   const handleAmount = (event: any) => {
     const value = parseFloat(event.target.value);
@@ -38,12 +28,12 @@ export default function ClaimCredits({record}: React.PropsWithChildren<{
 
   const handleClaimWithPass = async (event: any) => {
     event.preventDefault();
-    // ensure password is not empty and amount is gt 0
-    if (password.length == 0 || !amount || amount <= 0) {
+    // ensure amount is gt 0
+    if (!amount || amount <= 0) {
       toast(
         {
           type: "error",
-          message: "Please enter a valid amount and password"
+          message: "Please enter a valid amount"
         }
       );
       return;
@@ -57,16 +47,23 @@ export default function ClaimCredits({record}: React.PropsWithChildren<{
   }
 
   return env.ENABLE_CREDIT_TRANSFER && <>
-    <div className="leading-10 mt-5">
-      <span className="mr-4">Balance:</span>
-      <span className="rounded-lg bg-gray-700 px-2 py-1 mr-4">{record && record.balance / 1000000} ACs</span>
-      {record && !claiming && record.balance > 0 &&
-          <Button className="mr-4" onClick={handleClaim}>Withdraw</Button>}
-      {record && claiming && <Button color={"gray"} className="mr-4" disabled={true}><RefreshIcon
-          className="inline text-aquamarine motion-safe:animate-spin"/> {status} </Button>}
-      {record && !claimingWithPass && <Button className="mr-4" onClick={() => setShowModal(true)}> Withdraw with Password </Button>}
+    <div className="leading-10 mt-5 flex flex-row items-center justify-between sm:justify-start">
+      <span className="sm:mr-4">Balance:</span>
+      <span className="rounded-lg bg-gray-700 px-4">{record && record.balance / 1000000} ALEO</span>
+      <div className="hidden sm:flex ml-4">
+      {record && !claimingWithPass && <Button className="mr-4" onClick={() => setShowModal(true)}> Withdraw </Button>}
       {record && claimingWithPass && <Button color={"gray"} className="mr-4" disabled={true}><RefreshIcon
           className="inline text-aquamarine motion-safe:animate-spin"/> {statusPass} </Button>}
+      </div>
+    </div>
+    <div className="mt-5">
+      <div className="leading-10 flex flex-row items-center justify-end sm:hidden">
+        {record && !claimingWithPass &&
+            <Button fullWidth={true} onClick={() => setShowModal(true)}> Withdraw </Button>}
+        {record && claimingWithPass &&
+            <Button fullWidth={true} color={"gray"} disabled={true}><RefreshIcon
+            className="inline text-aquamarine motion-safe:animate-spin"/> {statusPass} </Button>}
+      </div>
     </div>
     {showModel && <div
           className="fixed z-50 top-0 left-0 w-full h-full bg-gray-900 bg-opacity-50 flex items-center justify-center">
@@ -77,11 +74,12 @@ export default function ClaimCredits({record}: React.PropsWithChildren<{
                     className="h-16 flex-grow appearance-none rounded-full md:rounded-l-full md:rounded-r-none border-r-0 py-1 text-lg tracking-tighter text-gray-900 outline-none transition-all placeholder:text-gray-600 dark:hover:border-teal dark:focus:border-aquamarine ltr:pl-8 rtl:pr-8 dark:border-gray-600 dark:bg-light-dark dark:text-white dark:placeholder:text-gray-500"
                     type="text"
                     autoComplete={"off"}
+                    placeholder={"amount"}
                     value={amount}
                     onChange={handleAmount}
                 />
                 <span
-                    className="hidden md:flex h-16 bg-gray-700 border-l-0 border-gray-600 items-center justify-center py-1 px-3 text-lg text-gray-400 rounded-r-full">ACs</span>
+                    className="hidden md:flex h-16 bg-gray-700 border-l-0 border-gray-600 items-center justify-center py-1 px-3 text-lg text-gray-400 rounded-r-full">ALEO</span>
             </div>
             <div className="flex mb-4 rounded-full">
                 <input

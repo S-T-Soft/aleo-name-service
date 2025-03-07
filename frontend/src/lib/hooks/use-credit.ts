@@ -272,7 +272,8 @@ export function useCredit() {
 
     const token = tokens.filter((token) => token.id === tokenId)[0];
     amount = amount * 10**token.decimals;
-    const amounts = privateFee ? [amount, env.FEES.CREDIT_TRANSFER] : [];
+    let fee = privateFee ? env.FEES.CREDIT_TRANSFER : env.FEES.CREDIT_TRANSFER_PUBLIC;
+    const amounts = privateFee ? [amount, fee] : [];
 
     Promise.all([getCreditRecords(amounts), getNameHash(recipient)])
       .then(([records, nameHash]) => {
@@ -284,7 +285,7 @@ export function useCredit() {
         }
         inputs.push(nameHash);
         inputs.push(getFormattedNameInput(password, 2));
-        inputs.push(amount + "u64");
+        inputs.push(amount + (tokenId !== "" ? "u128" : "u64"));
         if (privateFee) {
           inputs.push(records[0]);
         } else {
@@ -296,7 +297,7 @@ export function useCredit() {
           env.TRANSFER_PROGRAM,
           functionName,
           inputs,
-          env.FEES.CREDIT_TRANSFER,
+          fee,
           privateFee
         );
         console.log(aleoTransaction);
@@ -324,8 +325,8 @@ export function useCredit() {
       publicKey,
       env.NETWORK,
       env.TRANSFER_PROGRAM,
-      record.private ? "claim_credits_private" : "claim_credits_public",
-      [record.private ? record.record : record.nameHash, getFormattedNameInput(password, 2), amount + "u64"],
+      record.private ? "claim_credits_private" : "claim_credits_as_signer",
+      [publicKey, record.private ? record.record : record.nameHash, getFormattedNameInput(password, 2), amount + "u64"],
       fee,
       privateFee
     );
