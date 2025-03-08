@@ -296,6 +296,7 @@ const ToolBoxPage: NextPageWithLayout = () => {
                   outline-none transition-all placeholder:text-gray-500 hover:border-teal px-4 pr-20`}
                 id="amount"
                 required={true}
+                type="number"
                 value={amount}
                 placeholder="0.00"
                 onChange={handleAmount}

@@ -17,13 +17,24 @@ export default function ClaimCredits({record}: React.PropsWithChildren<{
   const {claimCreditsFromANS} = useCredit();
 
   const handleAmount = (event: any) => {
-    const value = parseFloat(event.target.value);
-    // make sure the amount is a valid number
-    if (isNaN(value)) {
-      setAmount(0);
+    let inputValue = event.target.value;
+
+    // Allow empty input
+    if (!inputValue) {
+      setAmount(undefined);
+      return;
+    }
+
+    // Only allow numbers and one decimal point
+    if (!/^\d*\.?\d*$/.test(inputValue)) {
       return false;
     }
-    setAmount(Math.floor(value * 1e6) / 1e6);
+
+    if (inputValue == ".") {
+      inputValue = "0."
+    }
+
+    setAmount(inputValue);
   }
 
   const handleClaimWithPass = async (event: any) => {
@@ -43,6 +54,10 @@ export default function ClaimCredits({record}: React.PropsWithChildren<{
     await claimCreditsFromANS("", record, amount * 1000000, password, (running: boolean, status: Status) => {
       setClaimingWithPass(running);
       setStatusPass(status.message);
+      if (!running && !status.hasError) {
+        setAmount(undefined);
+        setPassword("");
+      }
     });
   }
 
@@ -68,25 +83,32 @@ export default function ClaimCredits({record}: React.PropsWithChildren<{
     {showModel && <div
           className="fixed z-50 top-0 left-0 w-full h-full bg-gray-900 bg-opacity-50 flex items-center justify-center">
         <div className="bg-gray-800 p-4 rounded-lg w-full md:w-3/4 max-w-3xl">
-            <h2 className="mb-4 text-white text-center font-bold">Withdraw with Password</h2>
-            <div className="flex mb-4 border-2 border-gray-600 md:focus-within:border-aquamarine rounded-full">
-                <input
-                    className="h-16 flex-grow appearance-none rounded-full md:rounded-l-full md:rounded-r-none border-r-0 py-1 text-lg tracking-tighter text-gray-900 outline-none transition-all placeholder:text-gray-600 dark:hover:border-teal dark:focus:border-aquamarine ltr:pl-8 rtl:pr-8 dark:border-gray-600 dark:bg-light-dark dark:text-white dark:placeholder:text-gray-500"
-                    type="text"
-                    autoComplete={"off"}
-                    placeholder={"amount"}
-                    value={amount}
-                    onChange={handleAmount}
-                />
-                <span
-                    className="hidden md:flex h-16 bg-gray-700 border-l-0 border-gray-600 items-center justify-center py-1 px-3 text-lg text-gray-400 rounded-r-full">ALEO</span>
+            <h2 className="mb-4 text-white text-center font-bold">Withdraw ALEO</h2>
+            <div className="relative mb-4">
+              <input
+                className={`border-gray-700 focus:border-aquamarine
+                  h-12 w-full appearance-none rounded-full border-2 py-1 text-lg text-white bg-gray-800 
+                  outline-none transition-all placeholder:text-gray-500 hover:border-teal px-4 pr-20`}
+                id="amount"
+                required={true}
+                type="number"
+                value={amount}
+                placeholder="0.00"
+                onChange={handleAmount}
+                autoComplete="off"
+              />
+              <div className="absolute inset-y-0 right-0 flex items-center px-4 text-gray-400 pointer-events-none">
+                ALEO
+              </div>
             </div>
             <div className="flex mb-4 rounded-full">
                 <input
-                    className="h-16 flex-grow appearance-none border-2 rounded-full py-1 text-lg tracking-tighter text-gray-900 outline-none transition-all placeholder:text-gray-600 dark:hover:border-teal dark:focus:border-aquamarine ltr:pl-8 rtl:pr-8 dark:border-gray-600 dark:bg-light-dark dark:text-white dark:placeholder:text-gray-500"
+                    className={`border-gray-700 focus:border-aquamarine
+                      h-12 w-full appearance-none rounded-full border-2 py-1 text-lg text-white bg-gray-800 
+                      outline-none transition-all placeholder:text-gray-500 hover:border-teal px-4 pr-20`}
                     type="text"
                     autoComplete={"off"}
-                    placeholder={"Password"}
+                    placeholder={"Leave empty if no password"}
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                 />
