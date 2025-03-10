@@ -4,6 +4,8 @@ import Button from "@/components/ui/button";
 import {RefreshIcon} from "@/components/icons/refresh";
 import {useCredit} from "@/lib/hooks/use-credit";
 import toast from "@/components/ui/toast";
+import { Dialog } from '@/components/ui/dialog';
+import { Close } from '@/components/icons/close';
 import env from "@/config/env";
 
 export default function ClaimCredits({record}: React.PropsWithChildren<{
@@ -14,6 +16,7 @@ export default function ClaimCredits({record}: React.PropsWithChildren<{
   const [showModel, setShowModal] = useState(false);
   const [amount, setAmount] = useState<number|undefined>(undefined);
   const [password, setPassword] = useState<string>("");
+  const [showBalanceModal, setShowBalanceModal] = useState(false);
   const {claimCreditsFromANS} = useCredit();
 
   const handleAmount = (event: any) => {
@@ -64,7 +67,14 @@ export default function ClaimCredits({record}: React.PropsWithChildren<{
   return env.ENABLE_CREDIT_TRANSFER && <>
     <div className="leading-10 mt-5 flex flex-row items-center justify-between sm:justify-start">
       <span className="sm:mr-4">Balance:</span>
-      <span className="rounded-lg bg-gray-700 px-4">{record && record.balance / 1000000} ALEO</span>
+      <span className="rounded-lg bg-gray-700 px-4 cursor-pointer flex items-center" onClick={() => setShowBalanceModal(true)}>
+        {record && record.balance / 1000000} ALEO
+        <span className="ml-1 text-sm text-gray-400">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+          </svg>
+        </span>
+      </span>
       <div className="hidden sm:flex ml-4">
       {record && !claimingWithPass && <Button className="mr-4" onClick={() => setShowModal(true)}> Withdraw </Button>}
       {record && claimingWithPass && <Button color={"gray"} className="mr-4" disabled={true}><RefreshIcon
@@ -108,7 +118,7 @@ export default function ClaimCredits({record}: React.PropsWithChildren<{
                       outline-none transition-all placeholder:text-gray-500 hover:border-teal px-4 pr-20`}
                     type="text"
                     autoComplete={"off"}
-                    placeholder={"Leave empty if no password"}
+                    placeholder={"Leave empty if withdraw public balance"}
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                 />
@@ -124,5 +134,39 @@ export default function ClaimCredits({record}: React.PropsWithChildren<{
             </div>
         </div>
     </div>}
+    {/* Balance Info Modal */}
+    <Dialog
+      open={showBalanceModal}
+      onClose={() => setShowBalanceModal(false)}
+      className="fixed inset-0 z-50 flex items-center justify-center"
+    >
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" onClick={() => setShowBalanceModal(false)} />
+      <div className="dark:bg-light-dark p-6 rounded-2xl relative z-50 max-w-md w-full mx-4">
+        <button
+          className="absolute top-3 right-3 text-gray-400 hover:text-white"
+          onClick={() => setShowBalanceModal(false)}
+        >
+          <Close className="h-4 w-4" />
+        </button>
+
+        <h3 className="text-xl font-medium text-white mb-4">About Your Balance</h3>
+
+        <div className="space-y-3 text-gray-300">
+          <p>
+            The displayed balance only shows ALEO received without a password.
+          </p>
+          <p>
+            Password-protected ALEO are private and not visible. To access these ALEO,
+            simply enter an amount and the correct password to withdraw them.
+          </p>
+        </div>
+
+        <div className="mt-6 flex justify-end">
+          <Button onClick={() => setShowBalanceModal(false)}>
+            I understand
+          </Button>
+        </div>
+      </div>
+    </Dialog>
   </>
 }
