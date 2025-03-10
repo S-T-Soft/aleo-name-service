@@ -95,26 +95,26 @@ export const WalletMultiButton: FC<ButtonProps> = ({ children, className, ...pro
     <div className="wallet-adapter-dropdown">
       <Button
         aria-expanded={active}
-        style={{pointerEvents: active ? 'none' : 'auto', ...props.style, minWidth: '180px'}}
+        style={{pointerEvents: active ? 'none' : 'auto', ...props.style}}
         onClick={openDropdown}
         {...props}
       >
         {avatar && (
-          <div className="inline-block relative mr-2">
-                      <img src={avatar} className="inline w-8 h-8 rounded-full mr-2" alt={primaryName}/>
+          <div className="inline-block relative sm:mr-2">
+                      <img src={avatar} className="inline w-8 h-8 rounded-full sm:mr-2" alt={primaryName}/>
                       <img src={wallet.adapter.icon} alt={`${wallet.adapter.name}`} className="inline w-4 h-4 rounded-full absolute top-0 right-0"/>
                     </div>
                   )}
                 {!avatar && (
-                    <div className="inline-block relative mr-2">
-                      <img src={wallet.adapter.icon} alt={`${wallet.adapter.name}`} className="inline w-8 h-8 rounded-full mr-2"/>
+                    <div className="inline-block relative sm:mr-2">
+                      <img src={wallet.adapter.icon} alt={`${wallet.adapter.name}`} className="inline w-8 h-8 rounded-full sm:mr-2"/>
                     </div>
                   )}
-                <span className="font-bold">{content}</span>
+                <span className="font-bold hidden sm:inline">{content}</span>
             </Button>
           <ul
             aria-label="dropdown-list"
-            className={`w-full wallet-adapter-dropdown-list ${active && 'wallet-adapter-dropdown-list-active'}`}
+            className={`w-full min-w-[200px] wallet-adapter-dropdown-list ${active && 'wallet-adapter-dropdown-list-active'}`}
             ref={ref}
             role="menu"
           >

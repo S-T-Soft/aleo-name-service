@@ -70,7 +70,7 @@ const AccountPage: NextPageWithLayout = () => {
                     {record.isPrimaryName && <span className="bg-green-700 px-2 py-1 rounded-lg text-right">PrimaryName</span>}
                     {!record.private && !record.isPrimaryName && <span className="bg-gray-600 px-2 py-1 rounded-lg text-right">Public</span>}
                   </div>
-                  <div className="text-center">
+                  <div className="text-center mt-4">
                     <AnchorLink href={`/account/${record.name}`}>
                       <Button className="px-4 py-1 h-8">
                         Manage
