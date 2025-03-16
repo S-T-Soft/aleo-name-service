@@ -4,14 +4,14 @@ const parsePrices = (name: string) => {
   let prices = "";
   switch (name) {
     case "ans":
-      prices = process.env.NEXT_PUBLIC_PRICES_ANS || "9999,250,50,10,2";
+      prices = process.env.NEXT_PUBLIC_PRICES_ANS || "9999,640,160,40,4";
       break;
     default:
       return {};
   }
   const obj = {};
   prices.trim().split(",").forEach((price: string, index: number) => {
-    obj[index + 1] = parseInt(price) * 1000000;
+    obj[index + 1] = parseInt(price);
   });
   return obj;
 }

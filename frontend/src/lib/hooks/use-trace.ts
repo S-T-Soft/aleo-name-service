@@ -1,7 +1,20 @@
-import {useLocalStorage} from "react-use";
+import {createContext, Dispatch, SetStateAction, useContext} from "react";
 
-export function useTrace() {
-  const [cbUUID, setCbUUID, clearCbUUID] = useLocalStorage('cbUUID', '');
+interface TraceContextState {
+  cbUUID: string;
+  setCbUUID: Dispatch<SetStateAction<string>>;
+  questId: string;
+  setQuestId: Dispatch<SetStateAction<string>>;
+  clearCbQuest: () => void;
+  isRegisterQuest: boolean;
+  isConvertQuest: boolean;
+  isPrimaryQuest: boolean;
+  isAvatarQuest: boolean;
+  recordAddress: (address: string) => void;
+}
 
-  return {cbUUID, setCbUUID, clearCbUUID};
+export const TraceContext = createContext<TraceContextState>({} as TraceContextState);
+
+export function useTrace(): TraceContextState {
+  return useContext(TraceContext);
 }

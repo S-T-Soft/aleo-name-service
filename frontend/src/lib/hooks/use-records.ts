@@ -4,17 +4,14 @@ import {createContext, useContext, useEffect, useMemo, useState} from "react";
 import {NameHashBalance, Record, Statistic} from "@/types";
 import {useClient} from "@/lib/hooks/use-client";
 import useSWR from 'swr';
-import {queryByField, queryName, saveName} from "@/lib/db";
+import env from "@/config/env";
+import {queryByField, saveName} from "@/lib/db";
 
-const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL
-  ? process.env.NEXT_PUBLIC_GATEWAY_URL
-  : "https://gateway.pinata.cloud/ipfs/";
 
 export function createRecordContext() {
-  const NEXT_PUBLIC_PROGRAM = process.env.NEXT_PUBLIC_PROGRAM;
-  const NEXT_PUBLIC_DEBUG_ADDR = process.env.NEXT_PUBLIC_DEBUG_ADDR;
   const {getPrimaryName,getName,getNameByField,getPublicDomain,getResolver,getStatistic,getPublicBalance} = useClient();
   const {publicKey, requestRecords} = useWallet();
+  const [activeRecord, setActiveRecord] = useState<Record|undefined>(undefined);
   const [records, setRecords] = useLocalStorage<Record[]>('records', []);
   const [statistic, setStatistic] = useState<Statistic>({totalNFTOwners: 0, totalPriNames: 0, totalNames: 0, totalNames24h: 0, blockHeight: 0, healthy: true} as Statistic);
   const [names, setNames] = useState<string[]>([]);
@@ -28,7 +25,7 @@ export function createRecordContext() {
   const {data: publicBalance} = useSWR('getBalance', () => getBalance(), {refreshInterval: 1000 * 60});
   useSWR('refreshRecords', () => refreshRecords("auto"), {refreshInterval: 1000 * 30});
 
-  const isDebugger = useMemo(() => publicKey === NEXT_PUBLIC_DEBUG_ADDR, [publicKey]);
+  const isDebugger = useMemo(() => publicKey === env.DEBUG_ADDR, [publicKey]);
 
   useEffect(() => {
     setRecords((records || []).map((rec) => {
@@ -85,9 +82,9 @@ export function createRecordContext() {
 
   const loadPrivateRecords = async () => {
     return new Promise<Record[]>((resolve, reject) => {
-      requestRecords!(NEXT_PUBLIC_PROGRAM!).then((privateRecords) => {
+      requestRecords!(env.REGISTRY_PROGRAM).then((privateRecords) => {
         const rs = privateRecords.filter((rec) => !rec.spent && rec.recordName != 'NFTView' && !rec.data.is_view);
-        isDebugger && alert("Valid private records(" + rs.length + "): " + JSON.stringify(rs));
+        isDebugger && console.log("Valid private records(" + rs.length + "): " + JSON.stringify(rs));
         return Promise.all(rs.map(async (rec) => {
           const nameField = rec.data.data.metadata[0].replace(".private", "");
           try {
@@ -118,17 +115,17 @@ export function createRecordContext() {
               balance: item.balance
             } as Record;
           } catch (e) {
-            isDebugger && alert("Error: " + e);
+            isDebugger && console.error("Error: " + e);
             return {} as Record;
           }
         }));
       }).then((privateRecords) => {
-        isDebugger && alert("Result private records(" + privateRecords.length + "): " + JSON.stringify(privateRecords));
+        isDebugger && console.log("Result private records(" + privateRecords.length + "): " + JSON.stringify(privateRecords));
         resolve(privateRecords.filter((rec) => {
           return Object.keys(rec).length !== 0;
         }));
       }).catch((error) => {
-        isDebugger && alert("Error: " + error);
+        isDebugger && console.error("Error: " + error);
         console.log(error);
         resolve([]);
       })
@@ -174,7 +171,7 @@ export function createRecordContext() {
                 setPrimaryName(rec.name);
                 getResolver(rec.name, "avatar").then((resolver) => {
                   if (resolver != null) {
-                    setAvatar(resolver.value.replace("ipfs://", GATEWAY_URL));
+                    setAvatar(resolver.value.replace("ipfs://", env.GATEWAY_URL));
                   }
                 });
               }
@@ -244,6 +241,8 @@ export function createRecordContext() {
     primaryName,
     avatar,
     loading,
+    activeRecord,
+    setActiveRecord,
     refreshRecords,
     addRecord,
     removeRecord,
@@ -262,6 +261,8 @@ interface RecordContextState {
   primaryName?: string;
   avatar?: string;
   loading: boolean;
+  activeRecord: Record | undefined;
+  setActiveRecord: (record: Record | undefined) => void;
   refreshRecords: (mode: string) => void;
   addRecord: (record: Record) => void;
   removeRecord: (name: string) => void;
@@ -279,6 +280,8 @@ const DEFAULT = {
   primaryName: "",
   avatar: "",
   loading: false,
+  activeRecord: undefined,
+  setActiveRecord: () => {},
   refreshRecords: () => {},
   addRecord: () => {},
   removeRecord: () => {},

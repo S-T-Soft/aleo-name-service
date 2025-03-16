@@ -20,7 +20,7 @@ const ManageNamePage: NextPageWithLayout = () => {
   const {wallet, publicKey} = useWallet();
   const {getAddress} = useClient();
   const {convertToPrivate, convertToPublic, setPrimaryName, unsetPrimaryName, transfer} = useANS();
-  const {records, updateRecodeBalance} = useRecords();
+  const {records, updateRecodeBalance, setActiveRecord, activeRecord} = useRecords();
   const [activeTab, setActiveTab] = useState('profile');
   const [available, setAvailable] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -29,7 +29,6 @@ const ManageNamePage: NextPageWithLayout = () => {
   const [isMine, setIsMine] = useState(true);
   const [isPrimaryName, setIsPrimaryName] = useState(false);
   const [name, setName] = useState("");
-  const [record, setRecord] = useState<Record | undefined>(undefined);
 
   useEffect(() => {
     if (!loading && name && name.length > 0) {
@@ -60,7 +59,7 @@ const ManageNamePage: NextPageWithLayout = () => {
         .then((address) => {
           setAvailable(false);
           const record = records?.find((rec) => rec.name === name);
-          setRecord(record);
+          setActiveRecord(record);
           record && updateRecodeBalance(record);
           const isPrivate = address.startsWith("Private");
           if (!isPrivate) {
@@ -93,28 +92,28 @@ const ManageNamePage: NextPageWithLayout = () => {
           {isPrimaryName && <span className="bg-green-700 mx-3 px-2 py-1 rounded-lg text-lg sm:text-xl">PrimaryName</span>}
         </h2>
         <div>
-            <ul className="flex text-gray-300">
-                <li className="-mb-px mr-2 last:mr-0 flex-auto text-center">
+            <ul className="flex text-gray-300 justify-around">
+                <li className="-mb-px mr-1 sm:mr-2 last:mr-0 flex-auto text-center">
                   <button
-                      className={`font-bold uppercase px-5 py-3 block leading-normal ${activeTab === 'profile' ? 'text-aquamarine' : ''}`}
+                      className={`font-bold uppercase px-2 sm:px-5 py-2 sm:py-3 text-sm sm:text-base block leading-normal ${activeTab === 'profile' ? 'text-aquamarine' : ''}`}
                       onClick={() => router.push(name)}
                       style={{ border: 'none', background: 'transparent', outline: 'none', cursor: 'pointer' }}
                   >
                       Profile
                   </button>
                 </li>
-                <li className="-mb-px mr-2 last:mr-0 flex-auto text-center">
+                <li className="-mb-px mr-1 sm:mr-2 last:mr-0 flex-auto text-center">
                   <button
-                      className={`font-bold uppercase px-5 py-3 block leading-normal ${activeTab === 'subnames' ? 'text-aquamarine' : ''}`}
+                      className={`font-bold uppercase px-2 sm:px-5 py-2 sm:py-3 text-sm sm:text-base block leading-normal ${activeTab === 'subnames' ? 'text-aquamarine' : ''}`}
                       onClick={() => router.push(name + '?tab=subnames')}
                       style={{ border: 'none', background: 'transparent', outline: 'none', cursor: 'pointer' }}
                   >
                       Subnames
                   </button>
                 </li>
-              {!loading && <li className="-mb-px mr-2 last:mr-0 flex-auto text-center">
+              {!loading && <li className="-mb-px mr-1 sm:mr-2 last:mr-0 flex-auto text-center">
                   <button
-                      className={`font-bold uppercase px-5 py-3 block leading-normal ${activeTab === 'resolver' ? 'text-aquamarine' : ''}`}
+                      className={`font-bold uppercase px-2 sm:px-5 py-2 sm:py-3 text-sm sm:text-base block leading-normal ${activeTab === 'resolver' ? 'text-aquamarine' : ''}`}
                       onClick={() => router.push(name + '?tab=resolver')}
                       style={{ border: 'none', background: 'transparent', outline: 'none', cursor: 'pointer' }}
                   >
@@ -130,22 +129,22 @@ const ManageNamePage: NextPageWithLayout = () => {
           {!loading && available || !isMine && <span>Redirecting...</span>}
           {!loading && activeTab == "profile" && isPrivate &&
               <PrivateName
-                record={record!}
+                record={activeRecord!}
                 setTriggerRecheck={() => {setTriggerRecheck(triggerRecheck + 1)}}
                 convertToPublic={convertToPublic}
                 transfer={transfer}
               />}
-          {!loading && record && activeTab == "profile" && !isPrivate &&
+          {!loading && activeRecord && activeTab == "profile" && !isPrivate &&
               <PublicName
-                record={record}
+                record={activeRecord}
                 setTriggerRecheck={() => {setTriggerRecheck(triggerRecheck + 1)}}
                 convertToPrivate={convertToPrivate}
                 setPrimaryName={setPrimaryName}
                 unsetPrimaryName={unsetPrimaryName}
                 transfer={transfer}
               />}
-          {!loading && activeTab == "subnames" && <SubNameView record={record!}/>}
-          {!loading && activeTab == "resolver" && record && <ResolverView record={record} onlyView={false}/>}
+          {!loading && activeTab == "subnames" && <SubNameView record={activeRecord!}/>}
+          {!loading && activeTab == "resolver" && activeRecord && <ResolverView record={activeRecord} onlyView={false}/>}
           </div>
         </div>
       </div>

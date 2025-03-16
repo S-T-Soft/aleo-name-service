@@ -1,8 +1,7 @@
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
 import {getFormattedU128Input, getFormattedNameInput, getFormattedFieldsInput} from "@/lib/util";
-import React from "react";
-import * as process from "process";
-import {Transaction, WalletAdapterNetwork, WalletNotConnectedError} from "@demox-labs/aleo-wallet-adapter-base";
+import {useCallback} from "react";
+import {Transaction, WalletNotConnectedError} from "@demox-labs/aleo-wallet-adapter-base";
 import {useRecords} from "@/lib/hooks/use-records";
 import {CouponCard, Record, Status, StatusChangeCallback, TLD} from "@/types";
 import toast from "@/components/ui/toast";
@@ -13,67 +12,51 @@ import {useClient} from "@/lib/hooks/use-client";
 import tlds from "@/config/tlds";
 import {usePrivateFee} from "@/lib/hooks/use-private-fee";
 import {useTrace} from "@/lib/hooks/use-trace";
+import env from "@/config/env";
+import useSWR from "swr";
 
 
 export function useANS() {
-  const NEXT_PUBLIC_PROGRAM = process.env.NEXT_PUBLIC_PROGRAM;
-  const NEXT_PUBLIC_REGISTER_QUEST_PROGRAM = process.env.NEXT_PUBLIC_REGISTER_QUEST_PROGRAM;
-  const NEXT_PUBLIC_COUPON_CARD_PROGRAM = process.env.NEXT_PUBLIC_COUPON_CARD_PROGRAM;
-  const NEXT_PUBLIC_RESOLVER_PROGRAM = process.env.NEXT_PUBLIC_RESOLVER_PROGRAM;
-  const NEXT_PUBLIC_FEES_REGISTER = parseInt(process.env.NEXT_PUBLIC_FEES_REGISTER!);
-  const NEXT_PUBLIC_FEES_REGISTER_FREE = parseInt(process.env.NEXT_PUBLIC_FEES_REGISTER_FREE!);
-  const NEXT_PUBLIC_FEES_REGISTER_COUPON = parseInt(process.env.NEXT_PUBLIC_FEES_REGISTER_COUPON!);
-  const NEXT_PUBLIC_FEES_REGISTER_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_REGISTER_PUBLIC!);
-  const NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC!);
-  const NEXT_PUBLIC_FEES_CONVERT_TO_PRIVATE = parseInt(process.env.NEXT_PUBLIC_FEES_CONVERT_TO_PRIVATE!);
-  const NEXT_PUBLIC_FEES_SET_PRIMARY = parseInt(process.env.NEXT_PUBLIC_FEES_SET_PRIMARY!);
-  const NEXT_PUBLIC_FEES_UNSET_PRIMARY = parseInt(process.env.NEXT_PUBLIC_FEES_UNSET_PRIMARY!);
-  const NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD = parseInt(process.env.NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD!);
-  const NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD_PUBLIC!);
-  const NEXT_PUBLIC_FEES_UNSET_RESOLVER_RECORD = parseInt(process.env.NEXT_PUBLIC_FEES_UNSET_RESOLVER_RECORD!);
-  const NEXT_PUBLIC_FEES_UNSET_RESOLVER_RECORD_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_UNSET_RESOLVER_RECORD_PUBLIC!);
-  const NEXT_PUBLIC_FEES_TRANSFER_PRIVATE = parseInt(process.env.NEXT_PUBLIC_FEES_TRANSFER_PRIVATE!);
-  const NEXT_PUBLIC_FEES_TRANSFER_PUBLIC = parseInt(process.env.NEXT_PUBLIC_FEES_TRANSFER_PUBLIC!);
-  const NETWORK = process.env.NEXT_PUBLIC_NETWORK as WalletAdapterNetwork;
+  const { records, publicBalance } = useRecords();
+  const { addTransaction } = useTransaction();
+  const { getCreditRecords } = useCredit();
+  const { getAddress, getLatestAleoPrice } = useClient();
+  const { privateFee } = usePrivateFee();
+  const { publicKey, requestTransaction, requestRecordPlaintexts } = useWallet();
+  const { cbUUID, questId, isPrimaryQuest, isRegisterQuest, isConvertQuest, isAvatarQuest, clearCbQuest, recordAddress } = useTrace();
+  const {data: aleoPrice} = useSWR('getLatestAleoPrice', () => getLatestAleoPrice(), {refreshInterval: 1000 * 60});
 
-  const {records, publicBalance} = useRecords();
-  const {addTransaction} = useTransaction();
-  const {getCreditRecords} = useCredit();
-  const {getAddress, getName} = useClient();
-  const {privateFee} = usePrivateFee();
-  const {publicKey, requestTransaction, requestRecordPlaintexts} = useWallet();
-  const {cbUUID, clearCbUUID} = useTrace();
-
-  const notify = React.useCallback((type: TypeOptions, message: string) => {
-    toast({type, message});
+  const notify = useCallback((type: TypeOptions, message: string) => {
+    toast({ type, message });
   }, []);
 
   const matchTld = (name: string) => {
-    const is_valid = /^([a-z0-9-_]{1,64}\.)+[a-z]{1,10}$/.test(name);
-    if (!is_valid) {
-      return undefined;
-    }
-    return tlds.find(tld => name.endsWith(`.${tld.name}`));
-  }
+    const isValid = /^([a-z0-9-_]{1,64}\.)+[a-z]{1,10}$/.test(name);
+    return isValid ? tlds.find(tld => name.endsWith(`.${tld.name}`)) : undefined;
+  };
 
-  const calcPrice = (name: string, tld: TLD, card: CouponCard | null) => {
+  const calcPrice = async (name: string, tld: TLD, card: CouponCard | null) => {
+    let currentAleoPrice = aleoPrice;
+    if (!currentAleoPrice) {
+      currentAleoPrice = await getLatestAleoPrice();
+    }
     const length = name.length;
     const maxKey = Math.max(...Object.keys(tld.prices).map(Number));
     const priceKey = Math.min(length, maxKey);
     const price = tld.prices[priceKey];
-    if (card && card.limit_name_length <= name.length) {
-      return price * card.discount_percent / 100;
-    }
-    return price;
-  }
+    const priceInUSD = card && card.limit_name_length <= name.length ? price * card.discount_percent / 100 : price;
+    const priceInAleo = Math.floor(priceInUSD * 1000000000000 / currentAleoPrice.price);
+    return {usd: priceInUSD, aleo: priceInAleo, rate: currentAleoPrice.price,
+      isSgx: currentAleoPrice.isSgx, timestamp: currentAleoPrice.timestamp}
+  };
 
   const formatNftData = async (record: Record) => {
     return `{ metadata: [${record.nameField}, 0field, 0field, 0field] }`;
-  }
+  };
 
   const getCouponCards = async (name: string, tld: TLD) => {
     return new Promise<CouponCard[]>((resolve, reject) => {
-      requestRecordPlaintexts!(NEXT_PUBLIC_COUPON_CARD_PROGRAM!).then((records) => {
+      requestRecordPlaintexts!(env.COUPON_CARD_PROGRAM).then((records) => {
         return Promise.all(records.filter((rec) => !rec.spent && rec.data.count != '0u64.private').map(async (rec) => {
           const limit_name_length = parseInt(rec.data.limit_name_length.replace("u8.private", ""));
           let tld = rec.data.tld.replace(".private", "");
@@ -113,37 +96,44 @@ export function useANS() {
   const register = async (name: string, tld: TLD, card: CouponCard | null, isPrivate: boolean, onStatusChange?: StatusChangeCallback) => {
     if (!publicKey) throw new WalletNotConnectedError();
 
-    onStatusChange && onStatusChange(true, {hasError: false, message: "Registering"});
+    // make sure the name is not registered
+    try {
+      await getAddress(`${name}.${tld.name}`);
+      onStatusChange && onStatusChange(false, {hasError: true, message: "Registered"});
+      return;
+    } catch (error) {
+      onStatusChange && onStatusChange(true, {hasError: false, message: "Registering"});
+    }
 
-    let price = calcPrice(name, tld, card);
+    const isCbQuest = isRegisterQuest && tld.name == 'ans';
+
+    let price = await calcPrice(name, tld, card);
     let functionName = "register_fld";
-    let fee = NEXT_PUBLIC_FEES_REGISTER;
+    let fee = env.FEES.REGISTER;
     let amounts = [];
-    if (price === 0) {
+    if (price.aleo === 0) {
       functionName = "register_free";
-      fee = NEXT_PUBLIC_FEES_REGISTER_FREE;
+      fee = env.FEES.REGISTER_FREE;
     } else if (card) {
       functionName = "register_fld_with_coupon";
-      fee = NEXT_PUBLIC_FEES_REGISTER_COUPON;
+      fee = env.FEES.REGISTER_COUPON;
     }
     if (isPrivate) {
       if (functionName !== "register_free") {
-        amounts.push(price);
+        amounts.push(price.aleo);
       }
       amounts.push(fee);
     } else if (functionName !== "register_free") {
       functionName = functionName + "_public";
-      fee = Math.ceil(fee + 24000);
+      fee = Math.ceil(fee + 16000);
 
-      if (publicBalance < price + fee) {
+      if (publicBalance < price.aleo + fee) {
         const error = "You don't have enough public credits";
         notify("error", error);
         onStatusChange && onStatusChange(false, {hasError: true, message: error});
         return;
       }
     }
-
-    const isCbQuest = cbUUID != '' && tld.name == 'ans';
 
     getCreditRecords(amounts)
       .then((records) => {
@@ -156,14 +146,19 @@ export function useANS() {
         }
         let program = tld.registrar;
         if (isCbQuest) {
-          const memo = {msg: cbUUID, type: 'coinbase_quest'}
+          const memo = {msg: cbUUID, id: questId}
           inputs.push(getFormattedFieldsInput(JSON.stringify(memo), 8));
           fee += 12000;
-          program = NEXT_PUBLIC_REGISTER_QUEST_PROGRAM!;
+          program = env.REGISTER_QUEST1_PROGRAM;
+        }
+        if (functionName != "register_free") {
+          inputs.push(price.isSgx ? 'true' : 'false');
+          inputs.push(price.timestamp + 'u128');
+          inputs.push(price.rate + 'u64');
         }
         const aleoTransaction = Transaction.createTransaction(
           publicKey,
-          NETWORK,
+          env.NETWORK,
           program,
           functionName,
           inputs,
@@ -181,7 +176,7 @@ export function useANS() {
       .then((txId) => {
         const onCbStatusChange = (running: boolean, status: Status) => {
           if (!running && !status.hasError) {
-            clearCbUUID();
+            clearCbQuest();
           }
           onStatusChange && onStatusChange(running, status);
         }
@@ -193,27 +188,28 @@ export function useANS() {
       });
   }
 
-  const registerSubName = async (name: string, parentRecord: Record, isPrivate: boolean, onStatusChange?: StatusChangeCallback) => {
+  const registerSubName = async (name: string, parentRecord: Record, onStatusChange?: StatusChangeCallback) => {
     if (!publicKey) throw new WalletNotConnectedError();
 
     onStatusChange && onStatusChange(true, {hasError: false, message: "Registering"});
 
     let amounts = [];
+    const fee = env.FEES.REGISTER_PUBLIC;
     if (privateFee) {
-      amounts.push(NEXT_PUBLIC_FEES_REGISTER_PUBLIC);
+      amounts.push(fee);
     }
     getCreditRecords(amounts)
       .then((records) => {
         const aleoTransaction = Transaction.createTransaction(
           publicKey,
-          NETWORK,
-          NEXT_PUBLIC_PROGRAM!,
+          env.NETWORK,
+          env.REGISTRY_PROGRAM,
           "register_" + (parentRecord.private ? "private" : "public"),
           [getFormattedNameInput(name, 4),
             parentRecord.private ? parentRecord.record : parentRecord.nameHash,
             publicKey, '0field'],
-          NEXT_PUBLIC_FEES_REGISTER_PUBLIC,
-          isPrivate // use private fee, or will leak the user address information
+          fee,
+          privateFee // use private fee, or will leak the user address information
         );
 
         if (requestTransaction)
@@ -262,9 +258,9 @@ export function useANS() {
 
     if (record) {
       const inputs: string[] = [];
-      let fee = NEXT_PUBLIC_FEES_TRANSFER_PUBLIC;
+      let fee = env.FEES.TRANSFER_PUBLIC;
       if (record.private) {
-        fee = NEXT_PUBLIC_FEES_TRANSFER_PRIVATE;
+        fee = env.FEES.TRANSFER_PRIVATE;
         inputs.push(record.record);
       } else {
         inputs.push(await formatNftData(record));
@@ -273,14 +269,14 @@ export function useANS() {
       inputs.push(recipient);
       let amounts = [];
       if (privateFee) {
-        amounts.push(NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC);
+        amounts.push(fee);
       }
       getCreditRecords(amounts)
         .then((records) => {
           const aleoTransaction = Transaction.createTransaction(
             publicKey,
-            NETWORK,
-            NEXT_PUBLIC_PROGRAM!,
+            env.NETWORK,
+            env.REGISTRY_PROGRAM,
             `transfer_${record.private ? "private" : "public"}`,
             inputs,
             fee,
@@ -319,18 +315,27 @@ export function useANS() {
         return;
       }
       let amounts = [];
+      let fee = env.FEES.CONVERT_TO_PUBLIC;
       if (privateFee) {
-        amounts.push(NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC);
+        amounts.push(fee);
+      }
+      const inputs = [record.record, publicKey];
+      let program = env.REGISTRY_PROGRAM;
+      if (isConvertQuest) {
+        const memo = {msg: cbUUID, id: questId}
+        inputs.push(getFormattedFieldsInput(JSON.stringify(memo), 8));
+        fee += 12000;
+        program = env.REGISTER_QUEST2_PROGRAM;
       }
       getCreditRecords(amounts)
         .then((records) => {
           const aleoTransaction = Transaction.createTransaction(
             publicKey,
-            NETWORK,
-            NEXT_PUBLIC_PROGRAM!,
+            env.NETWORK,
+            program,
             "transfer_private_to_public",
-            [record.record, publicKey],
-            NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC,
+            inputs,
+            fee,
             privateFee
           );
           if (requestTransaction)
@@ -339,8 +344,15 @@ export function useANS() {
             throw new Error("requestTransaction is not defined");
         })
         .then((txId) => {
-          addTransaction("convertToPublic", txId, [name], onStatusChange);
-        }).catch((error) => {
+          const onCbStatusChange = (running: boolean, status: Status) => {
+            if (!running && !status.hasError) {
+              clearCbQuest();
+            }
+            onStatusChange && onStatusChange(running, status);
+          }
+          addTransaction("convertToPublic", txId, [name], isConvertQuest ? onCbStatusChange : onStatusChange);
+        })
+        .catch((error) => {
         notify("error", error.message);
         onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
       });
@@ -367,8 +379,9 @@ export function useANS() {
       }
 
       let amounts = [];
+      const fee = env.FEES.CONVERT_TO_PRIVATE;
       if (privateFee) {
-        amounts.push(NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC);
+        amounts.push(fee);
       }
 
       const inputs = [await formatNftData(record), "0scalar", publicKey]
@@ -377,11 +390,11 @@ export function useANS() {
         .then((records) => {
           const aleoTransaction = Transaction.createTransaction(
             publicKey,
-            NETWORK,
-            NEXT_PUBLIC_PROGRAM!,
+            env.NETWORK,
+            env.REGISTRY_PROGRAM,
             "transfer_public_to_private",
             inputs,
-            NEXT_PUBLIC_FEES_CONVERT_TO_PRIVATE,
+            fee,
             privateFee
           );
           if (requestTransaction)
@@ -417,18 +430,21 @@ export function useANS() {
       }
 
       let amounts = [];
+      let fee = env.FEES.SET_PRIMARY;
       if (privateFee) {
-        amounts.push(NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC);
+        amounts.push(fee);
       }
+      const inputs = [record.nameHash];
+      let program = env.REGISTRY_PROGRAM;
       getCreditRecords(amounts)
         .then((records) => {
           const aleoTransaction = Transaction.createTransaction(
             publicKey,
-            NETWORK,
-            NEXT_PUBLIC_PROGRAM!,
+            env.NETWORK,
+            program,
             "set_primary_name",
-            [record.nameHash],
-            NEXT_PUBLIC_FEES_SET_PRIMARY,
+            inputs,
+            fee,
             privateFee
           );
 
@@ -436,9 +452,17 @@ export function useANS() {
             return requestTransaction(aleoTransaction)
           else
             throw new Error("requestTransaction is not defined");
-        }).then((txId) => {
-        addTransaction("setPrimaryName", txId, [name], onStatusChange);
-      }).catch((error) => {
+        })
+        .then((txId) => {
+          const onCbStatusChange = (running: boolean, status: Status) => {
+            if (!running && !status.hasError) {
+              clearCbQuest();
+            }
+            onStatusChange && onStatusChange(running, status);
+          }
+          isPrimaryQuest && recordAddress(publicKey);
+          addTransaction("setPrimaryName", txId, [name], isPrimaryQuest ? onCbStatusChange : onStatusChange);
+        }).catch((error) => {
         notify("error", error.message);
         onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
       })
@@ -455,18 +479,19 @@ export function useANS() {
     onStatusChange && onStatusChange(true, {hasError: false, message: "Unsetting"});
 
     let amounts = [];
+    const fee = env.FEES.UNSET_PRIMARY;
     if (privateFee) {
-      amounts.push(NEXT_PUBLIC_FEES_CONVERT_TO_PUBLIC);
+      amounts.push(fee);
     }
     getCreditRecords(amounts)
       .then((records) => {
         const aleoTransaction = Transaction.createTransaction(
           publicKey,
-          NETWORK,
-          NEXT_PUBLIC_PROGRAM!,
+          env.NETWORK,
+          env.REGISTRY_PROGRAM,
           "unset_primary_name",
           [],
-          NEXT_PUBLIC_FEES_UNSET_PRIMARY,
+          fee,
           privateFee
         );
 
@@ -488,22 +513,30 @@ export function useANS() {
 
     if (record) {
       let amounts = [];
-      let fee = record.private ? NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD : NEXT_PUBLIC_FEES_SET_RESOLVER_RECORD_PUBLIC;
+      let fee = record.private ? env.FEES.SET_RESOLVER_RECORD : env.FEES.SET_RESOLVER_RECORD_PUBLIC;
       if (privateFee) {
         amounts.push(fee);
+      }
+      let inputs = [
+        record.private ? record.record : record.nameHash,
+        getFormattedU128Input(category),
+        getFormattedNameInput(content, 8)
+      ];
+      let program = env.RESOLVER_PROGRAM;
+      if (isAvatarQuest && category === 'avatar' && record.private) {
+        const memo = {msg: cbUUID, id: questId}
+        inputs.push(getFormattedFieldsInput(JSON.stringify(memo), 8));
+        fee += 12000;
+        program = env.REGISTER_QUEST2_PROGRAM;
       }
       getCreditRecords(amounts)
         .then((records) => {
           const aleoTransaction = Transaction.createTransaction(
             publicKey,
-            NETWORK,
-            NEXT_PUBLIC_RESOLVER_PROGRAM!,
+            env.NETWORK,
+            program,
             `set_resolver_record${record.private ? "" : "_public"}`,
-            [
-              record.private ? record.record : record.nameHash,
-              getFormattedU128Input(category),
-              getFormattedNameInput(content, 8)
-            ],
+            inputs,
             fee,
             privateFee
           );
@@ -512,9 +545,17 @@ export function useANS() {
             return requestTransaction(aleoTransaction)
           else
             throw new Error("requestTransaction is not defined");
-        }).then((txId) => {
-        addTransaction("setResolverRecord", txId, [name], onStatusChange);
-      }).catch((error) => {
+        })
+        .then((txId) => {
+          const onCbStatusChange = (running: boolean, status: Status) => {
+            if (!running && !status.hasError) {
+              clearCbQuest();
+            }
+            onStatusChange && onStatusChange(running, status);
+          }
+          isAvatarQuest && category === 'avatar' && !record.private && recordAddress(publicKey);
+          addTransaction("setResolverRecord", txId, [], (isAvatarQuest && category === 'avatar') ? onCbStatusChange : onStatusChange);
+        }).catch((error) => {
         notify("error", error.message);
         onStatusChange && onStatusChange(false, {hasError: true, message: error.message});
       });
@@ -532,7 +573,7 @@ export function useANS() {
 
     if (record) {
       let amounts = [];
-      let fee = record.private ? NEXT_PUBLIC_FEES_UNSET_RESOLVER_RECORD : NEXT_PUBLIC_FEES_UNSET_RESOLVER_RECORD_PUBLIC;
+      let fee = record.private ? env.FEES.UNSET_RESOLVER_RECORD : env.FEES.UNSET_RESOLVER_RECORD_PUBLIC;
       if (privateFee) {
         amounts.push(fee);
       }
@@ -541,8 +582,8 @@ export function useANS() {
 
           const aleoTransaction = Transaction.createTransaction(
             publicKey,
-            NETWORK,
-            NEXT_PUBLIC_RESOLVER_PROGRAM!,
+            env.NETWORK,
+            env.RESOLVER_PROGRAM,
             `unset_resolver_record${record.private ? "" : "_public"}`,
             [record.private ? record.record : record.nameHash, getFormattedU128Input(category)],
             fee,
@@ -554,7 +595,7 @@ export function useANS() {
           else
             throw new Error("requestTransaction is not defined");
         }).then((txId) => {
-        addTransaction("unsetResolverRecord", txId, [name], onStatusChange);
+        addTransaction("unsetResolverRecord", txId, [], onStatusChange);
       }).catch((error) => {
         notify("error", error.message);
         onStatusChange && onStatusChange(false, {hasError: true, message: error.message});

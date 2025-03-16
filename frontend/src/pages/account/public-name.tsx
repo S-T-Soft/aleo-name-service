@@ -1,10 +1,11 @@
-import {useState} from "react";
+import React, {useState} from "react";
 import {Status, Record} from "@/types";
 import Button from "@/components/ui/button";
 import {RefreshIcon} from "@/components/icons/refresh";
 import Transfer from "@/pages/account/transfer";
 import Avatar from "@/components/resolver/avatar";
 import ClaimCredits from "@/pages/account/claim-credits";
+import {ShieldSVG} from "@/assets/icons";
 
 
 export default function PublicName({
@@ -62,27 +63,50 @@ export default function PublicName({
 
   return <>
     <div className="leading-10 mb-5 flex items-center">
-      <span className="mr-4">Avatar: </span>
+      <span className="mr-4 hidden md:flex">Avatar: </span>
       <Avatar record={record} onlyView={false}/>
     </div>
 
-    <div className="leading-10 mb-5">
+    <div className="leading-10 mb-5 flex flex-row items-center justify-between sm:justify-start">
       <span className="mr-4">Visibility: </span>
-      <span className="rounded-lg bg-gray-700 px-2 py-1">Public</span>
+      <span className="rounded-lg bg-gray-700 px-5 sm:mr-4">Public</span>
     </div>
-    <div className="leading-10">
-      <span className="mr-4">Primary Name:</span>
-      {record && record.isPrimaryName && !setting && <Button className="mr-4" onClick={handleSetting}>Unset Primary</Button>}
-      {record && record.isPrimaryName && setting && <Button color={"gray"} className="mr-4" disabled={true}><RefreshIcon
-          className="inline text-aquamarine motion-safe:animate-spin"/> {settingStatus}</Button>}
-      {record && !record.isPrimaryName && !setting && <Button className="mr-4" onClick={handleSetting}>Set Primary</Button>}
-      {record && !record.isPrimaryName && setting && <Button color={"gray"} className="mr-4" disabled={true}><RefreshIcon
-          className="inline text-aquamarine motion-safe:animate-spin"/> {settingStatus}</Button>}
 
-      {!converting && <Button className="mr-4" onClick={handleConvert}>Convert to Private</Button>}
-      {converting && <Button color={"gray"} className="mr-4" disabled={true}><RefreshIcon
-          className="inline text-aquamarine motion-safe:animate-spin"/> {convertStatus}</Button>}
+    <div className="leading-10 mb-5 flex-row items-center justify-start hidden sm:flex">
+      <span className="sm:mr-4">Primary Name:</span>
+      {record && record.isPrimaryName && !setting && <Button onClick={handleSetting}>Unset Primary</Button>}
+      {record && record.isPrimaryName && setting && <Button color={"gray"} disabled={true}><RefreshIcon
+          className="inline text-aquamarine motion-safe:animate-spin"/> {settingStatus}</Button>}
+      {record && !record.isPrimaryName && !setting && <Button onClick={handleSetting}>Set Primary</Button>}
+      {record && !record.isPrimaryName && setting && <Button color={"gray"} disabled={true}><RefreshIcon
+          className="inline text-aquamarine motion-safe:animate-spin"/> {settingStatus}</Button>}
+      {!converting && <Button className="ml-5" onClick={handleConvert}>
+          <ShieldSVG className="h-6 inline" /> Convert to Private
+      </Button>}
+      {converting &&  <Button className="ml-5" color={"gray"} disabled={true}><RefreshIcon
+            className="inline text-aquamarine motion-safe:animate-spin"/> {convertStatus}</Button>}
     </div>
+
+    <div className="sm:hidden">
+      {record && record.isPrimaryName && !setting &&
+          <Button fullWidth={true} onClick={handleSetting}>Unset Primary</Button>}
+      {record && record.isPrimaryName && setting &&
+          <Button fullWidth={true} color={"gray"} disabled={true}><RefreshIcon
+          className="inline text-aquamarine motion-safe:animate-spin"/> {settingStatus}</Button>}
+      {record && !record.isPrimaryName && !setting &&
+          <Button fullWidth={true} onClick={handleSetting}>Set Primary</Button>}
+      {record && !record.isPrimaryName && setting &&
+          <Button fullWidth={true} color={"gray"} disabled={true}><RefreshIcon
+          className="inline text-aquamarine motion-safe:animate-spin"/> {settingStatus}</Button>}
+      {!converting &&
+          <Button className="w-full mt-5" onClick={handleConvert}>
+              <ShieldSVG className="h-6 inline" />  Convert to Private
+          </Button>}
+      {converting &&
+          <Button className="w-full mt-5" color={"gray"} disabled={true}><RefreshIcon
+            className="inline text-aquamarine motion-safe:animate-spin"/> {convertStatus}</Button>}
+    </div>
+
     {record && <ClaimCredits record={record}/>}
     {record && <Transfer name={record.name} transfer={transfer} setTriggerRecheck={setTriggerRecheck}/>}
   </>;

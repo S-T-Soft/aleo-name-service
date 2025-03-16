@@ -1,8 +1,5 @@
 import { JSONRPCClient } from 'json-rpc-2.0';
-import * as process from "process";
-
-const API_URL = process.env.NEXT_PUBLIC_RPC_URL!;
-const PROGRAM = process.env.NEXT_PUBLIC_PROGRAM!;
+import env from "@/config/env";
 
 export async function getHeight(): Promise<number> {
   const client = getClient();
@@ -34,7 +31,7 @@ export async function getAleoTransactionsForProgram(programId: string, functionN
 }
 
 export async function getTransaction(transactionId: string): Promise<any> {
-  const transactionUrl = `${API_URL}/aleo/transaction`;
+  const transactionUrl = `${env.API_URL}/aleo/transaction`;
   const response = await fetch(`${transactionUrl}/${transactionId}`);
   if (!response.ok) {
     throw new Error('Transaction not found');
@@ -44,7 +41,7 @@ export async function getTransaction(transactionId: string): Promise<any> {
 }
 
 export async function getSettingsStatus(): Promise<number> {
-  const transactions = await getTransactionsForProgram(PROGRAM, 'update_toggle_settings');
+  const transactions = await getTransactionsForProgram(env.REGISTRY_PROGRAM, 'update_toggle_settings');
   const transactionIds = transactions.map((transactionId: any) => transactionId.transaction_id);
   if (transactionIds.length === 0) {
     return 5;
@@ -56,7 +53,7 @@ export async function getSettingsStatus(): Promise<number> {
 }
 
 export async function getMintBlock(): Promise<{ block: number }> {
-  const transactionMetadata = await getAleoTransactionsForProgram(PROGRAM, 'set_mint_block');
+  const transactionMetadata = await getAleoTransactionsForProgram(env.REGISTRY_PROGRAM, 'set_mint_block');
   if (transactionMetadata.length === 0) {
     return { block: 0 };
   }
@@ -68,7 +65,7 @@ export async function getMintBlock(): Promise<{ block: number }> {
 
 export const getClient = () => {
   const client = new JSONRPCClient((jsonRPCRequest: any) =>
-    fetch(API_URL, {
+    fetch(env.API_URL, {
       method: 'POST',
       headers: {
         'content-type': 'application/json'

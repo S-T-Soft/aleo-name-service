@@ -11,7 +11,7 @@ export default function SearchButton({ ...props }) {
       shape="circle"
       aria-label="Search"
     >
-      <SearchIcon className="h-auto w-3.5 sm:w-auto" />
+      <SearchIcon className="h-5 w-5" />
     </Button>
   );
 }
