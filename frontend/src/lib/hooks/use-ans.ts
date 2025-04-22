@@ -46,8 +46,7 @@ export function useANS() {
     const price = tld.prices[priceKey];
     const priceInUSD = card && card.limit_name_length <= name.length ? price * card.discount_percent / 100 : price;
     const priceInAleo = Math.floor(priceInUSD * 1000000000000 / currentAleoPrice.price);
-    return {usd: priceInUSD, aleo: priceInAleo, rate: currentAleoPrice.price,
-      isSgx: currentAleoPrice.isSgx, timestamp: currentAleoPrice.timestamp}
+    return {usd: priceInUSD, aleo: priceInAleo, rate: currentAleoPrice.price, timestamp: currentAleoPrice.timestamp}
   };
 
   const formatNftData = async (record: Record) => {
@@ -152,8 +151,7 @@ export function useANS() {
           program = env.REGISTER_QUEST1_PROGRAM;
         }
         if (functionName != "register_free") {
-          inputs.push(price.isSgx ? 'true' : 'false');
-          inputs.push(price.timestamp + 'u128');
+          inputs.push(price.timestamp + 'u64');
           inputs.push(price.rate + 'u64');
         }
         const aleoTransaction = Transaction.createTransaction(
