@@ -11,6 +11,7 @@ interface TraceContextState {
   isPrimaryQuest: boolean;
   isAvatarQuest: boolean;
   recordAddress: (address: string) => void;
+  recordActivity: (address: string, domain: string) => void;
 }
 
 export const TraceContext = createContext<TraceContextState>({} as TraceContextState);

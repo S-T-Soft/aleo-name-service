@@ -23,7 +23,7 @@ export function useANS() {
   const { getAddress, getLatestAleoPrice } = useClient();
   const { privateFee } = usePrivateFee();
   const { publicKey, requestTransaction, requestRecordPlaintexts } = useWallet();
-  const { cbUUID, questId, isPrimaryQuest, isRegisterQuest, isConvertQuest, isAvatarQuest, clearCbQuest, recordAddress } = useTrace();
+  const { cbUUID, questId, isPrimaryQuest, isRegisterQuest, isConvertQuest, isAvatarQuest, clearCbQuest, recordAddress, recordActivity } = useTrace();
   const {data: aleoPrice} = useSWR('getLatestAleoPrice', () => getLatestAleoPrice(), {refreshInterval: 1000 * 60});
 
   const notify = useCallback((type: TypeOptions, message: string) => {
@@ -172,13 +172,19 @@ export function useANS() {
           throw new Error("requestTransaction is not defined");
       })
       .then((txId) => {
+        const onRegisterStatusChange = (running: boolean, status: Status) => {
+          if (!running && !status.hasError && isPrivate && env.NETWORK == "mainnetbeta") {
+            recordActivity(publicKey, `${name}.${tld.name}`);
+          }
+          onStatusChange && onStatusChange(running, status);
+        }
         const onCbStatusChange = (running: boolean, status: Status) => {
           if (!running && !status.hasError) {
             clearCbQuest();
           }
-          onStatusChange && onStatusChange(running, status);
+          onRegisterStatusChange(running, status);
         }
-        addTransaction("register", txId, [name], isCbQuest ? onCbStatusChange : onStatusChange);
+        addTransaction("register", txId, [name], isCbQuest ? onCbStatusChange : onRegisterStatusChange);
       })
       .catch((error) => {
         notify("error", error.message);

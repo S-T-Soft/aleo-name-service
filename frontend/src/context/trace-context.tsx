@@ -42,8 +42,18 @@ export const TraceProvider: FC<TraceProviderProps> = ({ children, ...props }) =>
     })
   }
 
+  const recordActivity = async (address: String, domain: String) => {
+    await fetch(`${env.QUEST_URL}/activity/registration`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ address, domain }),
+    })
+  }
+
   return (
-    <TraceContext.Provider value={{ cbUUID, setCbUUID, clearCbQuest, questId, setQuestId, isPrimaryQuest, isConvertQuest, isRegisterQuest, isAvatarQuest, recordAddress }}>
+    <TraceContext.Provider value={{ cbUUID, setCbUUID, clearCbQuest, questId, setQuestId, isPrimaryQuest, isConvertQuest, isRegisterQuest, isAvatarQuest, recordAddress, recordActivity }}>
       {children}
     </TraceContext.Provider>
   );
