@@ -1507,24 +1507,24 @@
   resolved "https://registry.yarnpkg.com/@pkgjs/parseargs/-/parseargs-0.11.0.tgz#a77ea742fab25775145434eb1d2328cf5013ac33"
   integrity sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==
 
-"@puzzlehq/sdk-core@1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@puzzlehq/sdk-core/-/sdk-core-1.0.1.tgz#f8c5ca224c283515cfdefb89eb3e83e5b4341d48"
-  integrity sha512-Mh5rlXBtOg3nZ3aZd1InTtOfLls3ICyr9WR+Uv3RNQLmZ5EppnIaoTdD/mQL2hrGCSE23hHKbj8XY2QKaj3Chg==
+"@puzzlehq/sdk-core@1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@puzzlehq/sdk-core/-/sdk-core-1.0.3.tgz#b4f24e6f773db3f2285ebfc8bb1eb5ee178f2a3f"
+  integrity sha512-nYXunLzYmxNyTARH6lNKD0eW2DZp+XpKCPeJPLvDdIW2jy0rXdDo1L0/CTAF1r09yDjBdoibIvjzwCVljjWinA==
   dependencies:
-    "@puzzlehq/types" "1.0.30"
+    "@puzzlehq/types" "1.0.31"
     debug "^4.3.4"
     events "^3.3.0"
     ws "^8.16.0"
     zod "3.21.1"
 
-"@puzzlehq/sdk@1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@puzzlehq/sdk/-/sdk-1.0.1.tgz#0408531b2b5945a90daab7da53b1fb358b382f58"
-  integrity sha512-rfAov/DBup8+mdQKIQE5RFUTtIjExkJmEj6WqrT8yRpnnOpvWtfYIbjET009/5vv6eadNSGVxSCiBK7hY0hGYA==
+"@puzzlehq/sdk@1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@puzzlehq/sdk/-/sdk-1.0.3.tgz#d0e3dc8fc0661c30720c6969499027760d7ea119"
+  integrity sha512-IqK/GMB3larnPzUWxNyMm23t+KDtcD/ZzaPVL0RakWUQ3jmRULcnKIeGNTZ2FPvRShCespyPXI/Qp6flftll2A==
   dependencies:
-    "@puzzlehq/sdk-core" "1.0.1"
-    "@puzzlehq/types" "1.0.30"
+    "@puzzlehq/sdk-core" "1.0.3"
+    "@puzzlehq/types" "1.0.31"
     "@tanstack/query-core" "^4.29.5"
     "@tanstack/react-query" "^4.29.5"
     "@tanstack/react-query-devtools" "^4.29.5"
@@ -1537,10 +1537,10 @@
     zod "3.21.1"
     zustand "^4.3.9"
 
-"@puzzlehq/types@1.0.30":
-  version "1.0.30"
-  resolved "https://registry.yarnpkg.com/@puzzlehq/types/-/types-1.0.30.tgz#9d0cc3c776dcc388e028aab4af863fb7e5c7aa02"
-  integrity sha512-I7WI400NBYqEU0yiE1dLw86gw/7ATnnz2zPg5j7tcY+bs2Ig2Ieis+F/c0GxVmhVKZmmmUQCXrzczQRIyEi/dA==
+"@puzzlehq/types@1.0.31":
+  version "1.0.31"
+  resolved "https://registry.yarnpkg.com/@puzzlehq/types/-/types-1.0.31.tgz#ff9a9b4aab8091d3e7975df99a76c8d10d4e24a6"
+  integrity sha512-m2VoTfuIs/hNr15MkQbZAtOO2cbf4OsrSyqKEbJ18WCzfYAk5oqbpgaoNDa5e4VAE6mcehtK7sy1VXxXJZqZoQ==
   dependencies:
     zod "3.21.1"
 
