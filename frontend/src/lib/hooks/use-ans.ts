@@ -124,7 +124,6 @@ export function useANS() {
       amounts.push(fee);
     } else if (functionName !== "register_free") {
       functionName = functionName + "_public";
-      fee = Math.ceil(fee + 16000);
 
       if (publicBalance < price.aleo + fee) {
         const error = "You don't have enough public credits";
@@ -147,7 +146,6 @@ export function useANS() {
         if (isCbQuest) {
           const memo = {msg: cbUUID, id: questId}
           inputs.push(getFormattedFieldsInput(JSON.stringify(memo), 8));
-          fee += 12000;
           program = env.REGISTER_QUEST1_PROGRAM;
         }
         if (functionName != "register_free") {
@@ -328,7 +326,6 @@ export function useANS() {
       if (isConvertQuest) {
         const memo = {msg: cbUUID, id: questId}
         inputs.push(getFormattedFieldsInput(JSON.stringify(memo), 8));
-        fee += 12000;
         program = env.REGISTER_QUEST2_PROGRAM;
       }
       getCreditRecords(amounts)
@@ -530,7 +527,6 @@ export function useANS() {
       if (isAvatarQuest && category === 'avatar' && record.private) {
         const memo = {msg: cbUUID, id: questId}
         inputs.push(getFormattedFieldsInput(JSON.stringify(memo), 8));
-        fee += 12000;
         program = env.REGISTER_QUEST2_PROGRAM;
       }
       getCreditRecords(amounts)
