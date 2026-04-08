@@ -377,11 +377,11 @@ const NamePage: NextPageWithLayout = () => {
                                 ALEO into Private ALEO, or manually make this conversion in your wallet. <br/>
                                 After this, please wait a few minutes for wallet synchronization. <br/>
                                 Refresh this page, and if the <span className="rounded-full bg-teal text-black p-1">Register</span> button is clickable,
-                                you're ready to register.<br/>
+                                you&apos;re ready to register.<br/>
                                 Alternatively, you may opt to disable the <span className="rounded-full bg-teal text-black p-1">Private Fee</span> option for a simpler process.
                             </div>}
                             {publicKey && !privateFee && <div className="mt-5">
-                                Please be aware that by disabling the "Private Fee" option,
+                                Please be aware that by disabling the &quot;Private Fee&quot; option,
                                   your Aleo address will be exposed in the transaction records.
                             </div>}
                             {publicKey && !canPublicMint && canCouponMint && <div className="mt-5 text-red-400">

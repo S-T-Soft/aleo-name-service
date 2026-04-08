@@ -8,7 +8,7 @@ import env from "@/config/env";
 import {queryByField, saveName} from "@/lib/db";
 
 
-export function createRecordContext() {
+export function useRecordContext() {
   const {getPrimaryName,getName,getNameByField,getPublicDomain,getResolver,getStatistic,getPublicBalance} = useClient();
   const {publicKey, requestRecords} = useWallet();
   const [activeRecord, setActiveRecord] = useState<Record|undefined>(undefined);

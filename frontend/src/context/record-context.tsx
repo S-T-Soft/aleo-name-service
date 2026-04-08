@@ -1,12 +1,12 @@
 import React, {FC, ReactNode} from "react";
-import {createRecordContext, RecordContext} from "@/lib/hooks/use-records";
+import {useRecordContext, RecordContext} from "@/lib/hooks/use-records";
 
 export interface RecordProviderProps {
     children: ReactNode;
 }
 export const RecordProvider: FC<RecordProviderProps> = ({ children, ...props }) => {
     return (
-        <RecordContext.Provider value={createRecordContext()}>
+        <RecordContext.Provider value={useRecordContext()}>
             {children}
         </RecordContext.Provider>
     );
