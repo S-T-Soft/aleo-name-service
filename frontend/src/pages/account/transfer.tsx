@@ -4,6 +4,7 @@ import Button from "@/components/ui/button";
 import {RefreshIcon} from "@/components/icons/refresh";
 import tlds from "@/config/tlds";
 import {useANS} from "@/lib/hooks/use-ans";
+import posthog from 'posthog-js';
 
 export default function Transfer({name, transfer, setTriggerRecheck}: React.PropsWithChildren<{
   name: string,
@@ -45,6 +46,9 @@ export default function Transfer({name, transfer, setTriggerRecheck}: React.Prop
       setTransferring(running);
       setTransferStatus(status.message);
       if (!running) {
+        if (!status.hasError) {
+          posthog.capture('name_transfer_completed', { name, recipient });
+        }
         setTriggerRecheck();
       }
     });

@@ -10,6 +10,7 @@ import {SearchIcon} from "@/components/icons/search";
 import Logo from "@/components/ui/logo";
 import {BuildWithAleoDarkSVG} from "@/assets/icons";
 import toast from "@/components/ui/toast";
+import posthog from 'posthog-js';
 
 const ANSDesktop: NextPage = () => {
   const [submitting, setSubmitting] = React.useState(false);
@@ -26,6 +27,7 @@ const ANSDesktop: NextPage = () => {
       },
       body: JSON.stringify({address}),
     }).then(() => {
+      posthog.capture('newsletter_subscribed', { email: address });
       toast({ type: "success", message: "Subscribed successfully" });
     }).catch(() => {
       toast({ type: "error", message: "Failed to subscribe" });

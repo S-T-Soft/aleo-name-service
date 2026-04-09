@@ -9,6 +9,7 @@ import ToggleSwitch from "@/components/ui/toggle-switch";
 
 import {usePrivateFee} from "@/lib/hooks/use-private-fee";
 import {Input} from "@/components/ui/input";
+import posthog from 'posthog-js';
 
 const AddSubName = ({record, onSuccess}: React.PropsWithChildren<{
   record: Record,
@@ -57,10 +58,20 @@ const AddSubName = ({record, onSuccess}: React.PropsWithChildren<{
     if (!inputValue || inputValue.length == 0) {
       return;
     }
+    posthog.capture('subname_registration_initiated', {
+      subname: inputValue,
+      parent_name: record.name,
+      full_name: `${inputValue}.${record.name}`,
+    });
     await registerSubName(inputValue, record, (running: boolean, status: Status) => {
       setRegistering(running);
       setStatus(status.message);
       if (status.message === 'Finalized') {
+        posthog.capture('subname_registration_completed', {
+          subname: inputValue,
+          parent_name: record.name,
+          full_name: `${inputValue}.${record.name}`,
+        });
         setInputValue("");
         onSuccess();
       }

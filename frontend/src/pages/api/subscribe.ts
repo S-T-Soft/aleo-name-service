@@ -1,4 +1,5 @@
 import * as process from "process";
+import { getPostHogClient } from '@/lib/posthog-server';
 
 const apiKey = process.env.MAILGUN_API_KEY;
 const listAddress = process.env.MAILGUN_LIST_ADDRESS;
@@ -24,6 +25,12 @@ export default async function handler(req, res) {
     const data = await resp.json();
     console.log(data);
     console.log(Buffer.from(`api:${apiKey}`).toString('base64'))
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: req.body.address,
+      event: 'newsletter_subscribed',
+      properties: { email: req.body.address, source: 'api' },
+    });
     res.status(200).send(data)
   } else {
     return res.status(405).send('Method Not Allowed');

@@ -24,6 +24,7 @@ import tlds from "@/config/tlds";
 import env from "@/config/env";
 
 import {usePrivateFee} from "@/lib/hooks/use-private-fee";
+import posthog from 'posthog-js';
 
 
 const NamePage: NextPageWithLayout = () => {
@@ -211,10 +212,26 @@ const NamePage: NextPageWithLayout = () => {
 
   const handleRegister = async (event: any) => {
     event.preventDefault();
+    posthog.capture('name_registration_initiated', {
+      name: `${name}.${tld.name}`,
+      price_aleo: price,
+      price_usd: priceUSD,
+      using_coupon: !!selectedCard,
+      private_fee: privateFee,
+    });
     await register(name, tld, selectedCard, privateFee, (running: boolean, status: Status) => {
       setRegistering(running);
       setStatus(status.message);
       if (!running) {
+        if (!status.hasError) {
+          posthog.capture('name_registration_completed', {
+            name: `${name}.${tld.name}`,
+            price_aleo: price,
+            price_usd: priceUSD,
+            using_coupon: !!selectedCard,
+            private_fee: privateFee,
+          });
+        }
         setTriggerRecheck(triggerRecheck + 1);
       }
     });

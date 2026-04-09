@@ -10,6 +10,7 @@ import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
 import RotatingCoin from "@/pages/tapns/rotating-coin";
 import {WalletMultiButton} from "@/components/WalletMultiButton";
 import env from "@/config/env";
+import posthog from 'posthog-js';
 
 export default function BindPage({ params }: { params: { code: string } }) {
   const [address, setAddress] = useState('')
@@ -47,6 +48,7 @@ export default function BindPage({ params }: { params: { code: string } }) {
       const data = await response.json()
       // check the data has queue prop, and queue is a int, >= 0
       if (data.queue !== undefined && Number.isInteger(data.queue) && data.queue >= 0) {
+        posthog.capture('tapns_address_bound', { code: params.code, address, queue_position: data.queue });
         router.push(`/tapns/queue/${params.code}?queue=${data.queue}&address=${encodeURIComponent(address)}`)
       } else {
         setError(data.error)

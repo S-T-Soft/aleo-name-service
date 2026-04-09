@@ -7,6 +7,7 @@ import {DynamicAddressIcon} from "@/assets/address/DynamicAddressIcon";
 import Button from "@/components/ui/button";
 import {RefreshIcon} from "@/components/icons/refresh";
 import { getCoderByCoinName } from '@ensdomains/address-encoder'
+import posthog from 'posthog-js';
 
 export const AddRecordForm = ({record, onSuccess}: React.PropsWithChildren<{
   record: Record,
@@ -66,6 +67,7 @@ export const AddRecordForm = ({record, onSuccess}: React.PropsWithChildren<{
       setSetting(running);
       setStatus(status.message);
       if (status.message === 'Finalized') {
+        posthog.capture('resolver_record_set', { name: record.name, coin: chooseCoin });
         setChooseCoin("");
         setContent("");
         onSuccess();

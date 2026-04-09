@@ -3,6 +3,7 @@ import { SearchIcon } from '@/components/icons/search';
 import Button from "@/components/ui/button";
 import {useRouter} from "next/router";
 import tlds from "@/config/tlds";
+import posthog from 'posthog-js';
 
 
 type SearchFromProps = {
@@ -28,6 +29,7 @@ export function SearchFrom({ placeholder = 'Search for a name...' }: SearchFromP
       return false;
     }
     setError('');
+    posthog.capture('name_searched', { name: search, tld: tlds[0].name });
     setSearch("");
     // redirect to /name/{search}
     await router.push(`/name/${search}.${tlds[0].name}`);

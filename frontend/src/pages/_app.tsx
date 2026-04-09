@@ -35,11 +35,24 @@ import {BlockNumber} from "@/components/BlockNumber";
 import {isMobile} from "@/lib/util";
 import env from "@/config/env";
 import {TraceProvider} from "@/context/trace-context";
+import posthog from 'posthog-js';
+import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
 
 
 type AppPropsWithLayout = AppProps & {
   Component: NextPageWithLayout;
 };
+
+function WalletIdentifier() {
+  const { publicKey } = useWallet();
+  useEffect(() => {
+    if (publicKey) {
+      posthog.identify(publicKey, { wallet_address: publicKey });
+      posthog.capture('wallet_connected', { wallet_address: publicKey });
+    }
+  }, [publicKey]);
+  return null;
+}
 
 
 function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
@@ -114,6 +127,7 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
               env.TRANSFER_PROGRAM]}
             autoConnect
           >
+            <WalletIdentifier />
             <WalletModalProvider>
               <PrivateFeeProvider>
                 <TraceProvider>
