@@ -41,7 +41,7 @@ const AddSubName = ({record, onSuccess}: React.PropsWithChildren<{
     } else {
       setAvailable(false);
     }
-  }, [inputValue]);
+  }, [inputValue, getAddress, record.name]);
 
   const handleInput = (event: any) => {
     const value = event.target.value.trim();

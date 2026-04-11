@@ -9,7 +9,7 @@ const parsePrices = (name: string) => {
     default:
       return {};
   }
-  const obj = {};
+  const obj: Record<number, number> = {};
   prices.trim().split(",").forEach((price: string, index: number) => {
     obj[index + 1] = parseInt(price);
   });

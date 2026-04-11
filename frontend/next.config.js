@@ -10,6 +10,9 @@ module.exports = withAxiom(withPWA({
   reactStrictMode: true,
   skipTrailingSlashRedirect: true,
   async rewrites() {
+    if (process.env.NODE_ENV !== 'production') {
+      return [];
+    }
     return [
       {
         source: "/ingest/static/:path*",

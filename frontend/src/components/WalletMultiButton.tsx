@@ -8,6 +8,7 @@ import AnchorLink from "@/components/ui/links/anchor-link";
 import {DynamicSocialIcon} from "@/assets/social/DynamicSocialIcon";
 import ToggleSwitch from "@/components/ui/toggle-switch";
 import { cn } from "@/lib/util"
+import Image from "next/image";
 
 import {usePrivateFee} from "@/lib/hooks/use-private-fee";
 
@@ -86,7 +87,7 @@ export const WalletMultiButton: FC<ButtonProps> = ({ children, className, ...pro
     if (!base58 && !connecting) return <WalletConnectButton className={cn("!bg-aquamarine !text-black !font-normal", className)} {...props}>{children}</WalletConnectButton>;
     if (connecting) return <Button className={cn("!bg-aquamarine !text-black !font-normal", className)} {...props} onClick={() => disconnect()}>
       <div className="inline-block relative mr-2">
-        <img src={wallet.adapter.icon} className="inline w-8 h-8 rounded-full mr-2" alt={wallet.adapter.name}/>
+        <Image src={wallet.adapter.icon} className="inline w-8 h-8 rounded-full mr-2" alt={wallet.adapter.name} width={32} height={32} unoptimized />
       </div>
       <span className="font-bold">Connecting...</span>
     </Button>;
@@ -101,13 +102,13 @@ export const WalletMultiButton: FC<ButtonProps> = ({ children, className, ...pro
       >
         {avatar && (
           <div className="inline-block relative sm:mr-2">
-                      <img src={avatar} className="inline w-8 h-8 rounded-full sm:mr-2" alt={primaryName}/>
-                      <img src={wallet.adapter.icon} alt={`${wallet.adapter.name}`} className="inline w-4 h-4 rounded-full absolute top-0 right-0"/>
+                      <Image src={avatar} className="inline w-8 h-8 rounded-full sm:mr-2" alt={primaryName || "Avatar"} width={32} height={32} unoptimized />
+                      <Image src={wallet.adapter.icon} alt={`${wallet.adapter.name}`} className="inline w-4 h-4 rounded-full absolute top-0 right-0" width={16} height={16} unoptimized />
                     </div>
                   )}
                 {!avatar && (
                     <div className="inline-block relative sm:mr-2">
-                      <img src={wallet.adapter.icon} alt={`${wallet.adapter.name}`} className="inline w-8 h-8 rounded-full sm:mr-2"/>
+                      <Image src={wallet.adapter.icon} alt={`${wallet.adapter.name}`} className="inline w-8 h-8 rounded-full sm:mr-2" width={32} height={32} unoptimized />
                     </div>
                   )}
                 <span className="font-bold hidden sm:inline">{content}</span>

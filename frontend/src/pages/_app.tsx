@@ -26,7 +26,6 @@ import {RecordProvider} from "@/context/record-context";
 import { AxiomWebVitals } from 'next-axiom';
 import {
   FoxWalletAdapter,
-  SoterWalletAdapter,
   LeoWalletAdapter,
   PuzzleWalletAdapter
 } from '@/lib/wallet-adapters';
@@ -74,11 +73,6 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
           isMobile: isMobile()
         })
       ]
-      if (!isMobile()) {
-        wallets.push(new SoterWalletAdapter({
-          appName: 'Aleo Name Service',
-        }))
-      }
       return wallets
     }, []);
   const [queryClient] = useState(() => new QueryClient());

@@ -10,7 +10,7 @@ import logoB from '../../assets/images/tapnsb.png'
 
 
 function Coin() {
-  const meshRef = useRef<THREE.Mesh>(null!)
+  const meshRef = useRef<THREE.Group>(null!)
 
   const frontMaterial = new THREE.MeshStandardMaterial({
     map: useLoader(TextureLoader, logoF.src),

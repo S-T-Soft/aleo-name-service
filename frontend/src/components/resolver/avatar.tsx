@@ -8,6 +8,7 @@ import {useBoolean} from "react-use";
 import env from "@/config/env";
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
 import {RefreshIcon} from "@/components/icons/refresh";
+import Image from "next/image";
 
 
 export default function Avatar({record, onlyView = false, ...props}: { record: Record, onlyView: boolean }) {
@@ -19,6 +20,7 @@ export default function Avatar({record, onlyView = false, ...props}: { record: R
   const [uploading, setUploading] = useState(false);
   const [setting, setSetting] = useState(false);
   const [status, setStatus] = useState("");
+  const recordName = record?.name;
 
 
   const inputFile = useRef(null);
@@ -94,25 +96,37 @@ export default function Avatar({record, onlyView = false, ...props}: { record: R
   };
 
   useEffect(() => {
-    if (record) {
+    if (recordName) {
+      let cancelled = false;
       setLoading(true);
-      getResolver(record.name, "avatar").then((resolver) => {
+      getResolver(recordName, "avatar").then((resolver) => {
+        if (cancelled) return;
         if (resolver != null) {
           setAvatar(resolver.value.replace("ipfs://", env.GATEWAY_URL));
+        } else {
+          setAvatar("");
         }
       }).finally(() => {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       })
+      return () => {
+        cancelled = true;
+      };
     }
-  }, [record]);
+  }, [recordName, getResolver, setLoading]);
 
   return <>
     <div className="mr-4">
       {avatar !== "" && (
-        <img
+        <Image
           src={avatar}
           alt="Avatar"
           className="rounded-full w-24 h-24"
+          width={96}
+          height={96}
+          unoptimized
         />
       )}
       {avatar === "" && <div

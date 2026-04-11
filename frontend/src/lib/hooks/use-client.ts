@@ -3,7 +3,25 @@ import ExpiryMap from 'expiry-map';
 import env from "@/config/env";
 import {NameHashBalance, Record, Resolver, Statistic} from "@/types";
 
-export function useClient() {
+type ClientApi = {
+  getAddress: (name: string) => Promise<string>;
+  getNameHash: (name: string) => Promise<string>;
+  getPrimaryName: (publicKey: string) => Promise<string>;
+  getName: (hashName: string) => Promise<NameHashBalance>;
+  getSubNames: (name: string) => Promise<Array<Record>>;
+  getPublicDomain: (publicKey: string) => Promise<Array<Record>>;
+  getResolvers: (name: string) => Promise<Array<Resolver>>;
+  getResolver: (name: string, category: string) => Promise<Resolver | null>;
+  getStatistic: () => Promise<Statistic>;
+  getPublicBalance: (address: string) => Promise<number>;
+  getNameByField: (field: string) => Promise<NameHashBalance>;
+  getLatestHeight: () => Promise<number>;
+  getLatestAleoPrice: () => Promise<{price: number, timestamp: number}>;
+};
+
+let clientApi: ClientApi | null = null;
+
+function createClient(): ClientApi {
   const getStatistic = pMemoize(async () => {
     return new Promise<Statistic>((resolve, reject) => {
       fetch(`${env.API_URL}/statistic`)
@@ -146,8 +164,20 @@ export function useClient() {
   const getResolver = pMemoize(async (name: string, category: string) => {
     return new Promise<Resolver | null>((resolve, reject) => {
       fetch(`${env.API_URL}/resolver?name=${name}&category=${category}`)
-        .then((response) => response.json())
+        .then((response) => {
+          if (response.status === 404) {
+            return null;
+          }
+          if (!response.ok) {
+            throw new Error(`Failed to load resolver: ${response.status}`);
+          }
+          return response.json();
+        })
         .then((data: {content: string, category: string, name_hash: string}) => {
+          if (data == null) {
+            resolve(null);
+            return;
+          }
           resolve({
               key: data.category,
               value: data.content,
@@ -274,4 +304,11 @@ export function useClient() {
 
   return {getAddress, getNameHash, getPrimaryName, getName, getSubNames, getPublicDomain, getResolvers, getResolver,
     getStatistic, getPublicBalance, getNameByField, getLatestHeight, getLatestAleoPrice};
+}
+
+export function useClient(): ClientApi {
+  if (!clientApi) {
+    clientApi = createClient();
+  }
+  return clientApi;
 }

@@ -5,7 +5,7 @@ import {useIsDarkMode} from '@/lib/hooks/use-is-dark-mode';
 import dynamic from 'next/dynamic'
 import React from "react";
 
-export const LogoIcon = dynamic(() => import('@/assets/images/logo.svg'));
+export const LogoIcon = dynamic<React.SVGProps<SVGSVGElement>>(() => import('@/assets/images/logo.svg'));
 
 export default function Logo({size, ...props}: {size: string, props?: any}) {
   const isMounted = useIsMounted();

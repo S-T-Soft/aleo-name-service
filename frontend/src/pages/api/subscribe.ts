@@ -24,7 +24,6 @@ export default async function handler(req, res) {
 
     const data = await resp.json();
     console.log(data);
-    console.log(Buffer.from(`api:${apiKey}`).toString('base64'))
     const posthog = getPostHogClient();
     posthog.capture({
       distinctId: req.body.address,

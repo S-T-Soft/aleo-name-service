@@ -25,9 +25,9 @@ const NamesPage: NextPageWithLayout = () => {
         router.push("/account");
         return;
       }
-      setAddress(addr || "");
+      setAddress(Array.isArray(addr) ? addr[0] || "" : addr || "");
     }
- }, [router.isReady && router.query, publicKey]);
+ }, [router.isReady, router.query, address, publicKey, router]);
 
   useEffect(() => {
     if (address) {
@@ -36,7 +36,7 @@ const NamesPage: NextPageWithLayout = () => {
         setRecords(records);
       });
     }
-  }, [address]);
+  }, [address, getPublicDomain]);
 
   return (
     <>

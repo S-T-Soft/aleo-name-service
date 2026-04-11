@@ -1,5 +1,4 @@
 import type {NextPageWithLayout} from '@/types';
-import {Record} from "@/types";
 import {NextSeo} from 'next-seo';
 import Head from 'next/head';
 import {useRouter} from 'next/router'
@@ -20,7 +19,7 @@ const ManageNamePage: NextPageWithLayout = () => {
   const {wallet, publicKey} = useWallet();
   const {getAddress} = useClient();
   const {convertToPrivate, convertToPublic, setPrimaryName, unsetPrimaryName, transfer} = useANS();
-  const {records, updateRecodeBalance, setActiveRecord, activeRecord} = useRecords();
+  const {records, updateRecodeBalance, setActiveRecord, activeRecord, loading: recordsLoading} = useRecords();
   const [activeTab, setActiveTab] = useState('profile');
   const [available, setAvailable] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -29,14 +28,14 @@ const ManageNamePage: NextPageWithLayout = () => {
   const [isMine, setIsMine] = useState(true);
   const [isPrimaryName, setIsPrimaryName] = useState(false);
   const [name, setName] = useState("");
+  const [addressOwner, setAddressOwner] = useState("");
+  const shouldRedirect = !loading && name.length > 0 && (available || (!isMine && (!isPrivate || !recordsLoading)));
 
   useEffect(() => {
-    if (!loading && name && name.length > 0) {
-      if (available || !isMine) {
-        router.push(`/name/${name}`);
-      }
+    if (shouldRedirect) {
+      router.push(`/name/${name}`);
     }
-  }, [loading, isMine, name]);
+  }, [name, router, shouldRedirect]);
 
   useEffect(() => {
     if (router.isReady) {
@@ -49,33 +48,72 @@ const ManageNamePage: NextPageWithLayout = () => {
         setName(slug?.toLowerCase())
       }
     }
-  }, [router.isReady && router.query]);
+  }, [router.isReady, router.query]);
 
   useEffect(() => {
     // Only do the check if the name is valid and the public key is available
-    if (publicKey && !loading && name && name.length > 0) {
+    if (publicKey && name && name.length > 0) {
+      let cancelled = false;
       setLoading(true);
       getAddress(name)
         .then((address) => {
+          if (cancelled) return;
+          setAddressOwner(address);
           setAvailable(false);
-          const record = records?.find((rec) => rec.name === name);
-          setActiveRecord(record);
-          record && updateRecodeBalance(record);
-          const isPrivate = address.startsWith("Private");
-          if (!isPrivate) {
-            setIsPrimaryName(record?.isPrimaryName || false);
+          const privateAddress = address.startsWith("Private");
+          setIsPrivate(privateAddress);
+          if (privateAddress) {
+            // Wait for record sync effect to decide ownership for private names.
+            setIsMine(true);
+            setIsPrimaryName(false);
+          } else {
+            setIsMine(address === publicKey);
           }
-          setIsPrivate(isPrivate);
-          setIsMine(address === publicKey || (isPrivate && (records || []).some((rec) => rec.name === name)));
         }).catch((error) => {
-        setAvailable(true);
+        if (!cancelled) {
+          setAddressOwner("");
+          setAvailable(true);
+        }
       }).finally(() => {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       });
+      return () => {
+        cancelled = true;
+      };
     } else if (!wallet?.adapter.connected && name && name.length > 0) {
       router.push(`/name/${name}`);
     }
-  }, [records, name, publicKey, triggerRecheck]);
+  }, [name, publicKey, triggerRecheck, getAddress, router, wallet?.adapter.connected]);
+
+  useEffect(() => {
+    if (!name) return;
+    const record = records?.find((rec) => rec.name === name);
+    setActiveRecord(record);
+    if (record) {
+      updateRecodeBalance(record);
+    }
+
+    if (isPrivate) {
+      if (!recordsLoading) {
+        setIsMine(!!record);
+      }
+      setIsPrimaryName(false);
+      return;
+    }
+
+    setIsPrimaryName(record?.isPrimaryName || false);
+    if (addressOwner) {
+      setIsMine(addressOwner === publicKey);
+    }
+  }, [records, name, isPrivate, recordsLoading, addressOwner, publicKey, setActiveRecord, updateRecodeBalance]);
+
+  const pushTab = (tab: 'profile' | 'subnames' | 'resolver') => {
+    if (!name) return;
+    const query = tab === 'profile' ? {} : {tab};
+    router.push({pathname: `/account/${name}`, query}, undefined, {shallow: true, scroll: false});
+  };
 
   return (
     <>
@@ -96,7 +134,7 @@ const ManageNamePage: NextPageWithLayout = () => {
                 <li className="-mb-px mr-1 sm:mr-2 last:mr-0 flex-auto text-center">
                   <button
                       className={`font-bold uppercase px-2 sm:px-5 py-2 sm:py-3 text-sm sm:text-base block leading-normal ${activeTab === 'profile' ? 'text-aquamarine' : ''}`}
-                      onClick={() => router.push(name)}
+                      onClick={() => pushTab('profile')}
                       style={{ border: 'none', background: 'transparent', outline: 'none', cursor: 'pointer' }}
                   >
                       Profile
@@ -105,28 +143,28 @@ const ManageNamePage: NextPageWithLayout = () => {
                 <li className="-mb-px mr-1 sm:mr-2 last:mr-0 flex-auto text-center">
                   <button
                       className={`font-bold uppercase px-2 sm:px-5 py-2 sm:py-3 text-sm sm:text-base block leading-normal ${activeTab === 'subnames' ? 'text-aquamarine' : ''}`}
-                      onClick={() => router.push(name + '?tab=subnames')}
+                      onClick={() => pushTab('subnames')}
                       style={{ border: 'none', background: 'transparent', outline: 'none', cursor: 'pointer' }}
                   >
                       Subnames
                   </button>
                 </li>
-              {!loading && <li className="-mb-px mr-1 sm:mr-2 last:mr-0 flex-auto text-center">
+              <li className="-mb-px mr-1 sm:mr-2 last:mr-0 flex-auto text-center">
                   <button
                       className={`font-bold uppercase px-2 sm:px-5 py-2 sm:py-3 text-sm sm:text-base block leading-normal ${activeTab === 'resolver' ? 'text-aquamarine' : ''}`}
-                      onClick={() => router.push(name + '?tab=resolver')}
+                      onClick={() => pushTab('resolver')}
                       style={{ border: 'none', background: 'transparent', outline: 'none', cursor: 'pointer' }}
                   >
                       Resolver
                   </button>
-                </li>}
+                </li>
             </ul>
         </div>
         <div
           className="mb-6 rounded-lg bg-white shadow-card z-50 mx-auto w-full max-w-full [background:linear-gradient(180deg,_#2e2e2e,_rgba(46,_46,_46,_0))]">
           <div className="relative items-center justify-between gap-4 p-4">
           {loading && <span>Loading...</span>}
-          {!loading && available || !isMine && <span>Redirecting...</span>}
+          {shouldRedirect && <span>Redirecting...</span>}
           {!loading && activeTab == "profile" && isPrivate &&
               <PrivateName
                 record={activeRecord!}

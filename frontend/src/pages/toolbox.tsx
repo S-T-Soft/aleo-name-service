@@ -79,7 +79,7 @@ const ToolBoxPage: NextPageWithLayout = () => {
     }, 1000);
 
     return () => clearTimeout(timeoutId);
-  }, [recipient]);
+  }, [recipient, matchTld, getAddress]);
 
   useEffect(() => {
     const numAmount = parseFloat(amount || "");

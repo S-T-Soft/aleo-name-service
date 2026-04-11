@@ -23,7 +23,7 @@ const CoinbaseQuest = () => {
         router.push(questId == 'aleo_names_register' ? '/' : '/account');
       }
     }
-  }, [router.query]);
+  }, [router, router.query, setCbUUID, setPrivateFee, setQuestId]);
 
   return null;
 };

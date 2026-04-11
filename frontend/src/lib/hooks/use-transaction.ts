@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import {StatusChangeCallback} from "@/types";
 import {useWallet} from "@demox-labs/aleo-wallet-adapter-react";
 import {useRecords} from "@/lib/hooks/use-records";
@@ -18,11 +18,11 @@ export function useTransaction() {
   const {transactionStatus} = useWallet();
   const [transactions, setTransactions] = useState<AnsTransaction[]>([]);
 
-  const notify = React.useCallback((type: TypeOptions, message: string) => {
+  const notify = useCallback((type: TypeOptions, message: string) => {
     toast({ type, message });
   }, []);
 
-  const getTransactionStatus = async (tx: AnsTransaction) => {
+  const getTransactionStatus = useCallback(async (tx: AnsTransaction) => {
     let status = "Pending";
     if (transactionStatus) {
       transactionStatus(tx.id).then(status => {
@@ -62,7 +62,7 @@ export function useTransaction() {
     } else {
       tx.onStatusChange && tx.onStatusChange(true, {hasError: false, message: status});
     }
-  };
+  }, [notify, refreshRecords, syncPrimaryName, transactionStatus, transactions]);
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout | undefined;
@@ -88,7 +88,7 @@ export function useTransaction() {
         clearInterval(intervalId);
       }
     };
-  }, [transactions]);
+  }, [transactions, getTransactionStatus]);
 
   const addTransaction = (method: string, id: string, params: any[], onStatusChange?: StatusChangeCallback) => {
     setTransactions([...transactions, {method, id, params, onStatusChange}]);

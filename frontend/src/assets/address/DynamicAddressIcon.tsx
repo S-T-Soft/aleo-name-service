@@ -1,4 +1,5 @@
 import { QuestionCircleSVG } from '@/assets/icons'
+import type { SVGProps } from 'react'
 
 import { DynamicAddressIconName, dynamicAddressIcons } from './dynamicAddressIcons'
 
@@ -9,9 +10,9 @@ export const DynamicAddressIcon = ({
   ...props
 }: {
   name: DynamicAddressIconName | string
-  className: string
+  className?: string
   showDefault?: boolean
-}) => {
+} & SVGProps<SVGSVGElement>) => {
   if (name.toLowerCase() in dynamicAddressIcons) {
     const key = name.toLowerCase() as DynamicAddressIconName
     const Icon = dynamicAddressIcons[key] as any

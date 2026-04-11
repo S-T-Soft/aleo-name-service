@@ -78,6 +78,7 @@ const NamePage: NextPageWithLayout = () => {
       mutate("getLatestHeight");
     }
     return canPublicMint || (canCouponMint && selectedCard);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCard, canPublicMint, canCouponMint]);
 
   const ansRecord = useMemo(() => {
@@ -85,6 +86,7 @@ const NamePage: NextPageWithLayout = () => {
       name: `${name}.${tld.name}` as string,
       private: owner.length > 60
     } as Record
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [name]);
 
   useEffect(() => {
@@ -101,6 +103,7 @@ const NamePage: NextPageWithLayout = () => {
         }
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.isReady && router.query]);
 
   const selectCard = (card: CouponCard) => {
@@ -143,13 +146,14 @@ const NamePage: NextPageWithLayout = () => {
       setRecord("");
       setFeeRecord("");
     });
-  }
+  };
 
   useEffect(() => {
     setOwner("");
     setLoading(true);
     if (name == "") {
       setIsValid(false);
+      setLoading(false);
       return;
     }
     if (names?.includes(`${name}.${tld.name}`)) {
@@ -169,22 +173,20 @@ const NamePage: NextPageWithLayout = () => {
           const ans_price = await calcPrice(name, tld, selectedCard);
           setPrice(ans_price.aleo / 1000000);
           setPriceUSD(ans_price.usd);
-          if (couponCards.length > 0) {
-            couponCards.forEach((card) => {
-              card.enable = card.limit_name_length <= name.length;
-              if (!card.enable && selectedCard && selectedCard.id == card.id) {
-                setSelectedCard(null);
-              }
-            });
-          }
           if (publicKey) {
             getCouponCards(name, tld).then((cards) => {
-              setCouponCards(cards);
-              if (cards.length === 0) {
-                setSelectedCard(null);
-              } else if (selectedCard && !cards.some(card => card.enable && card.id === selectedCard.id)) {
-                setSelectedCard(null);
-              }
+              const normalizedCards = cards.map((card) => ({
+                ...card,
+                enable: card.limit_name_length <= name.length,
+              }));
+              setCouponCards(normalizedCards);
+              setSelectedCard((prevSelected) => {
+                if (!prevSelected) return null;
+                const stillValid = normalizedCards.some(
+                  (card) => card.enable && card.id === prevSelected.id
+                );
+                return stillValid ? prevSelected : null;
+              });
             });
           }
           // refresh balance
@@ -194,6 +196,8 @@ const NamePage: NextPageWithLayout = () => {
           if (publicKey) {
             checkRecords();
           } else {
+            setCouponCards([]);
+            setSelectedCard(null);
             setRecord("");
             setFeeRecord("");
           }
@@ -201,6 +205,7 @@ const NamePage: NextPageWithLayout = () => {
     }).finally(() => {
       setLoading(false);
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [name, names, publicKey, triggerRecheck, tld]);
 
   useEffect(() => {
@@ -208,6 +213,7 @@ const NamePage: NextPageWithLayout = () => {
       checkRecords();
     }
     // setShowAleoTool(!selectedCard);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [privateFee, publicKey, selectedCard]);
 
   const handleRegister = async (event: any) => {

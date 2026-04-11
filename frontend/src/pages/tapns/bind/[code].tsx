@@ -15,7 +15,7 @@ const NamePage: NextPageWithLayout = () => {
         setCode(code);
       }
     }
-  }, [router.isReady && router.query]);
+  }, [router.isReady, router.query]);
 
   return <BindPage params={{ code }} />
 }

@@ -1,6 +1,6 @@
 import type { FC, MouseEvent } from 'react';
 import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { WalletAdapterNetwork, WalletName, WalletReadyState } from '@demox-labs/aleo-wallet-adapter-base';
+import { DecryptPermission, WalletAdapterNetwork, WalletName, WalletReadyState } from '@demox-labs/aleo-wallet-adapter-base';
 import { useWallet, Wallet } from '@demox-labs/aleo-wallet-adapter-react';
 import {useWalletModal} from "@demox-labs/aleo-wallet-adapter-reactui";
 import {createPortal} from "react-dom";
@@ -9,6 +9,9 @@ import {WalletListItem} from "./WalletListItem";
 export interface WalletModalProps {
     className?: string;
     container?: string;
+    decryptPermission?: DecryptPermission;
+    network?: WalletAdapterNetwork;
+    programs?: string[];
 }
 
 export const WalletModal: FC<WalletModalProps> = ({ className = '', container = 'body', decryptPermission, network, programs }) => {
@@ -115,9 +118,9 @@ export const WalletModal: FC<WalletModalProps> = ({ className = '', container = 
 
     useLayoutEffect(() => {
         if (wallet) {
-            connect(decryptPermission || "NO_DECRYPT", network || WalletAdapterNetwork.TestnetBeta, programs ?? []).catch((e) => {console.log({e})});
+            connect(decryptPermission || DecryptPermission.NoDecrypt, network || WalletAdapterNetwork.TestnetBeta, programs ?? []).catch((e) => {console.log({e})});
         }
-    }, [wallet])
+    }, [wallet, connect, decryptPermission, network, programs])
 
     return (
         portal &&

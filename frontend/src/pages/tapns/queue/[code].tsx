@@ -26,7 +26,7 @@ const NamePage: NextPageWithLayout = () => {
         setAddress(address);
       }
     }
-  }, [router.isReady && router.query]);
+  }, [router.isReady, router.query]);
 
   useEffect(() => {
     const fetchQueuePosition = async () => {

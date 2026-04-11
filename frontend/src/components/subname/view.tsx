@@ -24,7 +24,7 @@ export default function SubNameView({record, ...props}: { record: Record }) {
         setLoading(false);
       })
     }
-  }, [record, refresh]);
+  }, [record, refresh, getSubNames, setLoading]);
 
   const doRefresh = () => {
     setRefresh(refresh + 1);

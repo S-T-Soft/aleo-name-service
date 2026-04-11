@@ -8,10 +8,11 @@ import {AddRecordForm} from "@/components/resolver/addRecordForm";
 import {Resolver, Record, Status} from "@/types";
 import {useANS} from "@/lib/hooks/use-ans";
 import {RefreshIcon} from "@/components/icons/refresh";
-import {useBoolean} from "react-use";
 import {useClient} from "@/lib/hooks/use-client";
 import coinsWithIcons from "@/constants/coinsWithIcons.json";
 import coinsWithoutIcons from "@/constants/coinsWithoutIcons.json";
+
+const noopSetResolverRecordCount = (_count: number) => {};
 
 
 const AddressRecordItem = ({ record, resolver }: { record: Record, resolver: Resolver }) => {
@@ -66,19 +67,31 @@ const AddressRecordItem = ({ record, resolver }: { record: Record, resolver: Res
 }
 
 
-export default function ResolverView({ record, onlyView = false, setResolverRecordCount = (count) => {}, ...props }: {record: Record, onlyView: boolean, setResolverRecordCount: (count: number) => void}) {
+export default function ResolverView({
+  record,
+  onlyView = false,
+  setResolverRecordCount = noopSetResolverRecordCount,
+  ...props
+}: {
+  record: Record
+  onlyView?: boolean
+  setResolverRecordCount?: (count: number) => void
+}) {
   const {getResolvers} = useClient();
   const [canAddResolver, setCanAddResolver] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [loading, setLoading] = useBoolean(true);
+  const [loading, setLoading] = useState(true);
   const [refresh, setRefresh] = useState(0);
   const [addresses, setAddresses] = useState<Resolver[]>([]);
+  const recordName = record?.name;
 
   useEffect(() => {
-    if (record && record.name) {
-      if (record.name.split(".").slice(0, -1).join(".") == "") return;
+    if (recordName) {
+      if (recordName.split(".").slice(0, -1).join(".") == "") return;
+      let cancelled = false;
       setLoading(true);
-      getResolvers(record.name).then((resolvers) => {
+      getResolvers(recordName).then((resolvers) => {
+        if (cancelled) return;
         const addressList: Resolver[] = [];
         resolvers.forEach((resolver) => {
           resolver.canDelete = !onlyView;
@@ -90,13 +103,18 @@ export default function ResolverView({ record, onlyView = false, setResolverReco
         setAddresses(addressList);
         setResolverRecordCount(addressList.length);
       }).finally(() => {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       })
+      return () => {
+        cancelled = true;
+      };
     }
-  }, [refresh, record]);
+  }, [refresh, recordName, getResolvers, onlyView, setResolverRecordCount]);
 
   const doRefresh = () => {
-    setRefresh(refresh + 1);
+    setRefresh((prev) => prev + 1);
   }
 
   return (

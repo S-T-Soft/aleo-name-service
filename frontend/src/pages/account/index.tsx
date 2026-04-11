@@ -14,7 +14,7 @@ const AccountPage: NextPageWithLayout = () => {
 
   useEffect(() => {
     publicKey && refreshRecords("auto");
-  }, [publicKey]);
+  }, [publicKey, refreshRecords]);
 
   return (
     <>

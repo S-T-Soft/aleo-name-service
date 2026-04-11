@@ -28,11 +28,19 @@ export function useRecordContext() {
   const isDebugger = useMemo(() => publicKey === env.DEBUG_ADDR, [publicKey]);
 
   useEffect(() => {
-    setRecords((records || []).map((rec) => {
-          rec.isPrimaryName = !rec.private && rec.name === primaryName;
-          return rec;
-        }));
-  }, [primaryNameMemo]);
+    setRecords((prevRecords = []) => {
+      let changed = false;
+      const nextRecords = prevRecords.map((rec) => {
+        const isPrimaryName = !rec.private && rec.name === primaryNameMemo;
+        if (rec.isPrimaryName !== isPrimaryName) {
+          changed = true;
+          return { ...rec, isPrimaryName };
+        }
+        return rec;
+      });
+      return changed ? nextRecords : prevRecords;
+    });
+  }, [primaryNameMemo, setRecords]);
 
   useEffect(() => {
     if (records) {
@@ -43,7 +51,7 @@ export function useRecordContext() {
         setNamesHash(records.map(item => item.nameHash!))
       }
     }
-  }, [records]);
+  }, [records, names]);
 
   const getBalance = async () => {
     if (publicKey) {
@@ -192,6 +200,9 @@ export function useRecordContext() {
 
   useEffect(() => {
     refreshRecords("auto");
+    // Intentionally refresh on key changes only; refreshRecords closes over
+    // mutable state and would retrigger continuously if listed here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [publicKey]);
 
   const addRecord = (record: Record) => {

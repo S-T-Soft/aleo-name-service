@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import dynamic from 'next/dynamic'
+import type { SVGProps } from 'react'
 
 import { QuestionCircleSVG } from '@/assets/icons'
 import {useState} from "react";
@@ -37,7 +38,7 @@ export const DynamicSocialIcon = ({
   name: keyof typeof socialIconTypes | string
   showDefault?: boolean
   fill?: string
-}) => {
+} & SVGProps<SVGSVGElement>) => {
   const [hover, setHover] = useState(false);
 
   if (name in socialIconTypes) {
