@@ -10,7 +10,7 @@ import {queryByField, saveName} from "@/lib/db";
 
 export function useRecordContext() {
   const {getPrimaryName,getName,getNameByField,getPublicDomain,getResolver,getStatistic,getPublicBalance} = useClient();
-  const {publicKey, requestRecords} = useWallet();
+  const {publicKey, requestRecordPlaintexts} = useWallet();
   const [activeRecord, setActiveRecord] = useState<Record|undefined>(undefined);
   const [records, setRecords] = useLocalStorage<Record[]>('records', []);
   const [statistic, setStatistic] = useState<Statistic>({totalNFTOwners: 0, totalPriNames: 0, totalNames: 0, totalNames24h: 0, blockHeight: 0, healthy: true} as Statistic);
@@ -90,7 +90,7 @@ export function useRecordContext() {
 
   const loadPrivateRecords = async () => {
     return new Promise<Record[]>((resolve, reject) => {
-      requestRecords!(env.REGISTRY_PROGRAM).then((privateRecords) => {
+      requestRecordPlaintexts!(env.REGISTRY_PROGRAM).then((privateRecords) => {
         const rs = privateRecords.filter((rec) => !rec.spent && rec.recordName != 'NFTView' && !rec.data.is_view);
         isDebugger && console.log("Valid private records(" + rs.length + "): " + JSON.stringify(rs));
         return Promise.all(rs.map(async (rec) => {

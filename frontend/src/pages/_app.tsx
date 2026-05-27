@@ -27,7 +27,8 @@ import { AxiomWebVitals } from 'next-axiom';
 import {
   FoxWalletAdapter,
   LeoWalletAdapter,
-  PuzzleWalletAdapter
+  PuzzleWalletAdapter,
+  ShieldWalletAdapter
 } from '@/lib/wallet-adapters';
 import {PrivateFeeProvider} from "@/context/private-fee-context";
 import {BlockNumber} from "@/components/BlockNumber";
@@ -58,6 +59,10 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
   const wallets = useMemo(
     () => {
       const wallets: BaseMessageSignerWalletAdapter[] = [
+        new ShieldWalletAdapter({
+          appName: 'Aleo Name Service',
+          isMobile: isMobile()
+        }),
         new LeoWalletAdapter({
           appName: 'Aleo Name Service',
           isMobile: isMobile()

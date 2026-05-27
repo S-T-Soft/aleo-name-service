@@ -33,7 +33,7 @@ export function useTransaction() {
         if (status === "Failed" || status === "Reject" || status === "Rejected") {
           setTransactions(transactions.filter((t) => t.id !== tx.id));
           tx.onStatusChange && tx.onStatusChange(false, {hasError: true, message: status});
-        } else if (status === "Finalized") {
+        } else if (status === "Finalized" || status === "Accepted") {
           setTransactions(transactions.filter((t) => t.id !== tx.id));
 
           switch (tx.method) {
